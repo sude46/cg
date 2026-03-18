@@ -1,0 +1,46 @@
+info:
+  title: "微博平台 API"
+  description: |
+    # 微博平台 RESTful API 文档
+    
+    这是一个完整的微博平台 API 文档，包含用户认证、微博管理、社交互动等功能。
+    
+    ## 认证方式
+    大部分 API 需要 JWT 认证。请在登录后获取 token，并在请求头中添加：
+    ```
+    Authorization: Bearer <your_token>
+    ```
+    
+    ## 错误代码
+    - 400: 请求参数错误
+    - 401: 未认证访问
+    - 403: 权限不足
+    - 404: 资源不存在
+    - 500: 服务器内部错误
+    
+  version: "1.0.0"
+  termsOfService: ""
+  contact:
+    name: "API 支持"
+    url: "http://www.example.com/support"
+    email: "support@example.com"
+  license:
+    name: "MIT"
+    url: "https://opensource.org/licenses/MIT"
+
+# 全局安全定义
+securityDefinitions:
+  Bearer:
+    type: apiKey
+    name: Authorization
+    in: header
+    description: "请输入 JWT token，格式: Bearer <token>"
+
+# 全局响应定义
+responses:
+  Unauthorized:
+    description: "未认证访问"
+  NotFound:
+    description: "资源不存在"
+  InternalError:
+    description: "服务器内部错误"

@@ -1,0 +1,141 @@
+from sqlalchemy.exc import IntegrityError
+from core import db
+from .models import Notification
+from app.users.repositories import user_repository
+from app.common.exceptions import (
+    ResourceNotFoundError,
+    PermissionError,
+    ValidationError,
+    DatabaseError,
+)
+from app.notifications.schemas import notification_schema, notifications_schema
+from app.notifications.repositories import notification_repository
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+class NotificationService:
+    @staticmethod
+    def create_notification(data: dict):
+        user_id = data.get('user_id')
+        actor_id = data.get('actor_id')
+        if not user_id:
+            raise ValidationError('缺少 recipient user_id')
+        if not user_repository.get_by_id(user_id):
+            raise ResourceNotFoundError(f"用户(ID:{user_id})不存在")
+        if actor_id and not user_repository.get_by_id(actor_id):
+            raise ResourceNotFoundError(f"触发用户(ID:{actor_id})不存在")
+
+        # 转换资源字段
+        notif_type = data.get('type')
+        if notif_type == 'comment':
+            resource_id = data.get('comment_id')
+            resource_type = 'comment'
+        elif notif_type == 'like':
+            resource_id = data.get('post_id') or data.get('comment_id')
+            resource_type = 'post' if data.get('post_id') else 'comment'
+        else:
+            resource_id = data.get('post_id') or data.get('comment_id')
+            resource_type = 'post' if data.get('post_id') else 'comment'
+
+        notif_data = {
+            'user_id': user_id,
+            'actor_id': actor_id,
+            'type': notif_type,
+            'resource_id': resource_id,
+            'resource_type': resource_type,
+            'content': data.get('content')
+        }
+        # 移除 None 值
+        notif_data = {k: v for k, v in notif_data.items() if v is not None}
+
+        try:
+            notif = notification_repository.create_notification(notif_data)
+            db.session.commit()
+            return notification_schema.dump(notif)
+        except IntegrityError:
+            db.session.rollback()
+            raise DatabaseError('创建通知失败，数据库约束错误')
+        except Exception as e:
+            db.session.rollback()
+            logger.error('创建通知失败: %s', e)
+            if isinstance(e, (ResourceNotFoundError, ValidationError)):
+                raise
+            raise DatabaseError(f'创建通知失败: {e}')
+
+    @staticmethod
+    def get_notification_by_id(notification_id: int, user_id: int):
+        notif = notification_repository.get_by_id(notification_id, user_id)
+        if not notif:
+            raise ResourceNotFoundError(f'通知(ID:{notification_id})不存在或无权访问')
+        return notification_schema.dump(notif)
+
+    @staticmethod
+    def get_user_notifications(user_id: int, page: int = 1, per_page: int = 20, unread_only: bool = False):
+        pagination_result = notification_repository.list_by_user(
+            user_id=user_id,
+            page=page,
+            per_page=per_page,
+            unread_only=unread_only
+        )
+        # 兼容 Pagination 对象和 dict
+        if isinstance(pagination_result, dict):
+            raw_items = pagination_result.get('items', [])
+            pagination_info = pagination_result.get('pagination', {})
+        else:
+            raw_items = getattr(pagination_result, 'items', [])
+            pagination_info = {
+                'total': getattr(pagination_result, 'total', 0),
+                'pages': getattr(pagination_result, 'pages', 1),
+                'page': getattr(pagination_result, 'page', page),
+                'per_page': getattr(pagination_result, 'per_page', per_page),
+                'has_prev': getattr(pagination_result, 'has_prev', False),
+                'has_next': getattr(pagination_result, 'has_next', False)
+            }
+        items = notifications_schema.dump(raw_items) if raw_items else []
+        if not isinstance(items, list):
+            items = []
+        return {'items': items, 'pagination': pagination_info}
+
+    @staticmethod
+    def mark_as_read(notification_id: int, user_id: int):
+        try:
+            notif = notification_repository.get_by_id(notification_id, user_id)
+            if not notif:
+                raise ResourceNotFoundError('通知不存在或无权访问')
+            notification_repository.mark_as_read(notif)
+            db.session.commit()
+            return  notification_schema.dump(notif)
+        except Exception as e:
+            db.session.rollback()
+            logger.error('标记通知为已读失败: %s', e)
+            if isinstance(e, ResourceNotFoundError):
+                raise
+            raise DatabaseError(f'标记通知为已读失败: {e}')
+
+    @staticmethod
+    def mark_all_as_read(user_id):
+        try:
+            notification_repository.mark_all_as_read(user_id)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            logger.error('标记所有通知为已读失败: %s', e)
+            raise DatabaseError(f'标记所有通知为已读失败: {e}')
+
+    @staticmethod
+    def delete_notification(notification_id: int, user_id: int):
+        try:
+            notif = notification_repository.get_by_id(notification_id, user_id)
+            if not notif:
+                raise ResourceNotFoundError('通知不存在或无权访问')
+            notification_repository.delete(notif)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            logger.error('删除通知失败: %s', e)
+            if isinstance(e, ResourceNotFoundError):
+                raise
+            raise DatabaseError(f'删除通知失败: {e}')
+

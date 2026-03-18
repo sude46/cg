@@ -1,0 +1,655 @@
+2026-03-16 04:32:55,488INFO N/A N/A N/A 日志初始化完成，测试环境：False
+2026-03-16 04:32:55,494INFO N/A N/A N/A  所有异常处理器注册完成
+2026-03-16 04:32:55,499INFO N/A N/A N/A SELECT DATABASE()
+2026-03-16 04:32:55,500INFO N/A N/A N/A [raw sql] {}
+2026-03-16 04:32:55,502INFO N/A N/A N/A SELECT @@sql_mode
+2026-03-16 04:32:55,502INFO N/A N/A N/A [raw sql] {}
+2026-03-16 04:32:55,503INFO N/A N/A N/A SELECT @@lower_case_table_names
+2026-03-16 04:32:55,504INFO N/A N/A N/A [raw sql] {}
+2026-03-16 04:32:55,506INFO N/A N/A N/A BEGIN (implicit)
+2026-03-16 04:32:55,507INFO N/A N/A N/A DESCRIBE `weibo_platform`.`users`
+2026-03-16 04:32:55,507INFO N/A N/A N/A [raw sql] {}
+2026-03-16 04:32:55,510INFO N/A N/A N/A ROLLBACK
+2026-03-16 04:32:55,522INFO N/A N/A N/A ✅ 成功注册蓝图 comments_bp，前缀：根路径
+2026-03-16 04:32:55,527INFO N/A N/A N/A ✅ 成功注册蓝图 follows_bp，前缀：根路径
+2026-03-16 04:32:55,532INFO N/A N/A N/A ✅ 成功注册蓝图 posts_bp，前缀：根路径
+2026-03-16 04:32:55,537INFO N/A N/A N/A ✅ 成功注册蓝图 likes_bp，前缀：根路径
+2026-03-16 04:32:55,541INFO N/A N/A N/A ✅ 成功注册蓝图 notifications_bp，前缀：根路径
+2026-03-16 04:32:55,546INFO N/A N/A N/A ✅ 成功注册蓝图 users_bp，前缀：/users
+2026-03-16 04:32:55,548INFO N/A N/A N/A ✅ 成功注册蓝图 auth_bp，前缀：/auth
+2026-03-16 04:32:55,549INFO N/A N/A N/A ✅ 成功注册蓝图 feeds_bp，前缀：/feeds
+2026-03-16 04:32:55,550INFO N/A N/A N/A 📌 所有蓝图注册完成
+2026-03-16 04:32:56,770INFO N/A N/A N/A 日志初始化完成，测试环境：False
+2026-03-16 04:32:56,777INFO N/A N/A N/A  所有异常处理器注册完成
+2026-03-16 04:32:56,782INFO N/A N/A N/A SELECT DATABASE()
+2026-03-16 04:32:56,782INFO N/A N/A N/A [raw sql] {}
+2026-03-16 04:32:56,784INFO N/A N/A N/A SELECT @@sql_mode
+2026-03-16 04:32:56,785INFO N/A N/A N/A [raw sql] {}
+2026-03-16 04:32:56,786INFO N/A N/A N/A SELECT @@lower_case_table_names
+2026-03-16 04:32:56,787INFO N/A N/A N/A [raw sql] {}
+2026-03-16 04:32:56,789INFO N/A N/A N/A BEGIN (implicit)
+2026-03-16 04:32:56,789INFO N/A N/A N/A DESCRIBE `weibo_platform`.`users`
+2026-03-16 04:32:56,790INFO N/A N/A N/A [raw sql] {}
+2026-03-16 04:32:56,792INFO N/A N/A N/A ROLLBACK
+2026-03-16 04:32:56,798INFO N/A N/A N/A ✅ 成功注册蓝图 comments_bp，前缀：根路径
+2026-03-16 04:32:56,803INFO N/A N/A N/A ✅ 成功注册蓝图 follows_bp，前缀：根路径
+2026-03-16 04:32:56,810INFO N/A N/A N/A ✅ 成功注册蓝图 posts_bp，前缀：根路径
+2026-03-16 04:32:56,815INFO N/A N/A N/A ✅ 成功注册蓝图 likes_bp，前缀：根路径
+2026-03-16 04:32:56,820INFO N/A N/A N/A ✅ 成功注册蓝图 notifications_bp，前缀：根路径
+2026-03-16 04:32:56,824INFO N/A N/A N/A ✅ 成功注册蓝图 users_bp，前缀：/users
+2026-03-16 04:32:56,826INFO N/A N/A N/A ✅ 成功注册蓝图 auth_bp，前缀：/auth
+2026-03-16 04:32:56,828INFO N/A N/A N/A ✅ 成功注册蓝图 feeds_bp，前缀：/feeds
+2026-03-16 04:32:56,828INFO N/A N/A N/A 📌 所有蓝图注册完成
+2026-03-16 04:32:56,845WARNING N/A N/A N/A  * Debugger is active!
+2026-03-16 04:33:02,930INFO N/A N/A N/A {"timestamp": "2026-03-16T08:33:02.930373+00:00Z", "level": "INFO", "request_id": "e4612aef-a10e-48c5-be30-61b777773811", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 04:33:02,938WARNING 9b3d9dcb-1efd-44a2-b95b-e857173733e2 N/A -0.0 [CUSTOM ERROR] request_id=9b3d9dcb-1efd-44a2-b95b-e857173733e2, error_code=10002, msg=访问的接口/资源不存在
+2026-03-16 04:33:02,941WARNING N/A N/A N/A {"timestamp": "2026-03-16T08:33:02.941661+00:00Z", "level": "WARNING", "request_id": "9b3d9dcb-1efd-44a2-b95b-e857173733e2", "status_code": 404, "duration_ms": 3.63, "path": "/", "response_length": 121}
+2026-03-16 04:33:03,030INFO N/A N/A N/A {"timestamp": "2026-03-16T08:33:03.030175+00:00Z", "level": "INFO", "request_id": "9e141d76-db5b-4d79-8dae-d203ef2a0cc6", "method": "GET", "path": "/favicon.ico", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 04:33:03,031WARNING 61a51f65-04cb-4ffb-a6ff-b73876047df7 N/A -0.0 [CUSTOM ERROR] request_id=61a51f65-04cb-4ffb-a6ff-b73876047df7, error_code=10002, msg=访问的接口/资源不存在
+2026-03-16 04:33:03,031WARNING N/A N/A N/A {"timestamp": "2026-03-16T08:33:03.031640+00:00Z", "level": "WARNING", "request_id": "61a51f65-04cb-4ffb-a6ff-b73876047df7", "status_code": 404, "duration_ms": 0.94, "path": "/favicon.ico", "response_length": 121}
+2026-03-16 04:33:09,794INFO N/A N/A N/A {"timestamp": "2026-03-16T08:33:09.794339+00:00Z", "level": "INFO", "request_id": "8e1a790b-8a2e-4ef1-8d97-91e7b7f9e86a", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 04:33:09,797WARNING 28463274-6711-4108-bdf5-99ff6f82bda8 N/A -0.0 [CUSTOM ERROR] request_id=28463274-6711-4108-bdf5-99ff6f82bda8, error_code=10002, msg=访问的接口/资源不存在
+2026-03-16 04:33:09,798WARNING N/A N/A N/A {"timestamp": "2026-03-16T08:33:09.798337+00:00Z", "level": "WARNING", "request_id": "28463274-6711-4108-bdf5-99ff6f82bda8", "status_code": 404, "duration_ms": 1.77, "path": "/", "response_length": 121}
+2026-03-16 04:33:09,875INFO N/A N/A N/A {"timestamp": "2026-03-16T08:33:09.875266+00:00Z", "level": "INFO", "request_id": "330a12dc-a3bb-4ba4-8362-a9c404545e52", "method": "GET", "path": "/favicon.ico", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 04:33:09,877WARNING cf7f25e3-b70b-4bb3-b935-74ae869539b4 N/A -0.0 [CUSTOM ERROR] request_id=cf7f25e3-b70b-4bb3-b935-74ae869539b4, error_code=10002, msg=访问的接口/资源不存在
+2026-03-16 04:33:09,878WARNING N/A N/A N/A {"timestamp": "2026-03-16T08:33:09.878414+00:00Z", "level": "WARNING", "request_id": "cf7f25e3-b70b-4bb3-b935-74ae869539b4", "status_code": 404, "duration_ms": 2.01, "path": "/favicon.ico", "response_length": 121}
+2026-03-16 04:33:16,139INFO N/A N/A N/A {"timestamp": "2026-03-16T08:33:16.138952+00:00Z", "level": "INFO", "request_id": "46031d40-a58b-4599-a5fa-70aa0461f52a", "method": "GET", "path": "/users/docs", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 04:33:16,157INFO N/A N/A N/A {"timestamp": "2026-03-16T08:33:16.157739+00:00Z", "level": "INFO", "request_id": "cb7f6bb5-b5b4-4b5f-af21-4df7394a3e89", "status_code": 200, "duration_ms": 16.79, "path": "/users/docs", "response_length": 3817}
+2026-03-16 04:33:16,217INFO N/A N/A N/A {"timestamp": "2026-03-16T08:33:16.217663+00:00Z", "level": "INFO", "request_id": "b39322e2-2bca-47e9-b07e-f827258ac011", "method": "GET", "path": "/swaggerui/droid-sans.css", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 04:33:16,224INFO N/A N/A N/A {"timestamp": "2026-03-16T08:33:16.224379+00:00Z", "level": "INFO", "request_id": "7bc5b836-16e0-432f-9e20-62b2edf73876", "status_code": 304, "duration_ms": 5.88, "path": "/swaggerui/droid-sans.css", "response_length": 778}
+2026-03-16 04:33:16,227INFO N/A N/A N/A {"timestamp": "2026-03-16T08:33:16.227806+00:00Z", "level": "INFO", "request_id": "7291214b-45b0-4032-adbe-37cd69f0f713", "method": "GET", "path": "/swaggerui/swagger-ui.css", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 04:33:16,229INFO N/A N/A N/A {"timestamp": "2026-03-16T08:33:16.229542+00:00Z", "level": "INFO", "request_id": "08e476f7-077d-40d5-8c4f-2a89b997bf68", "status_code": 304, "duration_ms": 0.84, "path": "/swaggerui/swagger-ui.css", "response_length": 145206}
+2026-03-16 04:33:16,244INFO N/A N/A N/A {"timestamp": "2026-03-16T08:33:16.244667+00:00Z", "level": "INFO", "request_id": "65415841-1451-4259-b96f-c033e8723588", "method": "GET", "path": "/swaggerui/swagger-ui-bundle.js", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 04:33:16,246INFO N/A N/A N/A {"timestamp": "2026-03-16T08:33:16.246637+00:00Z", "level": "INFO", "request_id": "3b9a7c87-460b-4daf-a592-abf56e48e084", "status_code": 304, "duration_ms": 1.14, "path": "/swaggerui/swagger-ui-bundle.js", "response_length": 1048219}
+2026-03-16 04:33:16,256INFO N/A N/A N/A {"timestamp": "2026-03-16T08:33:16.256294+00:00Z", "level": "INFO", "request_id": "5e25497f-34ba-449b-80ff-c2f5f61a28d2", "method": "GET", "path": "/swaggerui/swagger-ui-standalone-preset.js", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 04:33:16,258INFO N/A N/A N/A {"timestamp": "2026-03-16T08:33:16.258012+00:00Z", "level": "INFO", "request_id": "d0fb4551-610d-4c72-86a7-7184d949dacb", "status_code": 304, "duration_ms": 0.85, "path": "/swaggerui/swagger-ui-standalone-preset.js", "response_length": 322770}
+2026-03-16 04:35:51,700INFO N/A N/A N/A {"timestamp": "2026-03-16T08:35:51.700242+00:00Z", "level": "INFO", "request_id": "0ac76589-3946-43d3-aba3-9bccf1539be2", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 04:35:51,703WARNING b1f83a30-eb08-4d0c-881d-192c98ca610d N/A -0.0 [CUSTOM ERROR] request_id=b1f83a30-eb08-4d0c-881d-192c98ca610d, error_code=10002, msg=访问的接口/资源不存在
+2026-03-16 04:35:51,704WARNING N/A N/A N/A {"timestamp": "2026-03-16T08:35:51.704811+00:00Z", "level": "WARNING", "request_id": "b1f83a30-eb08-4d0c-881d-192c98ca610d", "status_code": 404, "duration_ms": 1.95, "path": "/", "response_length": 121}
+2026-03-16 04:35:53,123INFO N/A N/A N/A {"timestamp": "2026-03-16T08:35:53.123805+00:00Z", "level": "INFO", "request_id": "3fd03d56-f1c9-4017-874a-b9256e0ab284", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 04:35:53,126WARNING c6a96f38-90ec-4d8f-a5aa-3864aef34ab9 N/A -0.0 [CUSTOM ERROR] request_id=c6a96f38-90ec-4d8f-a5aa-3864aef34ab9, error_code=10002, msg=访问的接口/资源不存在
+2026-03-16 04:35:53,127WARNING N/A N/A N/A {"timestamp": "2026-03-16T08:35:53.127268+00:00Z", "level": "WARNING", "request_id": "c6a96f38-90ec-4d8f-a5aa-3864aef34ab9", "status_code": 404, "duration_ms": 1.31, "path": "/", "response_length": 121}
+2026-03-16 04:35:57,273INFO N/A N/A N/A {"timestamp": "2026-03-16T08:35:57.273705+00:00Z", "level": "INFO", "request_id": "2ea8478a-d469-4460-a45b-8b72060e554b", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 04:35:57,277WARNING f54e3c35-bf96-4a0d-8d0f-ee9c38da568b N/A -0.0 [CUSTOM ERROR] request_id=f54e3c35-bf96-4a0d-8d0f-ee9c38da568b, error_code=10002, msg=访问的接口/资源不存在
+2026-03-16 04:35:57,279WARNING N/A N/A N/A {"timestamp": "2026-03-16T08:35:57.279060+00:00Z", "level": "WARNING", "request_id": "f54e3c35-bf96-4a0d-8d0f-ee9c38da568b", "status_code": 404, "duration_ms": 2.21, "path": "/", "response_length": 121}
+2026-03-16 04:35:58,070INFO N/A N/A N/A {"timestamp": "2026-03-16T08:35:58.070520+00:00Z", "level": "INFO", "request_id": "297ea91d-5f63-4efa-b312-d20071dbfa1d", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 04:35:58,073WARNING d8f06337-aff0-4147-aac6-32fe3f3da365 N/A -0.0 [CUSTOM ERROR] request_id=d8f06337-aff0-4147-aac6-32fe3f3da365, error_code=10002, msg=访问的接口/资源不存在
+2026-03-16 04:35:58,074WARNING N/A N/A N/A {"timestamp": "2026-03-16T08:35:58.074041+00:00Z", "level": "WARNING", "request_id": "d8f06337-aff0-4147-aac6-32fe3f3da365", "status_code": 404, "duration_ms": 1.34, "path": "/", "response_length": 121}
+2026-03-16 04:37:13,954INFO N/A N/A N/A {"timestamp": "2026-03-16T08:37:13.954318+00:00Z", "level": "INFO", "request_id": "b3cd02f1-b7de-41e4-ba33-9f545a9dedb4", "method": "GET", "path": "/users/docs", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 04:37:13,957INFO N/A N/A N/A {"timestamp": "2026-03-16T08:37:13.957632+00:00Z", "level": "INFO", "request_id": "468a843a-e06a-4c04-958d-1930c362bb53", "status_code": 200, "duration_ms": 1.1, "path": "/users/docs", "response_length": 3817}
+2026-03-16 04:37:14,013INFO N/A N/A N/A {"timestamp": "2026-03-16T08:37:14.013291+00:00Z", "level": "INFO", "request_id": "0a32ed60-d0e0-460c-a8d8-f663d2105d88", "method": "GET", "path": "/swaggerui/droid-sans.css", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 04:37:14,017INFO N/A N/A N/A {"timestamp": "2026-03-16T08:37:14.017370+00:00Z", "level": "INFO", "request_id": "fbf8eb8b-2ecd-4c00-9528-24e2c95a3660", "status_code": 304, "duration_ms": 2.3, "path": "/swaggerui/droid-sans.css", "response_length": 778}
+2026-03-16 04:37:14,024INFO N/A N/A N/A {"timestamp": "2026-03-16T08:37:14.024314+00:00Z", "level": "INFO", "request_id": "0cbd81bc-88ee-49b3-a6b4-1ebe1dd8cb5b", "method": "GET", "path": "/swaggerui/swagger-ui.css", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 04:37:14,026INFO N/A N/A N/A {"timestamp": "2026-03-16T08:37:14.026190+00:00Z", "level": "INFO", "request_id": "0eafba4a-0682-46d1-b72a-71e304a827f3", "status_code": 304, "duration_ms": 0.88, "path": "/swaggerui/swagger-ui.css", "response_length": 145206}
+2026-03-16 04:37:14,043INFO N/A N/A N/A {"timestamp": "2026-03-16T08:37:14.043252+00:00Z", "level": "INFO", "request_id": "c6712848-c1d4-4791-8429-74cdf5567482", "method": "GET", "path": "/swaggerui/swagger-ui-bundle.js", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 04:37:14,045INFO N/A N/A N/A {"timestamp": "2026-03-16T08:37:14.045167+00:00Z", "level": "INFO", "request_id": "4fb7a46c-be19-4245-bb87-bee850323a29", "status_code": 304, "duration_ms": 1.07, "path": "/swaggerui/swagger-ui-bundle.js", "response_length": 1048219}
+2026-03-16 04:37:14,053INFO N/A N/A N/A {"timestamp": "2026-03-16T08:37:14.053458+00:00Z", "level": "INFO", "request_id": "d8a4f83f-5ece-4008-890e-521769b619ca", "method": "GET", "path": "/swaggerui/swagger-ui-standalone-preset.js", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 04:37:14,055INFO N/A N/A N/A {"timestamp": "2026-03-16T08:37:14.054970+00:00Z", "level": "INFO", "request_id": "2ccfc60b-5760-4829-9a7c-c013cf0eb31d", "status_code": 304, "duration_ms": 0.73, "path": "/swaggerui/swagger-ui-standalone-preset.js", "response_length": 322770}
+2026-03-16 04:37:14,132INFO N/A N/A N/A {"timestamp": "2026-03-16T08:37:14.132121+00:00Z", "level": "INFO", "request_id": "1f4470cc-5506-4c52-a23a-046d1cbd99ec", "method": "GET", "path": "/swaggerui/favicon-32x32.png", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 04:37:14,134INFO N/A N/A N/A {"timestamp": "2026-03-16T08:37:14.134006+00:00Z", "level": "INFO", "request_id": "477f2fbe-377f-47f7-bed8-33f0b883a63a", "status_code": 304, "duration_ms": 0.95, "path": "/swaggerui/favicon-32x32.png", "response_length": 628}
+2026-03-16 04:40:50,927INFO N/A N/A N/A {"timestamp": "2026-03-16T08:40:50.926973+00:00Z", "level": "INFO", "request_id": "bb89ca54-34f7-491c-a529-1bad16f5fd1f", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 04:40:50,929WARNING 8f8b28dd-9906-4dbd-a8c8-3b681ec65c04 N/A -0.0 [CUSTOM ERROR] request_id=8f8b28dd-9906-4dbd-a8c8-3b681ec65c04, error_code=10002, msg=访问的接口/资源不存在
+2026-03-16 04:40:50,930WARNING N/A N/A N/A {"timestamp": "2026-03-16T08:40:50.930848+00:00Z", "level": "WARNING", "request_id": "8f8b28dd-9906-4dbd-a8c8-3b681ec65c04", "status_code": 404, "duration_ms": 1.36, "path": "/", "response_length": 121}
+2026-03-16 04:40:52,045INFO N/A N/A N/A {"timestamp": "2026-03-16T08:40:52.044928+00:00Z", "level": "INFO", "request_id": "a846e52e-68ef-4b60-84ed-e28ebe7c552b", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 04:40:52,048WARNING 7afe7b3d-99ca-4c8c-9fa2-f3a44f7a2d90 N/A -0.0 [CUSTOM ERROR] request_id=7afe7b3d-99ca-4c8c-9fa2-f3a44f7a2d90, error_code=10002, msg=访问的接口/资源不存在
+2026-03-16 04:40:52,049WARNING N/A N/A N/A {"timestamp": "2026-03-16T08:40:52.049861+00:00Z", "level": "WARNING", "request_id": "7afe7b3d-99ca-4c8c-9fa2-f3a44f7a2d90", "status_code": 404, "duration_ms": 1.73, "path": "/", "response_length": 121}
+2026-03-16 04:40:54,286INFO N/A N/A N/A {"timestamp": "2026-03-16T08:40:54.286473+00:00Z", "level": "INFO", "request_id": "e7d928e7-912d-4b5f-b9fa-24a2bc4e1a58", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 04:40:54,288WARNING ad23e789-1a1c-4f11-ab44-28aff2a3f6de N/A -0.0 [CUSTOM ERROR] request_id=ad23e789-1a1c-4f11-ab44-28aff2a3f6de, error_code=10002, msg=访问的接口/资源不存在
+2026-03-16 04:40:54,289WARNING N/A N/A N/A {"timestamp": "2026-03-16T08:40:54.289856+00:00Z", "level": "WARNING", "request_id": "ad23e789-1a1c-4f11-ab44-28aff2a3f6de", "status_code": 404, "duration_ms": 1.41, "path": "/", "response_length": 121}
+2026-03-16 04:45:19,183INFO N/A N/A N/A 日志初始化完成，测试环境：False
+2026-03-16 04:45:19,189INFO N/A N/A N/A  所有异常处理器注册完成
+2026-03-16 04:45:19,194INFO N/A N/A N/A SELECT DATABASE()
+2026-03-16 04:45:19,194INFO N/A N/A N/A [raw sql] {}
+2026-03-16 04:45:19,196INFO N/A N/A N/A SELECT @@sql_mode
+2026-03-16 04:45:19,196INFO N/A N/A N/A [raw sql] {}
+2026-03-16 04:45:19,198INFO N/A N/A N/A SELECT @@lower_case_table_names
+2026-03-16 04:45:19,198INFO N/A N/A N/A [raw sql] {}
+2026-03-16 04:45:19,200INFO N/A N/A N/A BEGIN (implicit)
+2026-03-16 04:45:19,201INFO N/A N/A N/A DESCRIBE `weibo_platform`.`users`
+2026-03-16 04:45:19,201INFO N/A N/A N/A [raw sql] {}
+2026-03-16 04:45:19,203INFO N/A N/A N/A ROLLBACK
+2026-03-16 04:45:19,209INFO N/A N/A N/A ✅ 成功注册蓝图 comments_bp，前缀：根路径
+2026-03-16 04:45:19,213INFO N/A N/A N/A ✅ 成功注册蓝图 follows_bp，前缀：根路径
+2026-03-16 04:45:19,219INFO N/A N/A N/A ✅ 成功注册蓝图 posts_bp，前缀：根路径
+2026-03-16 04:45:19,225INFO N/A N/A N/A ✅ 成功注册蓝图 likes_bp，前缀：根路径
+2026-03-16 04:45:19,229INFO N/A N/A N/A ✅ 成功注册蓝图 notifications_bp，前缀：根路径
+2026-03-16 04:45:19,233INFO N/A N/A N/A ✅ 成功注册蓝图 users_bp，前缀：/users
+2026-03-16 04:45:19,235INFO N/A N/A N/A ✅ 成功注册蓝图 auth_bp，前缀：/auth
+2026-03-16 04:45:19,236INFO N/A N/A N/A ✅ 成功注册蓝图 feeds_bp，前缀：/feeds
+2026-03-16 04:45:19,237INFO N/A N/A N/A 📌 所有蓝图注册完成
+2026-03-16 04:45:19,253WARNING N/A N/A N/A  * Debugger is active!
+2026-03-16 04:45:28,050INFO N/A N/A N/A {"timestamp": "2026-03-16T08:45:28.050396+00:00Z", "level": "INFO", "request_id": "68d9103e-3c57-445c-8a5c-ddd8bee8b477", "method": "GET", "path": "/users/docs", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 04:45:28,074INFO N/A N/A N/A {"timestamp": "2026-03-16T08:45:28.074487+00:00Z", "level": "INFO", "request_id": "748e788e-d8c3-4669-a5e7-b173b578f7b9", "status_code": 200, "duration_ms": 20.07, "path": "/users/docs", "response_length": 3817}
+2026-03-16 04:45:28,134INFO N/A N/A N/A {"timestamp": "2026-03-16T08:45:28.134163+00:00Z", "level": "INFO", "request_id": "7e8148d1-7b31-4bc2-9a84-a50dbf546a51", "method": "GET", "path": "/swaggerui/droid-sans.css", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 04:45:28,139INFO N/A N/A N/A {"timestamp": "2026-03-16T08:45:28.139434+00:00Z", "level": "INFO", "request_id": "66351c12-db65-43c9-839d-5d0bd356dd50", "method": "GET", "path": "/swaggerui/swagger-ui.css", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 04:45:28,145INFO N/A N/A N/A {"timestamp": "2026-03-16T08:45:28.145450+00:00Z", "level": "INFO", "request_id": "ff67e2a6-0480-43f0-8a54-6a5ae26e5b1b", "status_code": 304, "duration_ms": 0.81, "path": "/swaggerui/swagger-ui.css", "response_length": 145206}
+2026-03-16 04:45:28,144INFO N/A N/A N/A {"timestamp": "2026-03-16T08:45:28.144065+00:00Z", "level": "INFO", "request_id": "bc00ec6c-dd1c-4419-bf6f-1018824e4d63", "status_code": 304, "duration_ms": 9.19, "path": "/swaggerui/droid-sans.css", "response_length": 778}
+2026-03-16 04:45:28,153INFO N/A N/A N/A {"timestamp": "2026-03-16T08:45:28.153890+00:00Z", "level": "INFO", "request_id": "f32491bb-292f-4760-99f9-89049a7fde83", "method": "GET", "path": "/swaggerui/swagger-ui-bundle.js", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 04:45:28,155INFO N/A N/A N/A {"timestamp": "2026-03-16T08:45:28.155453+00:00Z", "level": "INFO", "request_id": "d366ee09-b26c-4e2b-8059-a0cae8426e15", "status_code": 304, "duration_ms": 0.73, "path": "/swaggerui/swagger-ui-bundle.js", "response_length": 1048219}
+2026-03-16 04:45:28,164INFO N/A N/A N/A {"timestamp": "2026-03-16T08:45:28.164839+00:00Z", "level": "INFO", "request_id": "e50eb3f1-4b05-45cf-9b05-61a32caf5bde", "method": "GET", "path": "/swaggerui/swagger-ui-standalone-preset.js", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 04:45:28,166INFO N/A N/A N/A {"timestamp": "2026-03-16T08:45:28.166847+00:00Z", "level": "INFO", "request_id": "c7211512-e345-43c7-b45a-137cb1f099c3", "status_code": 304, "duration_ms": 1.06, "path": "/swaggerui/swagger-ui-standalone-preset.js", "response_length": 322770}
+2026-03-16 04:45:28,269INFO N/A N/A N/A {"timestamp": "2026-03-16T08:45:28.269826+00:00Z", "level": "INFO", "request_id": "719b65cf-c136-42e5-912c-ad06d182aa22", "method": "GET", "path": "/users/swagger.json", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 04:45:28,275INFO N/A N/A N/A {"timestamp": "2026-03-16T08:45:28.275201+00:00Z", "level": "INFO", "request_id": "0f1fa372-2e44-4868-b09a-56b5a320271b", "status_code": 200, "duration_ms": 3.01, "path": "/users/swagger.json", "response_length": 3960}
+2026-03-16 04:45:28,279INFO N/A N/A N/A {"timestamp": "2026-03-16T08:45:28.279316+00:00Z", "level": "INFO", "request_id": "6a828255-9e0e-4238-b9b4-782748a0ca4c", "method": "GET", "path": "/swaggerui/favicon-32x32.png", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 04:45:28,282INFO N/A N/A N/A {"timestamp": "2026-03-16T08:45:28.282289+00:00Z", "level": "INFO", "request_id": "e3effddc-2b77-40f5-8ae6-e19c59c21129", "status_code": 304, "duration_ms": 0.94, "path": "/swaggerui/favicon-32x32.png", "response_length": 628}
+2026-03-16 04:45:35,026INFO N/A N/A N/A {"timestamp": "2026-03-16T08:45:35.025841+00:00Z", "level": "INFO", "request_id": "409ee2cf-d04b-48b0-973c-17735aedbb2d", "method": "GET", "path": "/users/swagger.json", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 04:45:35,032INFO N/A N/A N/A {"timestamp": "2026-03-16T08:45:35.032230+00:00Z", "level": "INFO", "request_id": "85640d91-3f3c-436a-922a-2e5b2cc14f56", "status_code": 200, "duration_ms": 1.45, "path": "/users/swagger.json", "response_length": 3960}
+2026-03-16 04:45:52,011INFO N/A N/A N/A {"timestamp": "2026-03-16T08:45:52.011005+00:00Z", "level": "INFO", "request_id": "c561713b-e4b5-45a5-9176-40cd06d8d6b1", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 04:45:52,014WARNING 68accbb2-f7ff-41f7-a1d2-af843e87fdce N/A -0.0 [CUSTOM ERROR] request_id=68accbb2-f7ff-41f7-a1d2-af843e87fdce, error_code=10002, msg=访问的接口/资源不存在
+2026-03-16 04:45:52,023WARNING N/A N/A N/A {"timestamp": "2026-03-16T08:45:52.023120+00:00Z", "level": "WARNING", "request_id": "68accbb2-f7ff-41f7-a1d2-af843e87fdce", "status_code": 404, "duration_ms": 9.75, "path": "/", "response_length": 121}
+2026-03-16 04:45:52,369INFO N/A N/A N/A {"timestamp": "2026-03-16T08:45:52.369256+00:00Z", "level": "INFO", "request_id": "96e86cfa-da62-4e9a-a44f-929a65e03b2d", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 04:45:52,372WARNING 2bbf66ab-b92e-4d36-b8eb-41a72b102a71 N/A -0.0 [CUSTOM ERROR] request_id=2bbf66ab-b92e-4d36-b8eb-41a72b102a71, error_code=10002, msg=访问的接口/资源不存在
+2026-03-16 04:45:52,373WARNING N/A N/A N/A {"timestamp": "2026-03-16T08:45:52.373430+00:00Z", "level": "WARNING", "request_id": "2bbf66ab-b92e-4d36-b8eb-41a72b102a71", "status_code": 404, "duration_ms": 1.74, "path": "/", "response_length": 121}
+2026-03-16 04:45:53,675INFO N/A N/A N/A {"timestamp": "2026-03-16T08:45:53.675408+00:00Z", "level": "INFO", "request_id": "2811e94c-bbe4-4b84-b5ce-803b4733e7a0", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 04:45:53,677WARNING d8a66d2e-9f74-46fa-a7c7-d823f5439664 N/A -0.0 [CUSTOM ERROR] request_id=d8a66d2e-9f74-46fa-a7c7-d823f5439664, error_code=10002, msg=访问的接口/资源不存在
+2026-03-16 04:45:53,679WARNING N/A N/A N/A {"timestamp": "2026-03-16T08:45:53.679032+00:00Z", "level": "WARNING", "request_id": "d8a66d2e-9f74-46fa-a7c7-d823f5439664", "status_code": 404, "duration_ms": 1.6, "path": "/", "response_length": 121}
+2026-03-16 04:45:54,405INFO N/A N/A N/A {"timestamp": "2026-03-16T08:45:54.405633+00:00Z", "level": "INFO", "request_id": "22d87682-a0da-4e63-939a-68fbb797bcbc", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 04:45:54,407WARNING 34d3ff5c-8127-4391-962e-8f40f274504f N/A -0.0 [CUSTOM ERROR] request_id=34d3ff5c-8127-4391-962e-8f40f274504f, error_code=10002, msg=访问的接口/资源不存在
+2026-03-16 04:45:54,408WARNING N/A N/A N/A {"timestamp": "2026-03-16T08:45:54.408842+00:00Z", "level": "WARNING", "request_id": "34d3ff5c-8127-4391-962e-8f40f274504f", "status_code": 404, "duration_ms": 1.43, "path": "/", "response_length": 121}
+2026-03-16 04:48:11,346INFO N/A N/A N/A {"timestamp": "2026-03-16T08:48:11.346562+00:00Z", "level": "INFO", "request_id": "ad84743c-18d3-4c94-ba47-8a33d26511f2", "method": "GET", "path": "/likes/docs", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 04:48:11,347WARNING ad84743c-18d3-4c94-ba47-8a33d26511f2 N/A -0.0 [CUSTOM ERROR] request_id=ad84743c-18d3-4c94-ba47-8a33d26511f2, error_code=10004, msg=未检测到 Token，请先登录
+2026-03-16 04:48:11,348WARNING N/A N/A N/A {"timestamp": "2026-03-16T08:48:11.348176+00:00Z", "level": "WARNING", "request_id": "ad84743c-18d3-4c94-ba47-8a33d26511f2", "status_code": 401, "duration_ms": 1.59, "path": "/likes/docs", "response_length": 120}
+2026-03-16 04:48:14,001INFO N/A N/A N/A {"timestamp": "2026-03-16T08:48:14.001803+00:00Z", "level": "INFO", "request_id": "c3cbc45f-99b9-44c3-aac9-eacff6610413", "method": "GET", "path": "/likes/docs", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 04:48:14,003WARNING c3cbc45f-99b9-44c3-aac9-eacff6610413 N/A -0.0 [CUSTOM ERROR] request_id=c3cbc45f-99b9-44c3-aac9-eacff6610413, error_code=10004, msg=未检测到 Token，请先登录
+2026-03-16 04:48:14,004WARNING N/A N/A N/A {"timestamp": "2026-03-16T08:48:14.004235+00:00Z", "level": "WARNING", "request_id": "c3cbc45f-99b9-44c3-aac9-eacff6610413", "status_code": 401, "duration_ms": 2.41, "path": "/likes/docs", "response_length": 120}
+2026-03-16 04:50:51,278INFO N/A N/A N/A {"timestamp": "2026-03-16T08:50:51.278483+00:00Z", "level": "INFO", "request_id": "5602967d-0bb1-480a-93ad-62f2b3b7c843", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 04:50:51,281WARNING 44e4b268-574c-4b8e-99fc-11f4d8ec4cc9 N/A -0.0 [CUSTOM ERROR] request_id=44e4b268-574c-4b8e-99fc-11f4d8ec4cc9, error_code=10002, msg=访问的接口/资源不存在
+2026-03-16 04:50:51,282WARNING N/A N/A N/A {"timestamp": "2026-03-16T08:50:51.282231+00:00Z", "level": "WARNING", "request_id": "44e4b268-574c-4b8e-99fc-11f4d8ec4cc9", "status_code": 404, "duration_ms": 1.57, "path": "/", "response_length": 121}
+2026-03-16 04:50:51,532INFO N/A N/A N/A {"timestamp": "2026-03-16T08:50:51.532135+00:00Z", "level": "INFO", "request_id": "9e74865f-c3b2-49ba-aba2-b96a34fd3204", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 04:50:51,536WARNING f567e83b-a03b-4ff5-9853-5c494ca6fd93 N/A -0.0 [CUSTOM ERROR] request_id=f567e83b-a03b-4ff5-9853-5c494ca6fd93, error_code=10002, msg=访问的接口/资源不存在
+2026-03-16 04:50:51,537WARNING N/A N/A N/A {"timestamp": "2026-03-16T08:50:51.537633+00:00Z", "level": "WARNING", "request_id": "f567e83b-a03b-4ff5-9853-5c494ca6fd93", "status_code": 404, "duration_ms": 2.01, "path": "/", "response_length": 121}
+2026-03-16 04:51:04,212INFO N/A N/A N/A {"timestamp": "2026-03-16T08:51:04.211941+00:00Z", "level": "INFO", "request_id": "3f031871-33ba-436e-93de-6ebe17ccf56b", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 04:51:04,214WARNING df04c43e-f5d5-42f3-8979-c20ee3e17feb N/A -0.0 [CUSTOM ERROR] request_id=df04c43e-f5d5-42f3-8979-c20ee3e17feb, error_code=10002, msg=访问的接口/资源不存在
+2026-03-16 04:51:04,215WARNING N/A N/A N/A {"timestamp": "2026-03-16T08:51:04.215318+00:00Z", "level": "WARNING", "request_id": "df04c43e-f5d5-42f3-8979-c20ee3e17feb", "status_code": 404, "duration_ms": 1.38, "path": "/", "response_length": 121}
+2026-03-16 04:51:04,265INFO N/A N/A N/A {"timestamp": "2026-03-16T08:51:04.265607+00:00Z", "level": "INFO", "request_id": "13c70426-b033-45c3-bdf3-7e16bee5f316", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 04:51:04,268WARNING d119bab9-5d4d-4cce-b6f4-7dd4872e3e18 N/A -0.0 [CUSTOM ERROR] request_id=d119bab9-5d4d-4cce-b6f4-7dd4872e3e18, error_code=10002, msg=访问的接口/资源不存在
+2026-03-16 04:51:04,270WARNING N/A N/A N/A {"timestamp": "2026-03-16T08:51:04.270191+00:00Z", "level": "WARNING", "request_id": "d119bab9-5d4d-4cce-b6f4-7dd4872e3e18", "status_code": 404, "duration_ms": 2.18, "path": "/", "response_length": 121}
+2026-03-16 04:55:52,815INFO N/A N/A N/A {"timestamp": "2026-03-16T08:55:52.815316+00:00Z", "level": "INFO", "request_id": "463a7db6-c691-4f7d-8530-c906e368628b", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 04:55:52,817WARNING d28e514d-943f-482b-aeda-02e725b69448 N/A -0.0 [CUSTOM ERROR] request_id=d28e514d-943f-482b-aeda-02e725b69448, error_code=10002, msg=访问的接口/资源不存在
+2026-03-16 04:55:52,818WARNING N/A N/A N/A {"timestamp": "2026-03-16T08:55:52.818721+00:00Z", "level": "WARNING", "request_id": "d28e514d-943f-482b-aeda-02e725b69448", "status_code": 404, "duration_ms": 1.38, "path": "/", "response_length": 121}
+2026-03-16 04:55:53,548INFO N/A N/A N/A {"timestamp": "2026-03-16T08:55:53.548251+00:00Z", "level": "INFO", "request_id": "6bbb0fb6-00d8-49fd-afa3-63af201dfe87", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 04:55:53,549INFO N/A N/A N/A {"timestamp": "2026-03-16T08:55:53.549611+00:00Z", "level": "INFO", "request_id": "7ec5d218-c32f-40a9-bb21-a48e20ed42ba", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 04:55:53,553WARNING 512a45c3-b2cb-492e-bcdd-d127339398cb N/A -0.0 [CUSTOM ERROR] request_id=512a45c3-b2cb-492e-bcdd-d127339398cb, error_code=10002, msg=访问的接口/资源不存在
+2026-03-16 04:55:53,555WARNING N/A N/A N/A {"timestamp": "2026-03-16T08:55:53.555240+00:00Z", "level": "WARNING", "request_id": "512a45c3-b2cb-492e-bcdd-d127339398cb", "status_code": 404, "duration_ms": 2.02, "path": "/", "response_length": 121}
+2026-03-16 04:55:53,557WARNING 5d479a98-f02d-48e8-935e-3e102fcc4e84 N/A -0.0 [CUSTOM ERROR] request_id=5d479a98-f02d-48e8-935e-3e102fcc4e84, error_code=10002, msg=访问的接口/资源不存在
+2026-03-16 04:55:53,559WARNING N/A N/A N/A {"timestamp": "2026-03-16T08:55:53.558918+00:00Z", "level": "WARNING", "request_id": "5d479a98-f02d-48e8-935e-3e102fcc4e84", "status_code": 404, "duration_ms": 2.38, "path": "/", "response_length": 121}
+2026-03-16 04:55:53,812INFO N/A N/A N/A {"timestamp": "2026-03-16T08:55:53.812666+00:00Z", "level": "INFO", "request_id": "0e76b015-eb8c-4c76-a310-d872ec9ba73d", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 04:55:53,815WARNING 5d93ec82-e806-46ea-9c0e-f56c7c152190 N/A -0.0 [CUSTOM ERROR] request_id=5d93ec82-e806-46ea-9c0e-f56c7c152190, error_code=10002, msg=访问的接口/资源不存在
+2026-03-16 04:55:53,817WARNING N/A N/A N/A {"timestamp": "2026-03-16T08:55:53.817071+00:00Z", "level": "WARNING", "request_id": "5d93ec82-e806-46ea-9c0e-f56c7c152190", "status_code": 404, "duration_ms": 2.34, "path": "/", "response_length": 121}
+2026-03-16 04:58:53,511INFO N/A N/A N/A 日志初始化完成，测试环境：False
+2026-03-16 04:58:53,517INFO N/A N/A N/A  所有异常处理器注册完成
+2026-03-16 04:58:53,521INFO N/A N/A N/A SELECT DATABASE()
+2026-03-16 04:58:53,522INFO N/A N/A N/A [raw sql] {}
+2026-03-16 04:58:53,523INFO N/A N/A N/A SELECT @@sql_mode
+2026-03-16 04:58:53,524INFO N/A N/A N/A [raw sql] {}
+2026-03-16 04:58:53,525INFO N/A N/A N/A SELECT @@lower_case_table_names
+2026-03-16 04:58:53,525INFO N/A N/A N/A [raw sql] {}
+2026-03-16 04:58:53,527INFO N/A N/A N/A BEGIN (implicit)
+2026-03-16 04:58:53,528INFO N/A N/A N/A DESCRIBE `weibo_platform`.`users`
+2026-03-16 04:58:53,528INFO N/A N/A N/A [raw sql] {}
+2026-03-16 04:58:53,530INFO N/A N/A N/A ROLLBACK
+2026-03-16 04:58:53,535INFO N/A N/A N/A ✅ 成功注册蓝图 comments_bp，前缀：根路径
+2026-03-16 04:58:53,540INFO N/A N/A N/A ✅ 成功注册蓝图 follows_bp，前缀：根路径
+2026-03-16 04:58:53,547INFO N/A N/A N/A ✅ 成功注册蓝图 posts_bp，前缀：根路径
+2026-03-16 04:58:53,552INFO N/A N/A N/A ✅ 成功注册蓝图 likes_bp，前缀：根路径
+2026-03-16 04:58:53,557INFO N/A N/A N/A ✅ 成功注册蓝图 notifications_bp，前缀：根路径
+2026-03-16 04:58:53,562INFO N/A N/A N/A ✅ 成功注册蓝图 users_bp，前缀：/users
+2026-03-16 04:58:53,563INFO N/A N/A N/A ✅ 成功注册蓝图 auth_bp，前缀：/auth
+2026-03-16 04:58:53,565INFO N/A N/A N/A ✅ 成功注册蓝图 feeds_bp，前缀：/feeds
+2026-03-16 04:58:53,565INFO N/A N/A N/A 📌 所有蓝图注册完成
+2026-03-16 04:58:53,581WARNING N/A N/A N/A  * Debugger is active!
+2026-03-16 04:59:02,844INFO N/A N/A N/A {"timestamp": "2026-03-16T08:59:02.844099+00:00Z", "level": "INFO", "request_id": "f297166b-57ce-4ff4-b839-aa9bbfe44259", "method": "GET", "path": "/likes/docs", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 04:59:02,846WARNING c0a8c0c2-529d-475f-a972-7063f1b49cd6 N/A -0.0 [CUSTOM ERROR] request_id=c0a8c0c2-529d-475f-a972-7063f1b49cd6, error_code=10002, msg=访问的接口/资源不存在
+2026-03-16 04:59:02,848WARNING N/A N/A N/A {"timestamp": "2026-03-16T08:59:02.848299+00:00Z", "level": "WARNING", "request_id": "c0a8c0c2-529d-475f-a972-7063f1b49cd6", "status_code": 404, "duration_ms": 2.44, "path": "/likes/docs", "response_length": 121}
+2026-03-16 05:00:51,394INFO N/A N/A N/A {"timestamp": "2026-03-16T09:00:51.394480+00:00Z", "level": "INFO", "request_id": "f9a6c82b-50b4-46d9-9179-c73280eee009", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:00:51,397WARNING 45fe1596-5bd9-4b23-a111-4a589baa20b0 N/A -0.0 [CUSTOM ERROR] request_id=45fe1596-5bd9-4b23-a111-4a589baa20b0, error_code=10002, msg=访问的接口/资源不存在
+2026-03-16 05:00:51,398WARNING N/A N/A N/A {"timestamp": "2026-03-16T09:00:51.398778+00:00Z", "level": "WARNING", "request_id": "45fe1596-5bd9-4b23-a111-4a589baa20b0", "status_code": 404, "duration_ms": 1.34, "path": "/", "response_length": 121}
+2026-03-16 05:00:51,863INFO N/A N/A N/A {"timestamp": "2026-03-16T09:00:51.863811+00:00Z", "level": "INFO", "request_id": "8e6f8378-536b-406b-ba56-1d3c469df0ce", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:00:51,866WARNING cc106476-ec3c-4f70-b2de-d3096dfb8136 N/A -0.0 [CUSTOM ERROR] request_id=cc106476-ec3c-4f70-b2de-d3096dfb8136, error_code=10002, msg=访问的接口/资源不存在
+2026-03-16 05:00:51,867WARNING N/A N/A N/A {"timestamp": "2026-03-16T09:00:51.867489+00:00Z", "level": "WARNING", "request_id": "cc106476-ec3c-4f70-b2de-d3096dfb8136", "status_code": 404, "duration_ms": 1.43, "path": "/", "response_length": 121}
+2026-03-16 05:00:57,699INFO N/A N/A N/A {"timestamp": "2026-03-16T09:00:57.699664+00:00Z", "level": "INFO", "request_id": "1702793a-f31b-496d-89fa-963ff3505374", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:00:57,702WARNING d7236b54-99f3-4c80-a101-d63dd2d044fc N/A -0.0 [CUSTOM ERROR] request_id=d7236b54-99f3-4c80-a101-d63dd2d044fc, error_code=10002, msg=访问的接口/资源不存在
+2026-03-16 05:00:57,703WARNING N/A N/A N/A {"timestamp": "2026-03-16T09:00:57.703073+00:00Z", "level": "WARNING", "request_id": "d7236b54-99f3-4c80-a101-d63dd2d044fc", "status_code": 404, "duration_ms": 1.42, "path": "/", "response_length": 121}
+2026-03-16 05:00:58,577INFO N/A N/A N/A {"timestamp": "2026-03-16T09:00:58.577664+00:00Z", "level": "INFO", "request_id": "5a74164d-1bad-4663-b385-8e2fcd268289", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:00:58,580WARNING 809b457a-1aa2-4a6a-a98c-f8299bfdebd7 N/A -0.0 [CUSTOM ERROR] request_id=809b457a-1aa2-4a6a-a98c-f8299bfdebd7, error_code=10002, msg=访问的接口/资源不存在
+2026-03-16 05:00:58,581WARNING N/A N/A N/A {"timestamp": "2026-03-16T09:00:58.581363+00:00Z", "level": "WARNING", "request_id": "809b457a-1aa2-4a6a-a98c-f8299bfdebd7", "status_code": 404, "duration_ms": 1.58, "path": "/", "response_length": 121}
+2026-03-16 05:03:11,409INFO N/A N/A N/A 日志初始化完成，测试环境：False
+2026-03-16 05:03:11,417INFO N/A N/A N/A  所有异常处理器注册完成
+2026-03-16 05:03:11,421INFO N/A N/A N/A SELECT DATABASE()
+2026-03-16 05:03:11,421INFO N/A N/A N/A [raw sql] {}
+2026-03-16 05:03:11,423INFO N/A N/A N/A SELECT @@sql_mode
+2026-03-16 05:03:11,423INFO N/A N/A N/A [raw sql] {}
+2026-03-16 05:03:11,425INFO N/A N/A N/A SELECT @@lower_case_table_names
+2026-03-16 05:03:11,425INFO N/A N/A N/A [raw sql] {}
+2026-03-16 05:03:11,427INFO N/A N/A N/A BEGIN (implicit)
+2026-03-16 05:03:11,428INFO N/A N/A N/A DESCRIBE `weibo_platform`.`users`
+2026-03-16 05:03:11,428INFO N/A N/A N/A [raw sql] {}
+2026-03-16 05:03:11,430INFO N/A N/A N/A ROLLBACK
+2026-03-16 05:03:11,436INFO N/A N/A N/A ✅ 成功注册蓝图 comments_bp，前缀：根路径
+2026-03-16 05:03:11,441INFO N/A N/A N/A ✅ 成功注册蓝图 follows_bp，前缀：根路径
+2026-03-16 05:03:11,447INFO N/A N/A N/A ✅ 成功注册蓝图 posts_bp，前缀：根路径
+2026-03-16 05:03:11,452INFO N/A N/A N/A ✅ 成功注册蓝图 likes_bp，前缀：/likes
+2026-03-16 05:03:11,456INFO N/A N/A N/A ✅ 成功注册蓝图 notifications_bp，前缀：根路径
+2026-03-16 05:03:11,461INFO N/A N/A N/A ✅ 成功注册蓝图 users_bp，前缀：/users
+2026-03-16 05:03:11,462INFO N/A N/A N/A ✅ 成功注册蓝图 auth_bp，前缀：/auth
+2026-03-16 05:03:11,463INFO N/A N/A N/A ✅ 成功注册蓝图 feeds_bp，前缀：/feeds
+2026-03-16 05:03:11,464INFO N/A N/A N/A 📌 所有蓝图注册完成
+2026-03-16 05:03:11,480WARNING N/A N/A N/A  * Debugger is active!
+2026-03-16 05:03:17,385INFO N/A N/A N/A {"timestamp": "2026-03-16T09:03:17.385212+00:00Z", "level": "INFO", "request_id": "d26fd499-4abf-4ac5-8868-d8bb15f6a77c", "method": "GET", "path": "/likes/docs", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:03:17,414INFO N/A N/A N/A {"timestamp": "2026-03-16T09:03:17.414739+00:00Z", "level": "INFO", "request_id": "3d1fd8fc-028d-4625-81f1-68676f1d42d3", "status_code": 200, "duration_ms": 25.4, "path": "/likes/docs", "response_length": 3817}
+2026-03-16 05:03:17,481INFO N/A N/A N/A {"timestamp": "2026-03-16T09:03:17.481280+00:00Z", "level": "INFO", "request_id": "e4a1796b-a99f-4849-bc5f-46d689fb3d70", "method": "GET", "path": "/swaggerui/droid-sans.css", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:03:17,486INFO N/A N/A N/A {"timestamp": "2026-03-16T09:03:17.486363+00:00Z", "level": "INFO", "request_id": "18450cc2-222c-4e1e-a5f1-4c6adda1db86", "method": "GET", "path": "/swaggerui/swagger-ui.css", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:03:17,494INFO N/A N/A N/A {"timestamp": "2026-03-16T09:03:17.494230+00:00Z", "level": "INFO", "request_id": "1fc76532-5172-440e-9a1b-aa0a2c636ec8", "status_code": 304, "duration_ms": 11.92, "path": "/swaggerui/droid-sans.css", "response_length": 778}
+2026-03-16 05:03:17,500INFO N/A N/A N/A {"timestamp": "2026-03-16T09:03:17.500411+00:00Z", "level": "INFO", "request_id": "feb73838-3d5a-4242-b148-0b3eb750d5e2", "status_code": 304, "duration_ms": 9.85, "path": "/swaggerui/swagger-ui.css", "response_length": 145206}
+2026-03-16 05:03:17,514INFO N/A N/A N/A {"timestamp": "2026-03-16T09:03:17.513993+00:00Z", "level": "INFO", "request_id": "cd3b0785-a2dd-40dd-a283-f80296ec5f31", "method": "GET", "path": "/swaggerui/swagger-ui-bundle.js", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:03:17,515INFO N/A N/A N/A {"timestamp": "2026-03-16T09:03:17.515756+00:00Z", "level": "INFO", "request_id": "b4e4035f-34b2-4168-a189-500a01496f8a", "status_code": 304, "duration_ms": 0.85, "path": "/swaggerui/swagger-ui-bundle.js", "response_length": 1048219}
+2026-03-16 05:03:17,523INFO N/A N/A N/A {"timestamp": "2026-03-16T09:03:17.523062+00:00Z", "level": "INFO", "request_id": "9001f74c-e3e1-4d0a-bd93-21562e780b14", "method": "GET", "path": "/swaggerui/swagger-ui-standalone-preset.js", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:03:17,525INFO N/A N/A N/A {"timestamp": "2026-03-16T09:03:17.524962+00:00Z", "level": "INFO", "request_id": "f30454fb-4cda-4940-a9f8-b77d5386bd2a", "status_code": 304, "duration_ms": 1.01, "path": "/swaggerui/swagger-ui-standalone-preset.js", "response_length": 322770}
+2026-03-16 05:03:17,779INFO N/A N/A N/A {"timestamp": "2026-03-16T09:03:17.779455+00:00Z", "level": "INFO", "request_id": "718f4d3d-327e-4767-ba23-b50a9f3a198a", "method": "GET", "path": "/likes/swagger.json", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:03:17,782ERROR N/A N/A N/A Unable to render schema
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask_restx/api.py", line 576, in __schema__
+    self._schema = Swagger(self).as_dict()
+                   ~~~~~~~~~~~~~~~~~~~~~^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask_restx/swagger.py", line 275, in as_dict
+    serialized = self.serialize_resource(
+        ns, resource, url, route_doc=route_doc, **kwargs
+    )
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask_restx/swagger.py", line 482, in serialize_resource
+    path[method] = self.serialize_operation(doc, method)
+                   ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask_restx/swagger.py", line 488, in serialize_operation
+    "responses": self.responses_for(doc, method) or None,
+                 ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask_restx/swagger.py", line 608, in responses_for
+    schema = self.serialize_schema(model)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask_restx/swagger.py", line 688, in serialize_schema
+    raise ValueError("Model {0} not registered".format(model))
+ValueError: Model {'message': '取消点赞成功'} not registered
+2026-03-16 05:03:17,787WARNING N/A N/A N/A {"timestamp": "2026-03-16T09:03:17.787449+00:00Z", "level": "WARNING", "request_id": "6bc0ba92-561d-4f40-83ac-8afd52c7bff1", "status_code": 500, "duration_ms": 5.81, "path": "/likes/swagger.json", "response_length": 43}
+2026-03-16 05:05:50,953INFO N/A N/A N/A {"timestamp": "2026-03-16T09:05:50.952993+00:00Z", "level": "INFO", "request_id": "dd55fc00-7b19-4549-b200-ef5b816a1ac3", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:05:50,955WARNING cd823707-d266-48e8-bd58-c46a3e2390c5 N/A -0.0 [CUSTOM ERROR] request_id=cd823707-d266-48e8-bd58-c46a3e2390c5, error_code=10002, msg=访问的接口/资源不存在
+2026-03-16 05:05:50,956WARNING N/A N/A N/A {"timestamp": "2026-03-16T09:05:50.956198+00:00Z", "level": "WARNING", "request_id": "cd823707-d266-48e8-bd58-c46a3e2390c5", "status_code": 404, "duration_ms": 1.32, "path": "/", "response_length": 121}
+2026-03-16 05:05:51,018INFO N/A N/A N/A {"timestamp": "2026-03-16T09:05:51.018767+00:00Z", "level": "INFO", "request_id": "d63b4e78-5db1-40e6-ae23-8baf6432a517", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:05:51,021WARNING 3c39caa7-7c9c-433d-8d08-798aa5cfa1ad N/A -0.0 [CUSTOM ERROR] request_id=3c39caa7-7c9c-433d-8d08-798aa5cfa1ad, error_code=10002, msg=访问的接口/资源不存在
+2026-03-16 05:05:51,022WARNING N/A N/A N/A {"timestamp": "2026-03-16T09:05:51.021987+00:00Z", "level": "WARNING", "request_id": "3c39caa7-7c9c-433d-8d08-798aa5cfa1ad", "status_code": 404, "duration_ms": 1.32, "path": "/", "response_length": 121}
+2026-03-16 05:05:57,245INFO N/A N/A N/A {"timestamp": "2026-03-16T09:05:57.245524+00:00Z", "level": "INFO", "request_id": "8103181c-20ae-4390-b2cf-7985f3d014dc", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:05:57,247WARNING 9d05848e-8dce-4df1-9323-968bfefdb0d8 N/A -0.0 [CUSTOM ERROR] request_id=9d05848e-8dce-4df1-9323-968bfefdb0d8, error_code=10002, msg=访问的接口/资源不存在
+2026-03-16 05:05:57,248WARNING N/A N/A N/A {"timestamp": "2026-03-16T09:05:57.248907+00:00Z", "level": "WARNING", "request_id": "9d05848e-8dce-4df1-9323-968bfefdb0d8", "status_code": 404, "duration_ms": 1.45, "path": "/", "response_length": 121}
+2026-03-16 05:05:57,502INFO N/A N/A N/A {"timestamp": "2026-03-16T09:05:57.501967+00:00Z", "level": "INFO", "request_id": "392e3537-bb8b-4232-bfdb-662820afce88", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:05:57,508WARNING 776a23fc-122a-4b86-ac09-48e5a31240d0 N/A -0.0 [CUSTOM ERROR] request_id=776a23fc-122a-4b86-ac09-48e5a31240d0, error_code=10002, msg=访问的接口/资源不存在
+2026-03-16 05:05:57,509WARNING N/A N/A N/A {"timestamp": "2026-03-16T09:05:57.509224+00:00Z", "level": "WARNING", "request_id": "776a23fc-122a-4b86-ac09-48e5a31240d0", "status_code": 404, "duration_ms": 2.31, "path": "/", "response_length": 121}
+2026-03-16 05:06:25,521INFO N/A N/A N/A 日志初始化完成，测试环境：False
+2026-03-16 05:06:25,528INFO N/A N/A N/A  所有异常处理器注册完成
+2026-03-16 05:06:25,534INFO N/A N/A N/A SELECT DATABASE()
+2026-03-16 05:06:25,535INFO N/A N/A N/A [raw sql] {}
+2026-03-16 05:06:25,538INFO N/A N/A N/A SELECT @@sql_mode
+2026-03-16 05:06:25,539INFO N/A N/A N/A [raw sql] {}
+2026-03-16 05:06:25,542INFO N/A N/A N/A SELECT @@lower_case_table_names
+2026-03-16 05:06:25,543INFO N/A N/A N/A [raw sql] {}
+2026-03-16 05:06:25,545INFO N/A N/A N/A BEGIN (implicit)
+2026-03-16 05:06:25,545INFO N/A N/A N/A DESCRIBE `weibo_platform`.`users`
+2026-03-16 05:06:25,546INFO N/A N/A N/A [raw sql] {}
+2026-03-16 05:06:25,548INFO N/A N/A N/A ROLLBACK
+2026-03-16 05:06:25,556INFO N/A N/A N/A ✅ 成功注册蓝图 comments_bp，前缀：根路径
+2026-03-16 05:06:25,562INFO N/A N/A N/A ✅ 成功注册蓝图 follows_bp，前缀：根路径
+2026-03-16 05:06:25,568INFO N/A N/A N/A ✅ 成功注册蓝图 posts_bp，前缀：根路径
+2026-03-16 05:06:25,573INFO N/A N/A N/A ✅ 成功注册蓝图 likes_bp，前缀：/likes
+2026-03-16 05:06:25,578INFO N/A N/A N/A ✅ 成功注册蓝图 notifications_bp，前缀：根路径
+2026-03-16 05:06:25,583INFO N/A N/A N/A ✅ 成功注册蓝图 users_bp，前缀：/users
+2026-03-16 05:06:25,584INFO N/A N/A N/A ✅ 成功注册蓝图 auth_bp，前缀：/auth
+2026-03-16 05:06:25,586INFO N/A N/A N/A ✅ 成功注册蓝图 feeds_bp，前缀：/feeds
+2026-03-16 05:06:25,587INFO N/A N/A N/A 📌 所有蓝图注册完成
+2026-03-16 05:06:25,609WARNING N/A N/A N/A  * Debugger is active!
+2026-03-16 05:06:31,345INFO N/A N/A N/A {"timestamp": "2026-03-16T09:06:31.345724+00:00Z", "level": "INFO", "request_id": "48795de7-17bb-430e-9c87-3e5086572a2e", "method": "GET", "path": "/likes/docs", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:06:31,368INFO N/A N/A N/A {"timestamp": "2026-03-16T09:06:31.367978+00:00Z", "level": "INFO", "request_id": "01c6bf1f-3598-45f9-bb0f-9060664a3bdb", "status_code": 200, "duration_ms": 19.02, "path": "/likes/docs", "response_length": 3817}
+2026-03-16 05:06:31,430INFO N/A N/A N/A {"timestamp": "2026-03-16T09:06:31.430231+00:00Z", "level": "INFO", "request_id": "1bb46701-9fd9-4153-acd1-c954685d977a", "method": "GET", "path": "/swaggerui/droid-sans.css", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:06:31,437INFO N/A N/A N/A {"timestamp": "2026-03-16T09:06:31.437398+00:00Z", "level": "INFO", "request_id": "f21f4da9-43e3-44ee-9b06-6fea059c0005", "status_code": 304, "duration_ms": 6.18, "path": "/swaggerui/droid-sans.css", "response_length": 778}
+2026-03-16 05:06:31,439INFO N/A N/A N/A {"timestamp": "2026-03-16T09:06:31.439179+00:00Z", "level": "INFO", "request_id": "caabad7d-a59c-4a66-b287-fdc7f09912f8", "method": "GET", "path": "/swaggerui/swagger-ui.css", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:06:31,442INFO N/A N/A N/A {"timestamp": "2026-03-16T09:06:31.442684+00:00Z", "level": "INFO", "request_id": "401bb805-9c0a-4c5e-8967-794e319e83e0", "status_code": 304, "duration_ms": 0.86, "path": "/swaggerui/swagger-ui.css", "response_length": 145206}
+2026-03-16 05:06:31,472INFO N/A N/A N/A {"timestamp": "2026-03-16T09:06:31.472849+00:00Z", "level": "INFO", "request_id": "74ec3f15-8bd6-479a-8525-768d7e7eace7", "method": "GET", "path": "/swaggerui/swagger-ui-standalone-preset.js", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:06:31,474INFO N/A N/A N/A {"timestamp": "2026-03-16T09:06:31.474438+00:00Z", "level": "INFO", "request_id": "48428c61-7038-491e-b187-d50a109fab45", "status_code": 304, "duration_ms": 0.78, "path": "/swaggerui/swagger-ui-standalone-preset.js", "response_length": 322770}
+2026-03-16 05:06:31,482INFO N/A N/A N/A {"timestamp": "2026-03-16T09:06:31.482739+00:00Z", "level": "INFO", "request_id": "22bf4a8d-706f-4280-8426-c14597e16da7", "method": "GET", "path": "/swaggerui/swagger-ui-bundle.js", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:06:31,484INFO N/A N/A N/A {"timestamp": "2026-03-16T09:06:31.484433+00:00Z", "level": "INFO", "request_id": "b69ce91f-4f73-4e5a-afcb-af0dbf16a66d", "status_code": 304, "duration_ms": 0.84, "path": "/swaggerui/swagger-ui-bundle.js", "response_length": 1048219}
+2026-03-16 05:06:31,712INFO N/A N/A N/A {"timestamp": "2026-03-16T09:06:31.712664+00:00Z", "level": "INFO", "request_id": "6a1e23d5-ad17-4a0c-beaf-a0b5b95a55e0", "method": "GET", "path": "/likes/swagger.json", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:06:31,716INFO N/A N/A N/A {"timestamp": "2026-03-16T09:06:31.716704+00:00Z", "level": "INFO", "request_id": "9a84ace0-7600-46b7-a934-d810836f1559", "status_code": 200, "duration_ms": 1.97, "path": "/likes/swagger.json", "response_length": 6265}
+2026-03-16 05:06:31,722INFO N/A N/A N/A {"timestamp": "2026-03-16T09:06:31.722580+00:00Z", "level": "INFO", "request_id": "873ee00b-6e4d-4dd6-a13d-3ebdd6652111", "method": "GET", "path": "/swaggerui/favicon-32x32.png", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:06:31,724INFO N/A N/A N/A {"timestamp": "2026-03-16T09:06:31.724108+00:00Z", "level": "INFO", "request_id": "b151128b-7262-4fe0-a830-55bee54f6bc7", "status_code": 304, "duration_ms": 0.84, "path": "/swaggerui/favicon-32x32.png", "response_length": 628}
+2026-03-16 05:07:00,851INFO N/A N/A N/A {"timestamp": "2026-03-16T09:07:00.851571+00:00Z", "level": "INFO", "request_id": "db4574d6-bda1-4441-b752-c5c848cfc460", "method": "GET", "path": "/comments/docs", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:07:00,854WARNING 9e1b603d-8cd7-485b-9b62-10bf7e89ad43 N/A -0.0 [CUSTOM ERROR] request_id=9e1b603d-8cd7-485b-9b62-10bf7e89ad43, error_code=10002, msg=访问的接口/资源不存在
+2026-03-16 05:07:00,855WARNING N/A N/A N/A {"timestamp": "2026-03-16T09:07:00.855600+00:00Z", "level": "WARNING", "request_id": "9e1b603d-8cd7-485b-9b62-10bf7e89ad43", "status_code": 404, "duration_ms": 2.52, "path": "/comments/docs", "response_length": 121}
+2026-03-16 05:08:05,623INFO N/A N/A N/A 日志初始化完成，测试环境：False
+2026-03-16 05:08:05,630INFO N/A N/A N/A  所有异常处理器注册完成
+2026-03-16 05:08:05,634INFO N/A N/A N/A SELECT DATABASE()
+2026-03-16 05:08:05,635INFO N/A N/A N/A [raw sql] {}
+2026-03-16 05:08:05,637INFO N/A N/A N/A SELECT @@sql_mode
+2026-03-16 05:08:05,637INFO N/A N/A N/A [raw sql] {}
+2026-03-16 05:08:05,639INFO N/A N/A N/A SELECT @@lower_case_table_names
+2026-03-16 05:08:05,640INFO N/A N/A N/A [raw sql] {}
+2026-03-16 05:08:05,642INFO N/A N/A N/A BEGIN (implicit)
+2026-03-16 05:08:05,643INFO N/A N/A N/A DESCRIBE `weibo_platform`.`users`
+2026-03-16 05:08:05,643INFO N/A N/A N/A [raw sql] {}
+2026-03-16 05:08:05,645INFO N/A N/A N/A ROLLBACK
+2026-03-16 05:08:05,651INFO N/A N/A N/A ✅ 成功注册蓝图 comments_bp，前缀：/comments
+2026-03-16 05:08:05,657INFO N/A N/A N/A ✅ 成功注册蓝图 follows_bp，前缀：根路径
+2026-03-16 05:08:05,664INFO N/A N/A N/A ✅ 成功注册蓝图 posts_bp，前缀：根路径
+2026-03-16 05:08:05,670INFO N/A N/A N/A ✅ 成功注册蓝图 likes_bp，前缀：/likes
+2026-03-16 05:08:05,674INFO N/A N/A N/A ✅ 成功注册蓝图 notifications_bp，前缀：根路径
+2026-03-16 05:08:05,679INFO N/A N/A N/A ✅ 成功注册蓝图 users_bp，前缀：/users
+2026-03-16 05:08:05,681INFO N/A N/A N/A ✅ 成功注册蓝图 auth_bp，前缀：/auth
+2026-03-16 05:08:05,682INFO N/A N/A N/A ✅ 成功注册蓝图 feeds_bp，前缀：/feeds
+2026-03-16 05:08:05,683INFO N/A N/A N/A 📌 所有蓝图注册完成
+2026-03-16 05:08:05,703WARNING N/A N/A N/A  * Debugger is active!
+2026-03-16 05:08:43,816INFO N/A N/A N/A 日志初始化完成，测试环境：False
+2026-03-16 05:08:43,822INFO N/A N/A N/A  所有异常处理器注册完成
+2026-03-16 05:08:43,827INFO N/A N/A N/A SELECT DATABASE()
+2026-03-16 05:08:43,827INFO N/A N/A N/A [raw sql] {}
+2026-03-16 05:08:43,829INFO N/A N/A N/A SELECT @@sql_mode
+2026-03-16 05:08:43,830INFO N/A N/A N/A [raw sql] {}
+2026-03-16 05:08:43,831INFO N/A N/A N/A SELECT @@lower_case_table_names
+2026-03-16 05:08:43,831INFO N/A N/A N/A [raw sql] {}
+2026-03-16 05:08:43,833INFO N/A N/A N/A BEGIN (implicit)
+2026-03-16 05:08:43,833INFO N/A N/A N/A DESCRIBE `weibo_platform`.`users`
+2026-03-16 05:08:43,834INFO N/A N/A N/A [raw sql] {}
+2026-03-16 05:08:43,836INFO N/A N/A N/A ROLLBACK
+2026-03-16 05:08:43,842INFO N/A N/A N/A ✅ 成功注册蓝图 comments_bp，前缀：/comments
+2026-03-16 05:08:43,847INFO N/A N/A N/A ✅ 成功注册蓝图 follows_bp，前缀：根路径
+2026-03-16 05:08:43,853INFO N/A N/A N/A ✅ 成功注册蓝图 posts_bp，前缀：/posts
+2026-03-16 05:08:43,858INFO N/A N/A N/A ✅ 成功注册蓝图 likes_bp，前缀：/likes
+2026-03-16 05:08:43,862INFO N/A N/A N/A ✅ 成功注册蓝图 notifications_bp，前缀：根路径
+2026-03-16 05:08:43,867INFO N/A N/A N/A ✅ 成功注册蓝图 users_bp，前缀：/users
+2026-03-16 05:08:43,868INFO N/A N/A N/A ✅ 成功注册蓝图 auth_bp，前缀：/auth
+2026-03-16 05:08:43,870INFO N/A N/A N/A ✅ 成功注册蓝图 feeds_bp，前缀：/feeds
+2026-03-16 05:08:43,870INFO N/A N/A N/A 📌 所有蓝图注册完成
+2026-03-16 05:08:43,886WARNING N/A N/A N/A  * Debugger is active!
+2026-03-16 05:09:21,923INFO N/A N/A N/A 日志初始化完成，测试环境：False
+2026-03-16 05:09:21,929INFO N/A N/A N/A  所有异常处理器注册完成
+2026-03-16 05:09:21,934INFO N/A N/A N/A SELECT DATABASE()
+2026-03-16 05:09:21,934INFO N/A N/A N/A [raw sql] {}
+2026-03-16 05:09:21,936INFO N/A N/A N/A SELECT @@sql_mode
+2026-03-16 05:09:21,937INFO N/A N/A N/A [raw sql] {}
+2026-03-16 05:09:21,938INFO N/A N/A N/A SELECT @@lower_case_table_names
+2026-03-16 05:09:21,938INFO N/A N/A N/A [raw sql] {}
+2026-03-16 05:09:21,940INFO N/A N/A N/A BEGIN (implicit)
+2026-03-16 05:09:21,940INFO N/A N/A N/A DESCRIBE `weibo_platform`.`users`
+2026-03-16 05:09:21,941INFO N/A N/A N/A [raw sql] {}
+2026-03-16 05:09:21,943INFO N/A N/A N/A ROLLBACK
+2026-03-16 05:09:21,948INFO N/A N/A N/A ✅ 成功注册蓝图 comments_bp，前缀：/comments
+2026-03-16 05:09:21,953INFO N/A N/A N/A ✅ 成功注册蓝图 follows_bp，前缀：/follows
+2026-03-16 05:09:21,959INFO N/A N/A N/A ✅ 成功注册蓝图 posts_bp，前缀：/posts
+2026-03-16 05:09:21,964INFO N/A N/A N/A ✅ 成功注册蓝图 likes_bp，前缀：/likes
+2026-03-16 05:09:21,969INFO N/A N/A N/A ✅ 成功注册蓝图 notifications_bp，前缀：根路径
+2026-03-16 05:09:21,973INFO N/A N/A N/A ✅ 成功注册蓝图 users_bp，前缀：/users
+2026-03-16 05:09:21,975INFO N/A N/A N/A ✅ 成功注册蓝图 auth_bp，前缀：/auth
+2026-03-16 05:09:21,977INFO N/A N/A N/A ✅ 成功注册蓝图 feeds_bp，前缀：/feeds
+2026-03-16 05:09:21,977INFO N/A N/A N/A 📌 所有蓝图注册完成
+2026-03-16 05:09:21,994WARNING N/A N/A N/A  * Debugger is active!
+2026-03-16 05:09:49,854INFO N/A N/A N/A 日志初始化完成，测试环境：False
+2026-03-16 05:09:49,860INFO N/A N/A N/A  所有异常处理器注册完成
+2026-03-16 05:09:49,865INFO N/A N/A N/A SELECT DATABASE()
+2026-03-16 05:09:49,866INFO N/A N/A N/A [raw sql] {}
+2026-03-16 05:09:49,867INFO N/A N/A N/A SELECT @@sql_mode
+2026-03-16 05:09:49,868INFO N/A N/A N/A [raw sql] {}
+2026-03-16 05:09:49,869INFO N/A N/A N/A SELECT @@lower_case_table_names
+2026-03-16 05:09:49,870INFO N/A N/A N/A [raw sql] {}
+2026-03-16 05:09:49,872INFO N/A N/A N/A BEGIN (implicit)
+2026-03-16 05:09:49,873INFO N/A N/A N/A DESCRIBE `weibo_platform`.`users`
+2026-03-16 05:09:49,874INFO N/A N/A N/A [raw sql] {}
+2026-03-16 05:09:49,876INFO N/A N/A N/A ROLLBACK
+2026-03-16 05:09:49,882INFO N/A N/A N/A ✅ 成功注册蓝图 comments_bp，前缀：/comments
+2026-03-16 05:09:49,887INFO N/A N/A N/A ✅ 成功注册蓝图 follows_bp，前缀：/follows
+2026-03-16 05:09:49,893INFO N/A N/A N/A ✅ 成功注册蓝图 posts_bp，前缀：/posts
+2026-03-16 05:09:49,898INFO N/A N/A N/A ✅ 成功注册蓝图 likes_bp，前缀：/likes
+2026-03-16 05:09:49,903INFO N/A N/A N/A ✅ 成功注册蓝图 notifications_bp，前缀：/notifications
+2026-03-16 05:09:49,908INFO N/A N/A N/A ✅ 成功注册蓝图 users_bp，前缀：/users
+2026-03-16 05:09:49,910INFO N/A N/A N/A ✅ 成功注册蓝图 auth_bp，前缀：/auth
+2026-03-16 05:09:49,911INFO N/A N/A N/A ✅ 成功注册蓝图 feeds_bp，前缀：/feeds
+2026-03-16 05:09:49,912INFO N/A N/A N/A 📌 所有蓝图注册完成
+2026-03-16 05:09:49,928WARNING N/A N/A N/A  * Debugger is active!
+2026-03-16 05:09:55,223INFO N/A N/A N/A {"timestamp": "2026-03-16T09:09:55.223534+00:00Z", "level": "INFO", "request_id": "5bdac60a-a723-4343-be97-fa13e36477d3", "method": "GET", "path": "/comments/docs", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:09:55,244INFO N/A N/A N/A {"timestamp": "2026-03-16T09:09:55.244287+00:00Z", "level": "INFO", "request_id": "a51fd959-73de-43c6-836c-663d76feaebc", "status_code": 200, "duration_ms": 17.45, "path": "/comments/docs", "response_length": 3820}
+2026-03-16 05:09:55,296INFO N/A N/A N/A {"timestamp": "2026-03-16T09:09:55.296688+00:00Z", "level": "INFO", "request_id": "01cfc71c-b8c7-4ac7-bcef-bd312c458bf2", "method": "GET", "path": "/swaggerui/droid-sans.css", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:09:55,303INFO N/A N/A N/A {"timestamp": "2026-03-16T09:09:55.303674+00:00Z", "level": "INFO", "request_id": "945c31f2-e3b5-45f2-bd73-e97752df3a3c", "status_code": 304, "duration_ms": 6.12, "path": "/swaggerui/droid-sans.css", "response_length": 778}
+2026-03-16 05:09:55,307INFO N/A N/A N/A {"timestamp": "2026-03-16T09:09:55.307517+00:00Z", "level": "INFO", "request_id": "aceba51b-48a3-462a-a053-1d0f5772dae3", "method": "GET", "path": "/swaggerui/swagger-ui.css", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:09:55,309INFO N/A N/A N/A {"timestamp": "2026-03-16T09:09:55.309195+00:00Z", "level": "INFO", "request_id": "26d9c7e4-7798-4bc9-8234-24161b1c77d1", "status_code": 304, "duration_ms": 0.88, "path": "/swaggerui/swagger-ui.css", "response_length": 145206}
+2026-03-16 05:09:55,330INFO N/A N/A N/A {"timestamp": "2026-03-16T09:09:55.330293+00:00Z", "level": "INFO", "request_id": "cd161b4e-56c6-413a-8bcc-27df721c2b98", "method": "GET", "path": "/swaggerui/swagger-ui-bundle.js", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:09:55,331INFO N/A N/A N/A {"timestamp": "2026-03-16T09:09:55.331602+00:00Z", "level": "INFO", "request_id": "a5200d5c-f2e8-4d21-8b52-81aad309e593", "method": "GET", "path": "/swaggerui/swagger-ui-standalone-preset.js", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:09:55,334INFO N/A N/A N/A {"timestamp": "2026-03-16T09:09:55.334848+00:00Z", "level": "INFO", "request_id": "1b6a02f1-1d69-434a-bff1-1520c36a5572", "status_code": 304, "duration_ms": 0.73, "path": "/swaggerui/swagger-ui-standalone-preset.js", "response_length": 322770}
+2026-03-16 05:09:55,333INFO N/A N/A N/A {"timestamp": "2026-03-16T09:09:55.333382+00:00Z", "level": "INFO", "request_id": "3a3be891-8d18-46ec-96c3-d68d74547733", "status_code": 304, "duration_ms": 0.8, "path": "/swaggerui/swagger-ui-bundle.js", "response_length": 1048219}
+2026-03-16 05:09:55,425INFO N/A N/A N/A {"timestamp": "2026-03-16T09:09:55.425725+00:00Z", "level": "INFO", "request_id": "f4c27671-3f5f-4c3e-b4a0-cab2082ba95e", "method": "GET", "path": "/comments/swagger.json", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:09:55,430INFO N/A N/A N/A {"timestamp": "2026-03-16T09:09:55.430047+00:00Z", "level": "INFO", "request_id": "ac32e1ce-7877-458c-8142-2400bcb8f302", "status_code": 200, "duration_ms": 2.13, "path": "/comments/swagger.json", "response_length": 5658}
+2026-03-16 05:10:10,675INFO N/A N/A N/A {"timestamp": "2026-03-16T09:10:10.675226+00:00Z", "level": "INFO", "request_id": "d0f1cdff-58b7-4662-aa40-485b3c40546f", "method": "GET", "path": "/posts/docs", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:10:10,678INFO N/A N/A N/A {"timestamp": "2026-03-16T09:10:10.678721+00:00Z", "level": "INFO", "request_id": "acf160ed-6a6f-436f-b5a7-ce411a5faea1", "status_code": 200, "duration_ms": 1.05, "path": "/posts/docs", "response_length": 3817}
+2026-03-16 05:10:10,743INFO N/A N/A N/A {"timestamp": "2026-03-16T09:10:10.743187+00:00Z", "level": "INFO", "request_id": "47934485-c932-4edb-adc7-c58d5f9f4d31", "method": "GET", "path": "/swaggerui/droid-sans.css", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:10:10,748INFO N/A N/A N/A {"timestamp": "2026-03-16T09:10:10.748023+00:00Z", "level": "INFO", "request_id": "af5bbd17-b94a-41ad-80cf-32f0efcc490a", "status_code": 304, "duration_ms": 2.46, "path": "/swaggerui/droid-sans.css", "response_length": 778}
+2026-03-16 05:10:10,749INFO N/A N/A N/A {"timestamp": "2026-03-16T09:10:10.749270+00:00Z", "level": "INFO", "request_id": "aaf591f7-3aa3-4817-800e-0525623d069c", "method": "GET", "path": "/swaggerui/swagger-ui.css", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:10:10,752INFO N/A N/A N/A {"timestamp": "2026-03-16T09:10:10.752048+00:00Z", "level": "INFO", "request_id": "6a69fcb2-0ef6-4390-8143-4822cced1352", "status_code": 304, "duration_ms": 0.96, "path": "/swaggerui/swagger-ui.css", "response_length": 145206}
+2026-03-16 05:10:10,781INFO N/A N/A N/A {"timestamp": "2026-03-16T09:10:10.781769+00:00Z", "level": "INFO", "request_id": "8ae58f02-e9b1-468a-93f1-18ff013db95b", "method": "GET", "path": "/swaggerui/swagger-ui-standalone-preset.js", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:10:10,782INFO N/A N/A N/A {"timestamp": "2026-03-16T09:10:10.782784+00:00Z", "level": "INFO", "request_id": "7541af14-f9ef-4cb6-95e0-5ee397f8aee7", "method": "GET", "path": "/swaggerui/swagger-ui-bundle.js", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:10:10,786INFO N/A N/A N/A {"timestamp": "2026-03-16T09:10:10.786304+00:00Z", "level": "INFO", "request_id": "74bf4ea9-99e3-4632-9588-35c422987bf3", "status_code": 304, "duration_ms": 0.86, "path": "/swaggerui/swagger-ui-bundle.js", "response_length": 1048219}
+2026-03-16 05:10:10,784INFO N/A N/A N/A {"timestamp": "2026-03-16T09:10:10.784549+00:00Z", "level": "INFO", "request_id": "1b73b589-23cf-4ac0-a30b-7c4748e9f6de", "status_code": 304, "duration_ms": 0.98, "path": "/swaggerui/swagger-ui-standalone-preset.js", "response_length": 322770}
+2026-03-16 05:10:10,868INFO N/A N/A N/A {"timestamp": "2026-03-16T09:10:10.868562+00:00Z", "level": "INFO", "request_id": "8eea25b1-83ed-46d0-a239-b90400c7e00b", "method": "GET", "path": "/posts/swagger.json", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:10:10,874INFO N/A N/A N/A {"timestamp": "2026-03-16T09:10:10.874777+00:00Z", "level": "INFO", "request_id": "6ede8c56-d816-4039-b9b2-abc070c0d511", "status_code": 200, "duration_ms": 3.59, "path": "/posts/swagger.json", "response_length": 10650}
+2026-03-16 05:10:26,511INFO N/A N/A N/A {"timestamp": "2026-03-16T09:10:26.511373+00:00Z", "level": "INFO", "request_id": "39393a3b-bba2-4319-88bc-448032f2f7f5", "method": "GET", "path": "/notifications/docs", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:10:26,512WARNING 39393a3b-bba2-4319-88bc-448032f2f7f5 N/A -0.0 [CUSTOM ERROR] request_id=39393a3b-bba2-4319-88bc-448032f2f7f5, error_code=10004, msg=未检测到 Token，请先登录
+2026-03-16 05:10:26,513WARNING N/A N/A N/A {"timestamp": "2026-03-16T09:10:26.512949+00:00Z", "level": "WARNING", "request_id": "39393a3b-bba2-4319-88bc-448032f2f7f5", "status_code": 401, "duration_ms": 1.56, "path": "/notifications/docs", "response_length": 120}
+2026-03-16 05:10:51,177INFO N/A N/A N/A {"timestamp": "2026-03-16T09:10:51.177711+00:00Z", "level": "INFO", "request_id": "d7b3763f-a542-47d8-b5a1-a83b31377d13", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:10:51,178WARNING cb7075e4-f6da-4c60-8b75-6a4ccf59680b N/A -0.0 [CUSTOM ERROR] request_id=cb7075e4-f6da-4c60-8b75-6a4ccf59680b, error_code=10002, msg=访问的接口/资源不存在
+2026-03-16 05:10:51,179WARNING N/A N/A N/A {"timestamp": "2026-03-16T09:10:51.179014+00:00Z", "level": "WARNING", "request_id": "cb7075e4-f6da-4c60-8b75-6a4ccf59680b", "status_code": 404, "duration_ms": 0.86, "path": "/", "response_length": 121}
+2026-03-16 05:10:53,006INFO N/A N/A N/A {"timestamp": "2026-03-16T09:10:53.005968+00:00Z", "level": "INFO", "request_id": "a0b01134-a43e-447f-acb2-8880df23ba52", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:10:53,006WARNING 1d96271d-110b-41b0-bcbf-dc3b1eaed223 N/A -0.0 [CUSTOM ERROR] request_id=1d96271d-110b-41b0-bcbf-dc3b1eaed223, error_code=10002, msg=访问的接口/资源不存在
+2026-03-16 05:10:53,007WARNING N/A N/A N/A {"timestamp": "2026-03-16T09:10:53.007508+00:00Z", "level": "WARNING", "request_id": "1d96271d-110b-41b0-bcbf-dc3b1eaed223", "status_code": 404, "duration_ms": 0.97, "path": "/", "response_length": 121}
+2026-03-16 05:10:56,894INFO N/A N/A N/A {"timestamp": "2026-03-16T09:10:56.893912+00:00Z", "level": "INFO", "request_id": "d2f4f69b-f86a-4d45-8c06-77371b0014a3", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:10:56,895WARNING ec1a0f3b-b74c-4661-84df-43f3555e9994 N/A -0.0 [CUSTOM ERROR] request_id=ec1a0f3b-b74c-4661-84df-43f3555e9994, error_code=10002, msg=访问的接口/资源不存在
+2026-03-16 05:10:56,898WARNING N/A N/A N/A {"timestamp": "2026-03-16T09:10:56.897952+00:00Z", "level": "WARNING", "request_id": "ec1a0f3b-b74c-4661-84df-43f3555e9994", "status_code": 404, "duration_ms": 3.06, "path": "/", "response_length": 121}
+2026-03-16 05:10:58,014INFO N/A N/A N/A {"timestamp": "2026-03-16T09:10:58.013920+00:00Z", "level": "INFO", "request_id": "c798be3b-e591-4b86-a5fb-af8ed4d842f9", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:10:58,015WARNING 9360be9c-e1bb-4a87-9193-8aaaa51e71c7 N/A -0.0 [CUSTOM ERROR] request_id=9360be9c-e1bb-4a87-9193-8aaaa51e71c7, error_code=10002, msg=访问的接口/资源不存在
+2026-03-16 05:10:58,016WARNING N/A N/A N/A {"timestamp": "2026-03-16T09:10:58.016531+00:00Z", "level": "WARNING", "request_id": "9360be9c-e1bb-4a87-9193-8aaaa51e71c7", "status_code": 404, "duration_ms": 1.72, "path": "/", "response_length": 121}
+2026-03-16 05:12:54,734INFO N/A N/A N/A 日志初始化完成，测试环境：False
+2026-03-16 05:12:54,741INFO N/A N/A N/A  所有异常处理器注册完成
+2026-03-16 05:12:54,745INFO N/A N/A N/A SELECT DATABASE()
+2026-03-16 05:12:54,746INFO N/A N/A N/A [raw sql] {}
+2026-03-16 05:12:54,747INFO N/A N/A N/A SELECT @@sql_mode
+2026-03-16 05:12:54,748INFO N/A N/A N/A [raw sql] {}
+2026-03-16 05:12:54,749INFO N/A N/A N/A SELECT @@lower_case_table_names
+2026-03-16 05:12:54,750INFO N/A N/A N/A [raw sql] {}
+2026-03-16 05:12:54,751INFO N/A N/A N/A BEGIN (implicit)
+2026-03-16 05:12:54,752INFO N/A N/A N/A DESCRIBE `weibo_platform`.`users`
+2026-03-16 05:12:54,752INFO N/A N/A N/A [raw sql] {}
+2026-03-16 05:12:54,755INFO N/A N/A N/A ROLLBACK
+2026-03-16 05:12:54,760INFO N/A N/A N/A ✅ 成功注册蓝图 comments_bp，前缀：/comments
+2026-03-16 05:12:54,766INFO N/A N/A N/A ✅ 成功注册蓝图 follows_bp，前缀：/follows
+2026-03-16 05:12:54,773INFO N/A N/A N/A ✅ 成功注册蓝图 posts_bp，前缀：/posts
+2026-03-16 05:12:54,778INFO N/A N/A N/A ✅ 成功注册蓝图 likes_bp，前缀：/likes
+2026-03-16 05:12:54,782INFO N/A N/A N/A ✅ 成功注册蓝图 notifications_bp，前缀：/notifications
+2026-03-16 05:12:54,787INFO N/A N/A N/A ✅ 成功注册蓝图 users_bp，前缀：/users
+2026-03-16 05:12:54,789INFO N/A N/A N/A ✅ 成功注册蓝图 auth_bp，前缀：/auth
+2026-03-16 05:12:54,790INFO N/A N/A N/A ✅ 成功注册蓝图 feeds_bp，前缀：/feeds
+2026-03-16 05:12:54,791INFO N/A N/A N/A 📌 所有蓝图注册完成
+2026-03-16 05:12:54,808WARNING N/A N/A N/A  * Debugger is active!
+2026-03-16 05:13:00,517INFO N/A N/A N/A {"timestamp": "2026-03-16T09:13:00.516940+00:00Z", "level": "INFO", "request_id": "d0221d75-9254-484a-8810-5cd9fd00f8a2", "method": "GET", "path": "/notifications/docs", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:13:00,518WARNING d0221d75-9254-484a-8810-5cd9fd00f8a2 N/A -0.0 [CUSTOM ERROR] request_id=d0221d75-9254-484a-8810-5cd9fd00f8a2, error_code=10004, msg=未检测到 Token，请先登录
+2026-03-16 05:13:00,519WARNING N/A N/A N/A {"timestamp": "2026-03-16T09:13:00.519720+00:00Z", "level": "WARNING", "request_id": "d0221d75-9254-484a-8810-5cd9fd00f8a2", "status_code": 401, "duration_ms": 2.75, "path": "/notifications/docs", "response_length": 120}
+2026-03-16 05:13:52,273INFO N/A N/A N/A 日志初始化完成，测试环境：False
+2026-03-16 05:13:52,280INFO N/A N/A N/A  所有异常处理器注册完成
+2026-03-16 05:13:52,285INFO N/A N/A N/A SELECT DATABASE()
+2026-03-16 05:13:52,286INFO N/A N/A N/A [raw sql] {}
+2026-03-16 05:13:52,287INFO N/A N/A N/A SELECT @@sql_mode
+2026-03-16 05:13:52,288INFO N/A N/A N/A [raw sql] {}
+2026-03-16 05:13:52,289INFO N/A N/A N/A SELECT @@lower_case_table_names
+2026-03-16 05:13:52,289INFO N/A N/A N/A [raw sql] {}
+2026-03-16 05:13:52,292INFO N/A N/A N/A BEGIN (implicit)
+2026-03-16 05:13:52,292INFO N/A N/A N/A DESCRIBE `weibo_platform`.`users`
+2026-03-16 05:13:52,293INFO N/A N/A N/A [raw sql] {}
+2026-03-16 05:13:52,295INFO N/A N/A N/A ROLLBACK
+2026-03-16 05:13:52,304INFO N/A N/A N/A ✅ 成功注册蓝图 comments_bp，前缀：/comments
+2026-03-16 05:13:52,311INFO N/A N/A N/A ✅ 成功注册蓝图 follows_bp，前缀：/follows
+2026-03-16 05:13:52,320INFO N/A N/A N/A ✅ 成功注册蓝图 posts_bp，前缀：/posts
+2026-03-16 05:13:52,327INFO N/A N/A N/A ✅ 成功注册蓝图 likes_bp，前缀：/likes
+2026-03-16 05:13:52,334INFO N/A N/A N/A ✅ 成功注册蓝图 notifications_bp，前缀：/notifications
+2026-03-16 05:13:52,341INFO N/A N/A N/A ✅ 成功注册蓝图 users_bp，前缀：/users
+2026-03-16 05:13:52,343INFO N/A N/A N/A ✅ 成功注册蓝图 auth_bp，前缀：/auth
+2026-03-16 05:13:52,344INFO N/A N/A N/A ✅ 成功注册蓝图 feeds_bp，前缀：/feeds
+2026-03-16 05:13:52,345INFO N/A N/A N/A 📌 所有蓝图注册完成
+2026-03-16 05:13:52,362WARNING N/A N/A N/A  * Debugger is active!
+2026-03-16 05:13:54,100INFO N/A N/A N/A {"timestamp": "2026-03-16T09:13:54.100737+00:00Z", "level": "INFO", "request_id": "e9f31efc-43ec-4dec-a6c5-6bf4673b8e1f", "method": "GET", "path": "/notifications/docs", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:13:54,136INFO N/A N/A N/A {"timestamp": "2026-03-16T09:13:54.136067+00:00Z", "level": "INFO", "request_id": "097ac20f-3cd3-466a-ac14-9a193a7ad9d0", "status_code": 200, "duration_ms": 30.53, "path": "/notifications/docs", "response_length": 3825}
+2026-03-16 05:13:54,205INFO N/A N/A N/A {"timestamp": "2026-03-16T09:13:54.205768+00:00Z", "level": "INFO", "request_id": "df527100-9570-4d71-887e-f560d50d92cc", "method": "GET", "path": "/swaggerui/droid-sans.css", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:13:54,213INFO N/A N/A N/A {"timestamp": "2026-03-16T09:13:54.213051+00:00Z", "level": "INFO", "request_id": "a04ac7ba-4cac-4c68-81ce-d7e2162abcf7", "status_code": 304, "duration_ms": 6.12, "path": "/swaggerui/droid-sans.css", "response_length": 778}
+2026-03-16 05:13:54,214INFO N/A N/A N/A {"timestamp": "2026-03-16T09:13:54.214423+00:00Z", "level": "INFO", "request_id": "2e73fb98-f3ab-46ce-ae41-32e78e5e468a", "method": "GET", "path": "/swaggerui/swagger-ui.css", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:13:54,216INFO N/A N/A N/A {"timestamp": "2026-03-16T09:13:54.216675+00:00Z", "level": "INFO", "request_id": "0808d480-10af-4f08-8a10-3c20ad514b01", "status_code": 304, "duration_ms": 0.85, "path": "/swaggerui/swagger-ui.css", "response_length": 145206}
+2026-03-16 05:13:54,225INFO N/A N/A N/A {"timestamp": "2026-03-16T09:13:54.225676+00:00Z", "level": "INFO", "request_id": "e65c72c3-a105-4da1-a94c-48585612ded3", "method": "GET", "path": "/swaggerui/swagger-ui-bundle.js", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:13:54,227INFO N/A N/A N/A {"timestamp": "2026-03-16T09:13:54.227418+00:00Z", "level": "INFO", "request_id": "bf12c919-2881-4177-a6ac-1a675f6d49a1", "status_code": 304, "duration_ms": 0.84, "path": "/swaggerui/swagger-ui-bundle.js", "response_length": 1048219}
+2026-03-16 05:13:54,230INFO N/A N/A N/A {"timestamp": "2026-03-16T09:13:54.230445+00:00Z", "level": "INFO", "request_id": "73de0049-6782-4554-a636-ed578f70b385", "method": "GET", "path": "/swaggerui/swagger-ui-standalone-preset.js", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:13:54,233INFO N/A N/A N/A {"timestamp": "2026-03-16T09:13:54.233517+00:00Z", "level": "INFO", "request_id": "b6a86fd0-0c17-44d2-bafc-0c4e24dd44e6", "status_code": 304, "duration_ms": 0.88, "path": "/swaggerui/swagger-ui-standalone-preset.js", "response_length": 322770}
+2026-03-16 05:13:54,371INFO N/A N/A N/A {"timestamp": "2026-03-16T09:13:54.371004+00:00Z", "level": "INFO", "request_id": "ca77a79f-1a20-4319-a43d-c3f39aeb692d", "method": "GET", "path": "/notifications/swagger.json", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:13:54,377INFO N/A N/A N/A {"timestamp": "2026-03-16T09:13:54.377740+00:00Z", "level": "INFO", "request_id": "18f2931b-a383-4ce7-b477-85e01c0a4966", "status_code": 200, "duration_ms": 4.78, "path": "/notifications/swagger.json", "response_length": 10388}
+2026-03-16 05:14:25,271INFO N/A N/A N/A {"timestamp": "2026-03-16T09:14:25.271611+00:00Z", "level": "INFO", "request_id": "b7b237c5-d755-4a44-b317-5a643ecab0fa", "method": "GET", "path": "/follows/docs", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:14:25,273WARNING b7b237c5-d755-4a44-b317-5a643ecab0fa N/A -0.0 [CUSTOM ERROR] request_id=b7b237c5-d755-4a44-b317-5a643ecab0fa, error_code=10004, msg=未检测到 Token，请先登录
+2026-03-16 05:14:25,274WARNING N/A N/A N/A {"timestamp": "2026-03-16T09:14:25.274365+00:00Z", "level": "WARNING", "request_id": "b7b237c5-d755-4a44-b317-5a643ecab0fa", "status_code": 401, "duration_ms": 2.73, "path": "/follows/docs", "response_length": 120}
+2026-03-16 05:14:31,537INFO N/A N/A N/A {"timestamp": "2026-03-16T09:14:31.537220+00:00Z", "level": "INFO", "request_id": "2ece67f3-ee14-4755-905a-c3525f81ba41", "method": "GET", "path": "/follow/docs", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:14:31,538WARNING 2ece67f3-ee14-4755-905a-c3525f81ba41 N/A -0.0 [CUSTOM ERROR] request_id=2ece67f3-ee14-4755-905a-c3525f81ba41, error_code=10004, msg=未检测到 Token，请先登录
+2026-03-16 05:14:31,538WARNING N/A N/A N/A {"timestamp": "2026-03-16T09:14:31.538589+00:00Z", "level": "WARNING", "request_id": "2ece67f3-ee14-4755-905a-c3525f81ba41", "status_code": 401, "duration_ms": 1.35, "path": "/follow/docs", "response_length": 120}
+2026-03-16 05:15:14,923INFO N/A N/A N/A 日志初始化完成，测试环境：False
+2026-03-16 05:15:14,938INFO N/A N/A N/A  所有异常处理器注册完成
+2026-03-16 05:15:14,948INFO N/A N/A N/A SELECT DATABASE()
+2026-03-16 05:15:14,949INFO N/A N/A N/A [raw sql] {}
+2026-03-16 05:15:14,952INFO N/A N/A N/A SELECT @@sql_mode
+2026-03-16 05:15:14,953INFO N/A N/A N/A [raw sql] {}
+2026-03-16 05:15:14,954INFO N/A N/A N/A SELECT @@lower_case_table_names
+2026-03-16 05:15:14,955INFO N/A N/A N/A [raw sql] {}
+2026-03-16 05:15:14,957INFO N/A N/A N/A BEGIN (implicit)
+2026-03-16 05:15:14,958INFO N/A N/A N/A DESCRIBE `weibo_platform`.`users`
+2026-03-16 05:15:14,958INFO N/A N/A N/A [raw sql] {}
+2026-03-16 05:15:14,960INFO N/A N/A N/A ROLLBACK
+2026-03-16 05:15:14,968INFO N/A N/A N/A ✅ 成功注册蓝图 comments_bp，前缀：/comments
+2026-03-16 05:15:14,973INFO N/A N/A N/A ✅ 成功注册蓝图 follows_bp，前缀：/follows
+2026-03-16 05:15:14,979INFO N/A N/A N/A ✅ 成功注册蓝图 posts_bp，前缀：/posts
+2026-03-16 05:15:14,984INFO N/A N/A N/A ✅ 成功注册蓝图 likes_bp，前缀：/likes
+2026-03-16 05:15:14,989INFO N/A N/A N/A ✅ 成功注册蓝图 notifications_bp，前缀：/notifications
+2026-03-16 05:15:14,994INFO N/A N/A N/A ✅ 成功注册蓝图 users_bp，前缀：/users
+2026-03-16 05:15:14,995INFO N/A N/A N/A ✅ 成功注册蓝图 auth_bp，前缀：/auth
+2026-03-16 05:15:14,997INFO N/A N/A N/A ✅ 成功注册蓝图 feeds_bp，前缀：/feeds
+2026-03-16 05:15:14,998INFO N/A N/A N/A 📌 所有蓝图注册完成
+2026-03-16 05:15:15,015WARNING N/A N/A N/A  * Debugger is active!
+2026-03-16 05:15:18,901INFO N/A N/A N/A {"timestamp": "2026-03-16T09:15:18.900961+00:00Z", "level": "INFO", "request_id": "bebe4752-da06-428e-b46d-2953f32ef661", "method": "GET", "path": "/follow/docs", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:15:18,902WARNING bebe4752-da06-428e-b46d-2953f32ef661 N/A -0.0 [CUSTOM ERROR] request_id=bebe4752-da06-428e-b46d-2953f32ef661, error_code=10004, msg=未检测到 Token，请先登录
+2026-03-16 05:15:18,903WARNING N/A N/A N/A {"timestamp": "2026-03-16T09:15:18.903623+00:00Z", "level": "WARNING", "request_id": "bebe4752-da06-428e-b46d-2953f32ef661", "status_code": 401, "duration_ms": 2.64, "path": "/follow/docs", "response_length": 120}
+2026-03-16 05:15:46,935INFO N/A N/A N/A {"timestamp": "2026-03-16T09:15:46.935781+00:00Z", "level": "INFO", "request_id": "141f45e5-25e0-47a0-8a9e-f02e6992a746", "method": "GET", "path": "/follow/docs", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:15:46,937WARNING 141f45e5-25e0-47a0-8a9e-f02e6992a746 N/A -0.0 [CUSTOM ERROR] request_id=141f45e5-25e0-47a0-8a9e-f02e6992a746, error_code=10004, msg=未检测到 Token，请先登录
+2026-03-16 05:15:46,938WARNING N/A N/A N/A {"timestamp": "2026-03-16T09:15:46.938098+00:00Z", "level": "WARNING", "request_id": "141f45e5-25e0-47a0-8a9e-f02e6992a746", "status_code": 401, "duration_ms": 2.3, "path": "/follow/docs", "response_length": 120}
+2026-03-16 05:15:50,968INFO N/A N/A N/A {"timestamp": "2026-03-16T09:15:50.968861+00:00Z", "level": "INFO", "request_id": "a160fcb0-610e-425b-a408-68cff3d7f223", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:15:50,970WARNING bd49dd49-f812-4437-ba94-e41c91bf109b N/A -0.0 [CUSTOM ERROR] request_id=bd49dd49-f812-4437-ba94-e41c91bf109b, error_code=10002, msg=访问的接口/资源不存在
+2026-03-16 05:15:50,971WARNING N/A N/A N/A {"timestamp": "2026-03-16T09:15:50.971042+00:00Z", "level": "WARNING", "request_id": "bd49dd49-f812-4437-ba94-e41c91bf109b", "status_code": 404, "duration_ms": 1.36, "path": "/", "response_length": 121}
+2026-03-16 05:15:51,363INFO N/A N/A N/A {"timestamp": "2026-03-16T09:15:51.363337+00:00Z", "level": "INFO", "request_id": "89473685-e5ff-4e2d-92ce-81578d5da06a", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:15:51,364WARNING d55f7967-d79c-4759-a84b-fe8dc46bfdf5 N/A -0.0 [CUSTOM ERROR] request_id=d55f7967-d79c-4759-a84b-fe8dc46bfdf5, error_code=10002, msg=访问的接口/资源不存在
+2026-03-16 05:15:51,366WARNING N/A N/A N/A {"timestamp": "2026-03-16T09:15:51.365971+00:00Z", "level": "WARNING", "request_id": "d55f7967-d79c-4759-a84b-fe8dc46bfdf5", "status_code": 404, "duration_ms": 1.65, "path": "/", "response_length": 121}
+2026-03-16 05:15:53,744INFO N/A N/A N/A {"timestamp": "2026-03-16T09:15:53.744840+00:00Z", "level": "INFO", "request_id": "f69cb039-48b9-4ea8-a614-501ce8a373d4", "method": "GET", "path": "/follows/docs", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:15:53,746WARNING f69cb039-48b9-4ea8-a614-501ce8a373d4 N/A -0.0 [CUSTOM ERROR] request_id=f69cb039-48b9-4ea8-a614-501ce8a373d4, error_code=10004, msg=未检测到 Token，请先登录
+2026-03-16 05:15:53,747WARNING N/A N/A N/A {"timestamp": "2026-03-16T09:15:53.747424+00:00Z", "level": "WARNING", "request_id": "f69cb039-48b9-4ea8-a614-501ce8a373d4", "status_code": 401, "duration_ms": 2.56, "path": "/follows/docs", "response_length": 120}
+2026-03-16 05:15:56,945INFO N/A N/A N/A {"timestamp": "2026-03-16T09:15:56.945516+00:00Z", "level": "INFO", "request_id": "065459e8-3409-4924-a2b1-d92458ce4cfe", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:15:56,946WARNING a6e5f354-e26e-4c8d-b4fe-2cf17a5fdfc8 N/A -0.0 [CUSTOM ERROR] request_id=a6e5f354-e26e-4c8d-b4fe-2cf17a5fdfc8, error_code=10002, msg=访问的接口/资源不存在
+2026-03-16 05:15:56,947WARNING N/A N/A N/A {"timestamp": "2026-03-16T09:15:56.947415+00:00Z", "level": "WARNING", "request_id": "a6e5f354-e26e-4c8d-b4fe-2cf17a5fdfc8", "status_code": 404, "duration_ms": 1.15, "path": "/", "response_length": 121}
+2026-03-16 05:15:57,202INFO N/A N/A N/A {"timestamp": "2026-03-16T09:15:57.202081+00:00Z", "level": "INFO", "request_id": "57adc157-342e-4a6c-8f8c-163a902c1354", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:15:57,203WARNING 93b833bd-e9ff-45d5-9bbe-f4a6b65b02ac N/A -0.0 [CUSTOM ERROR] request_id=93b833bd-e9ff-45d5-9bbe-f4a6b65b02ac, error_code=10002, msg=访问的接口/资源不存在
+2026-03-16 05:15:57,204WARNING N/A N/A N/A {"timestamp": "2026-03-16T09:15:57.204389+00:00Z", "level": "WARNING", "request_id": "93b833bd-e9ff-45d5-9bbe-f4a6b65b02ac", "status_code": 404, "duration_ms": 1.53, "path": "/", "response_length": 121}
+2026-03-16 05:16:00,697INFO N/A N/A N/A {"timestamp": "2026-03-16T09:16:00.696954+00:00Z", "level": "INFO", "request_id": "44c56906-6f7d-426f-8fae-d6e9dea6af26", "method": "GET", "path": "/follows/docs", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:16:00,698WARNING 44c56906-6f7d-426f-8fae-d6e9dea6af26 N/A -0.0 [CUSTOM ERROR] request_id=44c56906-6f7d-426f-8fae-d6e9dea6af26, error_code=10004, msg=未检测到 Token，请先登录
+2026-03-16 05:16:00,699WARNING N/A N/A N/A {"timestamp": "2026-03-16T09:16:00.699207+00:00Z", "level": "WARNING", "request_id": "44c56906-6f7d-426f-8fae-d6e9dea6af26", "status_code": 401, "duration_ms": 2.23, "path": "/follows/docs", "response_length": 120}
+2026-03-16 05:17:45,566INFO N/A N/A N/A 日志初始化完成，测试环境：False
+2026-03-16 05:17:45,573INFO N/A N/A N/A  所有异常处理器注册完成
+2026-03-16 05:17:45,577INFO N/A N/A N/A SELECT DATABASE()
+2026-03-16 05:17:45,578INFO N/A N/A N/A [raw sql] {}
+2026-03-16 05:17:45,580INFO N/A N/A N/A SELECT @@sql_mode
+2026-03-16 05:17:45,580INFO N/A N/A N/A [raw sql] {}
+2026-03-16 05:17:45,582INFO N/A N/A N/A SELECT @@lower_case_table_names
+2026-03-16 05:17:45,583INFO N/A N/A N/A [raw sql] {}
+2026-03-16 05:17:45,585INFO N/A N/A N/A BEGIN (implicit)
+2026-03-16 05:17:45,586INFO N/A N/A N/A DESCRIBE `weibo_platform`.`users`
+2026-03-16 05:17:45,586INFO N/A N/A N/A [raw sql] {}
+2026-03-16 05:17:45,589INFO N/A N/A N/A ROLLBACK
+2026-03-16 05:17:45,595INFO N/A N/A N/A ✅ 成功注册蓝图 comments_bp，前缀：/comments
+2026-03-16 05:17:45,601INFO N/A N/A N/A ✅ 成功注册蓝图 follows_bp，前缀：/follows
+2026-03-16 05:17:45,607INFO N/A N/A N/A ✅ 成功注册蓝图 posts_bp，前缀：/posts
+2026-03-16 05:17:45,612INFO N/A N/A N/A ✅ 成功注册蓝图 likes_bp，前缀：/likes
+2026-03-16 05:17:45,617INFO N/A N/A N/A ✅ 成功注册蓝图 notifications_bp，前缀：/notifications
+2026-03-16 05:17:45,625INFO N/A N/A N/A ✅ 成功注册蓝图 users_bp，前缀：/users
+2026-03-16 05:17:45,626INFO N/A N/A N/A ✅ 成功注册蓝图 auth_bp，前缀：/auth
+2026-03-16 05:17:45,628INFO N/A N/A N/A ✅ 成功注册蓝图 feeds_bp，前缀：/feeds
+2026-03-16 05:17:45,629INFO N/A N/A N/A 📌 所有蓝图注册完成
+2026-03-16 05:17:45,646WARNING N/A N/A N/A  * Debugger is active!
+2026-03-16 05:17:52,530INFO N/A N/A N/A {"timestamp": "2026-03-16T09:17:52.530157+00:00Z", "level": "INFO", "request_id": "42cf2b46-bbb7-4ec0-bcde-4dc34e3654cf", "method": "GET", "path": "/follows/docs", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:17:52,552INFO N/A N/A N/A {"timestamp": "2026-03-16T09:17:52.552803+00:00Z", "level": "INFO", "request_id": "6998cc93-94d3-48ca-bfe4-230c83bd5250", "status_code": 200, "duration_ms": 19.07, "path": "/follows/docs", "response_length": 3819}
+2026-03-16 05:17:52,608INFO N/A N/A N/A {"timestamp": "2026-03-16T09:17:52.608575+00:00Z", "level": "INFO", "request_id": "1b853d30-aed1-4f5a-8280-14a4724b0c9f", "method": "GET", "path": "/swaggerui/droid-sans.css", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:17:52,617INFO N/A N/A N/A {"timestamp": "2026-03-16T09:17:52.617554+00:00Z", "level": "INFO", "request_id": "8eb32b99-c9bb-4c76-a279-d02519e86892", "method": "GET", "path": "/swaggerui/swagger-ui.css", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:17:52,622INFO N/A N/A N/A {"timestamp": "2026-03-16T09:17:52.622324+00:00Z", "level": "INFO", "request_id": "83b48edf-8864-4375-8ae5-6ddb9b403d84", "status_code": 304, "duration_ms": 12.85, "path": "/swaggerui/droid-sans.css", "response_length": 778}
+2026-03-16 05:17:52,629INFO N/A N/A N/A {"timestamp": "2026-03-16T09:17:52.629075+00:00Z", "level": "INFO", "request_id": "400db4a0-ae49-4608-951f-ca015daad5e9", "status_code": 304, "duration_ms": 10.96, "path": "/swaggerui/swagger-ui.css", "response_length": 145206}
+2026-03-16 05:17:52,638INFO N/A N/A N/A {"timestamp": "2026-03-16T09:17:52.638618+00:00Z", "level": "INFO", "request_id": "2be674ca-8682-40d2-ba31-21fa9cb49bde", "method": "GET", "path": "/swaggerui/swagger-ui-bundle.js", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:17:52,640INFO N/A N/A N/A {"timestamp": "2026-03-16T09:17:52.640766+00:00Z", "level": "INFO", "request_id": "528ac480-ddea-4b34-9614-c94bb405e0d8", "status_code": 304, "duration_ms": 1.15, "path": "/swaggerui/swagger-ui-bundle.js", "response_length": 1048219}
+2026-03-16 05:17:52,654INFO N/A N/A N/A {"timestamp": "2026-03-16T09:17:52.653903+00:00Z", "level": "INFO", "request_id": "2b3e99d1-3139-4f7d-9705-eb99f5c5b8e5", "method": "GET", "path": "/swaggerui/swagger-ui-standalone-preset.js", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:17:52,656INFO N/A N/A N/A {"timestamp": "2026-03-16T09:17:52.656098+00:00Z", "level": "INFO", "request_id": "842a7a62-98fb-4c79-8b19-4fd43ddd6aa5", "status_code": 304, "duration_ms": 1.06, "path": "/swaggerui/swagger-ui-standalone-preset.js", "response_length": 322770}
+2026-03-16 05:17:52,808INFO N/A N/A N/A {"timestamp": "2026-03-16T09:17:52.808314+00:00Z", "level": "INFO", "request_id": "dae9da9a-28a9-46af-a678-ddac2679b8d9", "method": "GET", "path": "/follows/swagger.json", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:17:52,813INFO N/A N/A N/A {"timestamp": "2026-03-16T09:17:52.812951+00:00Z", "level": "INFO", "request_id": "20c69be6-34be-4ed5-a846-ffe56f9c5f24", "status_code": 200, "duration_ms": 2.43, "path": "/follows/swagger.json", "response_length": 7691}
+2026-03-16 05:18:07,606INFO N/A N/A N/A {"timestamp": "2026-03-16T09:18:07.606564+00:00Z", "level": "INFO", "request_id": "f7f6a28b-dd74-49de-8158-47f6c6914b33", "method": "POST", "path": "/follows/follows/following", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0, "request_body": {}}
+2026-03-16 05:18:07,607WARNING f7f6a28b-dd74-49de-8158-47f6c6914b33 N/A -0.0 [CUSTOM ERROR] request_id=f7f6a28b-dd74-49de-8158-47f6c6914b33, error_code=10004, msg=未检测到 Token，请先登录
+2026-03-16 05:18:07,608WARNING N/A N/A N/A {"timestamp": "2026-03-16T09:18:07.608003+00:00Z", "level": "WARNING", "request_id": "f7f6a28b-dd74-49de-8158-47f6c6914b33", "status_code": 401, "duration_ms": 1.42, "path": "/follows/follows/following", "response_length": 120}
+2026-03-16 05:18:47,387INFO N/A N/A N/A {"timestamp": "2026-03-16T09:18:47.387683+00:00Z", "level": "INFO", "request_id": "e15bbd61-2df2-4563-bb38-3285efa35f1c", "method": "GET", "path": "/notifications/docs", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:18:47,390INFO N/A N/A N/A {"timestamp": "2026-03-16T09:18:47.390905+00:00Z", "level": "INFO", "request_id": "983e7071-0763-414b-9905-5e5ed4c030d1", "status_code": 200, "duration_ms": 1.04, "path": "/notifications/docs", "response_length": 3825}
+2026-03-16 05:18:47,465INFO N/A N/A N/A {"timestamp": "2026-03-16T09:18:47.465249+00:00Z", "level": "INFO", "request_id": "e5a284b1-12d5-4f17-a274-9095e3330f5c", "method": "GET", "path": "/swaggerui/droid-sans.css", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:18:47,466INFO N/A N/A N/A {"timestamp": "2026-03-16T09:18:47.466787+00:00Z", "level": "INFO", "request_id": "51093a2f-f6a0-4059-abef-b8de579586be", "status_code": 304, "duration_ms": 0.77, "path": "/swaggerui/droid-sans.css", "response_length": 778}
+2026-03-16 05:18:47,474INFO N/A N/A N/A {"timestamp": "2026-03-16T09:18:47.474760+00:00Z", "level": "INFO", "request_id": "56797104-2e03-4c69-acea-ad0e9c80f45d", "method": "GET", "path": "/swaggerui/swagger-ui.css", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:18:47,476INFO N/A N/A N/A {"timestamp": "2026-03-16T09:18:47.476265+00:00Z", "level": "INFO", "request_id": "eb4c5003-169d-4379-952d-3cd44b5f7f25", "status_code": 304, "duration_ms": 0.76, "path": "/swaggerui/swagger-ui.css", "response_length": 145206}
+2026-03-16 05:18:47,490INFO N/A N/A N/A {"timestamp": "2026-03-16T09:18:47.490785+00:00Z", "level": "INFO", "request_id": "a6457cb7-472b-4a08-bf9f-27a1cb20bbc7", "method": "GET", "path": "/swaggerui/swagger-ui-bundle.js", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:18:47,492INFO N/A N/A N/A {"timestamp": "2026-03-16T09:18:47.492400+00:00Z", "level": "INFO", "request_id": "e6bc6073-af1d-4517-9541-ece143b7c60d", "status_code": 304, "duration_ms": 0.81, "path": "/swaggerui/swagger-ui-bundle.js", "response_length": 1048219}
+2026-03-16 05:18:47,500INFO N/A N/A N/A {"timestamp": "2026-03-16T09:18:47.500081+00:00Z", "level": "INFO", "request_id": "fde2ae13-8f32-4ebd-8430-e4cbde49ea93", "method": "GET", "path": "/swaggerui/swagger-ui-standalone-preset.js", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:18:47,501INFO N/A N/A N/A {"timestamp": "2026-03-16T09:18:47.501812+00:00Z", "level": "INFO", "request_id": "d3a98fc3-2e6e-4ef1-97fe-bec7f12b6607", "status_code": 304, "duration_ms": 0.86, "path": "/swaggerui/swagger-ui-standalone-preset.js", "response_length": 322770}
+2026-03-16 05:18:47,568INFO N/A N/A N/A {"timestamp": "2026-03-16T09:18:47.568707+00:00Z", "level": "INFO", "request_id": "308a28e7-261b-45f3-bf59-9957230251cf", "method": "GET", "path": "/notifications/swagger.json", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:18:47,575INFO N/A N/A N/A {"timestamp": "2026-03-16T09:18:47.575047+00:00Z", "level": "INFO", "request_id": "79955968-5428-4a6f-97b9-632ea6eb44ff", "status_code": 200, "duration_ms": 4.51, "path": "/notifications/swagger.json", "response_length": 10388}
+2026-03-16 05:19:01,182INFO N/A N/A N/A {"timestamp": "2026-03-16T09:19:01.182170+00:00Z", "level": "INFO", "request_id": "e9af1ff2-9e2d-41ec-b994-678f09cf84d6", "method": "GET", "path": "/likes/docs", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:19:01,185INFO N/A N/A N/A {"timestamp": "2026-03-16T09:19:01.184960+00:00Z", "level": "INFO", "request_id": "00b195a6-e0d3-4307-a2aa-c13216faea2c", "status_code": 200, "duration_ms": 1.04, "path": "/likes/docs", "response_length": 3817}
+2026-03-16 05:19:01,249INFO N/A N/A N/A {"timestamp": "2026-03-16T09:19:01.249797+00:00Z", "level": "INFO", "request_id": "da4c207f-6a48-45de-b7c0-f8f3a9391bd0", "method": "GET", "path": "/swaggerui/droid-sans.css", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:19:01,251INFO N/A N/A N/A {"timestamp": "2026-03-16T09:19:01.251694+00:00Z", "level": "INFO", "request_id": "109cdf87-c8ef-4171-9716-1666b10a227e", "status_code": 304, "duration_ms": 0.87, "path": "/swaggerui/droid-sans.css", "response_length": 778}
+2026-03-16 05:19:01,260INFO N/A N/A N/A {"timestamp": "2026-03-16T09:19:01.260100+00:00Z", "level": "INFO", "request_id": "a498b1fc-9d59-4770-b559-97a7e5524279", "method": "GET", "path": "/swaggerui/swagger-ui.css", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:19:01,263INFO N/A N/A N/A {"timestamp": "2026-03-16T09:19:01.263819+00:00Z", "level": "INFO", "request_id": "1fd36dba-1cc7-4db0-8297-f85fc0192a7b", "status_code": 304, "duration_ms": 0.85, "path": "/swaggerui/swagger-ui.css", "response_length": 145206}
+2026-03-16 05:19:01,261INFO N/A N/A N/A {"timestamp": "2026-03-16T09:19:01.261408+00:00Z", "level": "INFO", "request_id": "918476d1-27e1-4d18-92b5-5b0ea7adb38e", "method": "GET", "path": "/swaggerui/swagger-ui-standalone-preset.js", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:19:01,265INFO N/A N/A N/A {"timestamp": "2026-03-16T09:19:01.265234+00:00Z", "level": "INFO", "request_id": "a2386062-f655-4695-9b36-f92a0edc5f88", "method": "GET", "path": "/swaggerui/swagger-ui-bundle.js", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:19:01,267INFO N/A N/A N/A {"timestamp": "2026-03-16T09:19:01.267496+00:00Z", "level": "INFO", "request_id": "4bebdf4b-0e61-4793-bfef-f7475b85b905", "status_code": 304, "duration_ms": 0.69, "path": "/swaggerui/swagger-ui-standalone-preset.js", "response_length": 322770}
+2026-03-16 05:19:01,269INFO N/A N/A N/A {"timestamp": "2026-03-16T09:19:01.268913+00:00Z", "level": "INFO", "request_id": "8b4aebf4-e097-4a5a-88f6-37f53393ed54", "status_code": 304, "duration_ms": 0.97, "path": "/swaggerui/swagger-ui-bundle.js", "response_length": 1048219}
+2026-03-16 05:19:01,347INFO N/A N/A N/A {"timestamp": "2026-03-16T09:19:01.347338+00:00Z", "level": "INFO", "request_id": "64f7bef0-d0fd-4687-bbbf-9bb668e6401c", "method": "GET", "path": "/likes/swagger.json", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:19:01,351INFO N/A N/A N/A {"timestamp": "2026-03-16T09:19:01.351884+00:00Z", "level": "INFO", "request_id": "e0ad5547-acf6-45c4-b73d-2e530e52c3fd", "status_code": 200, "duration_ms": 1.75, "path": "/likes/swagger.json", "response_length": 6265}
+2026-03-16 05:19:12,151INFO N/A N/A N/A {"timestamp": "2026-03-16T09:19:12.151808+00:00Z", "level": "INFO", "request_id": "c0e49c6b-6fdf-4d01-9c70-6edf056f681f", "method": "GET", "path": "/comments/docs", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:19:12,155INFO N/A N/A N/A {"timestamp": "2026-03-16T09:19:12.155854+00:00Z", "level": "INFO", "request_id": "baf2d1c3-11f0-4057-9fb1-309978a91e0a", "status_code": 200, "duration_ms": 1.29, "path": "/comments/docs", "response_length": 3820}
+2026-03-16 05:19:12,218INFO N/A N/A N/A {"timestamp": "2026-03-16T09:19:12.218763+00:00Z", "level": "INFO", "request_id": "334f30e4-243b-491d-91bd-7e2ee11986ce", "method": "GET", "path": "/swaggerui/droid-sans.css", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:19:12,220INFO N/A N/A N/A {"timestamp": "2026-03-16T09:19:12.220618+00:00Z", "level": "INFO", "request_id": "b8d0c207-ae8b-46b1-81ff-49bc7c265af8", "status_code": 304, "duration_ms": 1.0, "path": "/swaggerui/droid-sans.css", "response_length": 778}
+2026-03-16 05:19:12,229INFO N/A N/A N/A {"timestamp": "2026-03-16T09:19:12.229126+00:00Z", "level": "INFO", "request_id": "03b75385-1200-4fda-b313-fe9ebcf74bd7", "method": "GET", "path": "/swaggerui/swagger-ui.css", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:19:12,230INFO N/A N/A N/A {"timestamp": "2026-03-16T09:19:12.230844+00:00Z", "level": "INFO", "request_id": "aed562a3-55e8-4b68-84a1-3fc3cb983129", "status_code": 304, "duration_ms": 0.86, "path": "/swaggerui/swagger-ui.css", "response_length": 145206}
+2026-03-16 05:19:12,246INFO N/A N/A N/A {"timestamp": "2026-03-16T09:19:12.246867+00:00Z", "level": "INFO", "request_id": "e5095759-6b1c-4646-96f4-a6ae1c35d9bb", "method": "GET", "path": "/swaggerui/swagger-ui-bundle.js", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:19:12,248INFO N/A N/A N/A {"timestamp": "2026-03-16T09:19:12.248702+00:00Z", "level": "INFO", "request_id": "bb834299-95b4-4082-acbb-5f1cb98e3c5b", "status_code": 304, "duration_ms": 0.95, "path": "/swaggerui/swagger-ui-bundle.js", "response_length": 1048219}
+2026-03-16 05:19:12,260INFO N/A N/A N/A {"timestamp": "2026-03-16T09:19:12.260557+00:00Z", "level": "INFO", "request_id": "d5868cc7-cd0b-46b8-bdc3-9a98ef9770f0", "method": "GET", "path": "/swaggerui/swagger-ui-standalone-preset.js", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:19:12,263INFO N/A N/A N/A {"timestamp": "2026-03-16T09:19:12.262887+00:00Z", "level": "INFO", "request_id": "7fba7ab4-41d2-461a-80f9-4d54e3c6c6c9", "status_code": 304, "duration_ms": 1.17, "path": "/swaggerui/swagger-ui-standalone-preset.js", "response_length": 322770}
+2026-03-16 05:19:12,330INFO N/A N/A N/A {"timestamp": "2026-03-16T09:19:12.330084+00:00Z", "level": "INFO", "request_id": "394f852d-d8bc-4b97-a296-c754b050636c", "method": "GET", "path": "/comments/swagger.json", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:19:12,334INFO N/A N/A N/A {"timestamp": "2026-03-16T09:19:12.334179+00:00Z", "level": "INFO", "request_id": "56947f43-1825-47cf-ad81-5ef976615968", "status_code": 200, "duration_ms": 1.97, "path": "/comments/swagger.json", "response_length": 5658}
+2026-03-16 05:19:29,212INFO N/A N/A N/A {"timestamp": "2026-03-16T09:19:29.212319+00:00Z", "level": "INFO", "request_id": "9fb2e141-5b23-41f6-a1f0-7b53f809f678", "method": "GET", "path": "/users/docs", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:19:29,215INFO N/A N/A N/A {"timestamp": "2026-03-16T09:19:29.215129+00:00Z", "level": "INFO", "request_id": "e5bfaf67-28d4-4d1a-86f0-ecfb0f2341ef", "status_code": 200, "duration_ms": 0.93, "path": "/users/docs", "response_length": 3817}
+2026-03-16 05:19:29,295INFO N/A N/A N/A {"timestamp": "2026-03-16T09:19:29.295675+00:00Z", "level": "INFO", "request_id": "867711e0-a6fc-44a1-bcc9-87ee2945672e", "method": "GET", "path": "/swaggerui/droid-sans.css", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:19:29,297INFO N/A N/A N/A {"timestamp": "2026-03-16T09:19:29.297357+00:00Z", "level": "INFO", "request_id": "3fc4527a-4b30-482e-96c1-586c0e74a53b", "status_code": 304, "duration_ms": 1.08, "path": "/swaggerui/droid-sans.css", "response_length": 778}
+2026-03-16 05:19:29,301INFO N/A N/A N/A {"timestamp": "2026-03-16T09:19:29.301366+00:00Z", "level": "INFO", "request_id": "6914512a-42ca-478f-9f1f-8a7801b1217d", "method": "GET", "path": "/swaggerui/swagger-ui.css", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:19:29,303INFO N/A N/A N/A {"timestamp": "2026-03-16T09:19:29.303640+00:00Z", "level": "INFO", "request_id": "9115bbbf-1f70-4b98-8695-3487c6b143b6", "status_code": 304, "duration_ms": 1.48, "path": "/swaggerui/swagger-ui.css", "response_length": 145206}
+2026-03-16 05:19:29,305INFO N/A N/A N/A {"timestamp": "2026-03-16T09:19:29.305476+00:00Z", "level": "INFO", "request_id": "7445cccf-5502-48d3-9b5f-ef009b6154e3", "method": "GET", "path": "/swaggerui/swagger-ui-standalone-preset.js", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:19:29,306INFO N/A N/A N/A {"timestamp": "2026-03-16T09:19:29.306322+00:00Z", "level": "INFO", "request_id": "19810d06-71ad-4be5-9cba-1c959a8bf6a1", "method": "GET", "path": "/swaggerui/swagger-ui-bundle.js", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:19:29,309INFO N/A N/A N/A {"timestamp": "2026-03-16T09:19:29.309699+00:00Z", "level": "INFO", "request_id": "15e791ca-2b8d-4b44-99bd-b5b0c9768b70", "status_code": 304, "duration_ms": 0.75, "path": "/swaggerui/swagger-ui-bundle.js", "response_length": 1048219}
+2026-03-16 05:19:29,310INFO N/A N/A N/A {"timestamp": "2026-03-16T09:19:29.310417+00:00Z", "level": "INFO", "request_id": "f14e3560-5abb-4c89-bc38-e6ab0f568044", "status_code": 304, "duration_ms": 2.02, "path": "/swaggerui/swagger-ui-standalone-preset.js", "response_length": 322770}
+2026-03-16 05:19:29,397INFO N/A N/A N/A {"timestamp": "2026-03-16T09:19:29.397281+00:00Z", "level": "INFO", "request_id": "257a553d-19c9-4280-a817-91852bd3928f", "method": "GET", "path": "/users/swagger.json", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:19:29,401INFO N/A N/A N/A {"timestamp": "2026-03-16T09:19:29.401590+00:00Z", "level": "INFO", "request_id": "32b63c09-c56b-47ec-b331-2e665389eef9", "status_code": 200, "duration_ms": 1.78, "path": "/users/swagger.json", "response_length": 3960}
+2026-03-16 05:20:17,120INFO N/A N/A N/A {"timestamp": "2026-03-16T09:20:17.120594+00:00Z", "level": "INFO", "request_id": "1941494a-4d6d-4a9a-a370-5adc27f2a2d1", "method": "POST", "path": "/users/register", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0, "request_body": {}}
+2026-03-16 05:20:17,122ERROR N/A N/A N/A [FAIL] request_id=3054319b-c277-4c61-85d7-519fb2a1e78c, response={'code': 400, 'error': '请求体不能为空，且必须为JSON格式', 'request_id': '3054319b-c277-4c61-85d7-519fb2a1e78c'}
+2026-03-16 05:20:17,123WARNING N/A N/A N/A {"timestamp": "2026-03-16T09:20:17.123330+00:00Z", "level": "WARNING", "request_id": "3054319b-c277-4c61-85d7-519fb2a1e78c", "status_code": 400, "duration_ms": 0.79, "path": "/users/register", "response_length": 183}
+2026-03-16 05:20:51,618INFO N/A N/A N/A {"timestamp": "2026-03-16T09:20:51.617945+00:00Z", "level": "INFO", "request_id": "a9ae91ec-0814-4fff-880d-4574dd1838d0", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:20:51,618WARNING cef613c7-ef1f-44db-8c4f-9a712639c7fe N/A -0.0 [CUSTOM ERROR] request_id=cef613c7-ef1f-44db-8c4f-9a712639c7fe, error_code=10002, msg=访问的接口/资源不存在
+2026-03-16 05:20:51,619WARNING N/A N/A N/A {"timestamp": "2026-03-16T09:20:51.619299+00:00Z", "level": "WARNING", "request_id": "cef613c7-ef1f-44db-8c4f-9a712639c7fe", "status_code": 404, "duration_ms": 0.86, "path": "/", "response_length": 121}
+2026-03-16 05:20:57,075INFO N/A N/A N/A {"timestamp": "2026-03-16T09:20:57.075477+00:00Z", "level": "INFO", "request_id": "089b01fa-5279-4d9e-9d1f-479e5446c6dc", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:20:57,076WARNING d118c2ff-0fbb-4cf5-a74b-54b733a183f9 N/A -0.0 [CUSTOM ERROR] request_id=d118c2ff-0fbb-4cf5-a74b-54b733a183f9, error_code=10002, msg=访问的接口/资源不存在
+2026-03-16 05:20:57,077WARNING N/A N/A N/A {"timestamp": "2026-03-16T09:20:57.077537+00:00Z", "level": "WARNING", "request_id": "d118c2ff-0fbb-4cf5-a74b-54b733a183f9", "status_code": 404, "duration_ms": 1.5, "path": "/", "response_length": 121}
+2026-03-16 05:20:57,943INFO N/A N/A N/A {"timestamp": "2026-03-16T09:20:57.943619+00:00Z", "level": "INFO", "request_id": "6151a6b1-eaa7-4fea-ad1c-e9ccf45c30ae", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-16 05:20:57,945WARNING 77f02199-8403-4600-8021-b9c68114c1a7 N/A -0.0 [CUSTOM ERROR] request_id=77f02199-8403-4600-8021-b9c68114c1a7, error_code=10002, msg=访问的接口/资源不存在
+2026-03-16 05:20:57,946WARNING N/A N/A N/A {"timestamp": "2026-03-16T09:20:57.946056+00:00Z", "level": "WARNING", "request_id": "77f02199-8403-4600-8021-b9c68114c1a7", "status_code": 404, "duration_ms": 1.49, "path": "/", "response_length": 121}

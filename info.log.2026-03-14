@@ -1,0 +1,1544 @@
+2026-03-14 03:47:58,459INFO N/A N/A N/A 日志初始化完成，测试环境：False
+2026-03-14 03:49:54,328INFO N/A N/A N/A 日志初始化完成，测试环境：False
+2026-03-14 03:49:54,335INFO N/A N/A N/A  所有异常处理器注册完成
+2026-03-14 03:52:13,439INFO N/A N/A N/A 日志初始化完成，测试环境：False
+2026-03-14 03:52:13,445INFO N/A N/A N/A  所有异常处理器注册完成
+2026-03-14 03:52:13,461INFO N/A N/A N/A SELECT DATABASE()
+2026-03-14 03:52:13,462INFO N/A N/A N/A [raw sql] {}
+2026-03-14 03:52:13,464INFO N/A N/A N/A SELECT @@sql_mode
+2026-03-14 03:52:13,465INFO N/A N/A N/A [raw sql] {}
+2026-03-14 03:52:13,466INFO N/A N/A N/A SELECT @@lower_case_table_names
+2026-03-14 03:52:13,467INFO N/A N/A N/A [raw sql] {}
+2026-03-14 03:52:13,468INFO N/A N/A N/A BEGIN (implicit)
+2026-03-14 03:52:13,469INFO N/A N/A N/A DESCRIBE `weibo_platform`.`users`
+2026-03-14 03:52:13,469INFO N/A N/A N/A [raw sql] {}
+2026-03-14 03:52:13,471INFO N/A N/A N/A ROLLBACK
+2026-03-14 03:52:13,472INFO N/A N/A N/A BEGIN (implicit)
+2026-03-14 03:52:13,473INFO N/A N/A N/A DESCRIBE `weibo_platform`.`users`
+2026-03-14 03:52:13,473INFO N/A N/A N/A [raw sql] {}
+2026-03-14 03:52:13,477INFO N/A N/A N/A 
+CREATE TABLE users (
+	id INTEGER NOT NULL AUTO_INCREMENT, 
+	username VARCHAR(64) NOT NULL, 
+	email VARCHAR(120) NOT NULL, 
+	password_hash VARCHAR(128) NOT NULL, 
+	is_active BOOL, 
+	is_admin BOOL, 
+	created_at DATETIME, 
+	last_login DATETIME, 
+	password_history TEXT, 
+	login_fail_count INTEGER NOT NULL, 
+	lock_until DATETIME, 
+	mfa_secret VARCHAR(20), 
+	mfa_enabled BOOL NOT NULL, 
+	PRIMARY KEY (id)
+)
+
+
+2026-03-14 03:52:13,478INFO N/A N/A N/A [no key 0.00146s] {}
+2026-03-14 03:52:13,545INFO N/A N/A N/A CREATE UNIQUE INDEX ix_users_username ON users (username)
+2026-03-14 03:52:13,546INFO N/A N/A N/A [no key 0.00058s] {}
+2026-03-14 03:52:13,618INFO N/A N/A N/A CREATE UNIQUE INDEX ix_users_email ON users (email)
+2026-03-14 03:52:13,618INFO N/A N/A N/A [no key 0.00035s] {}
+2026-03-14 03:52:13,680INFO N/A N/A N/A COMMIT
+2026-03-14 03:52:13,681WARNING N/A N/A N/A [DEV MODE] Auto-creating database tables(only for development)
+2026-03-14 03:52:13,682INFO N/A N/A N/A ✅ 成功注册蓝图 comments_bp，前缀：根路径
+2026-03-14 03:52:13,683INFO N/A N/A N/A ✅ 成功注册蓝图 follows_bp，前缀：根路径
+2026-03-14 03:52:13,683INFO N/A N/A N/A ✅ 成功注册蓝图 posts_bp，前缀：根路径
+2026-03-14 03:52:13,684INFO N/A N/A N/A ✅ 成功注册蓝图 likes_bp，前缀：根路径
+2026-03-14 03:52:13,685INFO N/A N/A N/A ✅ 成功注册蓝图 notifications_bp，前缀：根路径
+2026-03-14 03:52:13,685INFO N/A N/A N/A ✅ 成功注册蓝图 users_bp，前缀：/users
+2026-03-14 03:52:13,686ERROR N/A N/A N/A ❌ 注册蓝图 auth_bp 失败：No module named 'app.auth'
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/core/blueprint_registry.py", line 16, in register_all_blueprints
+    module = __import__(module_path, fromlist=[bp_name])
+ModuleNotFoundError: No module named 'app.auth'
+2026-03-14 03:52:13,688ERROR N/A N/A N/A ❌ 注册蓝图 feeds_bp 失败：No module named 'app.feeds'
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/core/blueprint_registry.py", line 16, in register_all_blueprints
+    module = __import__(module_path, fromlist=[bp_name])
+ModuleNotFoundError: No module named 'app.feeds'
+2026-03-14 03:52:13,689INFO N/A N/A N/A 📌 所有蓝图注册完成
+2026-03-14 03:55:33,002INFO N/A N/A N/A 日志初始化完成，测试环境：False
+2026-03-14 03:55:33,009INFO N/A N/A N/A  所有异常处理器注册完成
+2026-03-14 03:55:33,014INFO N/A N/A N/A SELECT DATABASE()
+2026-03-14 03:55:33,015INFO N/A N/A N/A [raw sql] {}
+2026-03-14 03:55:33,017INFO N/A N/A N/A SELECT @@sql_mode
+2026-03-14 03:55:33,017INFO N/A N/A N/A [raw sql] {}
+2026-03-14 03:55:33,018INFO N/A N/A N/A SELECT @@lower_case_table_names
+2026-03-14 03:55:33,019INFO N/A N/A N/A [raw sql] {}
+2026-03-14 03:55:33,021INFO N/A N/A N/A BEGIN (implicit)
+2026-03-14 03:55:33,021INFO N/A N/A N/A DESCRIBE `weibo_platform`.`users`
+2026-03-14 03:55:33,022INFO N/A N/A N/A [raw sql] {}
+2026-03-14 03:55:33,024INFO N/A N/A N/A ROLLBACK
+2026-03-14 03:55:33,026INFO N/A N/A N/A ✅ 成功注册蓝图 comments_bp，前缀：根路径
+2026-03-14 03:55:33,027INFO N/A N/A N/A ✅ 成功注册蓝图 follows_bp，前缀：根路径
+2026-03-14 03:55:33,028INFO N/A N/A N/A ✅ 成功注册蓝图 posts_bp，前缀：根路径
+2026-03-14 03:55:33,029INFO N/A N/A N/A ✅ 成功注册蓝图 likes_bp，前缀：根路径
+2026-03-14 03:55:33,030INFO N/A N/A N/A ✅ 成功注册蓝图 notifications_bp，前缀：根路径
+2026-03-14 03:55:33,030INFO N/A N/A N/A ✅ 成功注册蓝图 users_bp，前缀：/users
+2026-03-14 03:55:33,032INFO N/A N/A N/A ✅ 成功注册蓝图 auth_bp，前缀：/auth
+2026-03-14 03:55:33,034INFO N/A N/A N/A ✅ 成功注册蓝图 feeds_bp，前缀：/feeds
+2026-03-14 03:55:33,035INFO N/A N/A N/A 📌 所有蓝图注册完成
+2026-03-14 03:55:51,162INFO N/A N/A N/A {"timestamp": "2026-03-14T07:55:51.162245+00:00Z", "level": "INFO", "request_id": "e8d1824d-dd53-4e68-9992-86a6ec482b31", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 03:55:51,163ERROR N/A N/A N/A 认证校验失败：flask-jwt-extended is required but not installed
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 76, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 23, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+2026-03-14 03:55:51,165WARNING e8d1824d-dd53-4e68-9992-86a6ec482b31 N/A -0.0 [CUSTOM ERROR] request_id=e8d1824d-dd53-4e68-9992-86a6ec482b31, error_code=10004, msg=认证失败，请重新登录
+2026-03-14 03:55:51,219ERROR N/A N/A N/A Error on request:
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2193, in wsgi_app
+    response = self.handle_exception(e)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1487, in full_dispatch_request
+    return self.finalize_request(rv)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1508, in finalize_request
+    response = self.process_response(response)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2002, in process_response
+    response = self.ensure_sync(func)(response)
+  File "/home/app/weibo-platform/middlewares/request_hooks.py", line 46, in after_request_hook
+    g.log_extra["elapsed_time"]=elapsed_time
+    ^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/ctx.py", line 54, in __getattr__
+    raise AttributeError(name) from None
+AttributeError: log_extra
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/werkzeug/serving.py", line 370, in run_wsgi
+    execute(self.server.app)
+    ~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/werkzeug/serving.py", line 331, in execute
+    application_iter = app(environ, start_response)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2213, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2206, in wsgi_app
+    ctx.pop(error)
+    ~~~~~~~^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/ctx.py", line 401, in pop
+    self.app.do_teardown_request(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2038, in do_teardown_request
+    self.ensure_sync(func)(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "/home/app/weibo-platform/middlewares/logging_middleware.py", line 88, in teardown_request
+    "traceback": logging.Formatter().formatException(exception.__traceback__)
+                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/logging/__init__.py", line 666, in formatException
+    tb = ei[2]
+         ~~^^^
+TypeError: 'traceback' object is not subscriptable
+2026-03-14 03:55:53,395INFO N/A N/A N/A {"timestamp": "2026-03-14T07:55:53.395161+00:00Z", "level": "INFO", "request_id": "cf544b71-6dd8-4447-b4c1-46d9309585ca", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 03:55:53,395ERROR N/A N/A N/A 认证校验失败：flask-jwt-extended is required but not installed
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 76, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 23, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+2026-03-14 03:55:53,397WARNING cf544b71-6dd8-4447-b4c1-46d9309585ca N/A -0.0 [CUSTOM ERROR] request_id=cf544b71-6dd8-4447-b4c1-46d9309585ca, error_code=10004, msg=认证失败，请重新登录
+2026-03-14 03:55:53,402ERROR N/A N/A N/A Error on request:
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2193, in wsgi_app
+    response = self.handle_exception(e)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1487, in full_dispatch_request
+    return self.finalize_request(rv)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1508, in finalize_request
+    response = self.process_response(response)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2002, in process_response
+    response = self.ensure_sync(func)(response)
+  File "/home/app/weibo-platform/middlewares/request_hooks.py", line 46, in after_request_hook
+    g.log_extra["elapsed_time"]=elapsed_time
+    ^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/ctx.py", line 54, in __getattr__
+    raise AttributeError(name) from None
+AttributeError: log_extra
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/werkzeug/serving.py", line 370, in run_wsgi
+    execute(self.server.app)
+    ~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/werkzeug/serving.py", line 331, in execute
+    application_iter = app(environ, start_response)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2213, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2206, in wsgi_app
+    ctx.pop(error)
+    ~~~~~~~^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/ctx.py", line 401, in pop
+    self.app.do_teardown_request(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2038, in do_teardown_request
+    self.ensure_sync(func)(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "/home/app/weibo-platform/middlewares/logging_middleware.py", line 88, in teardown_request
+    "traceback": logging.Formatter().formatException(exception.__traceback__)
+                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/logging/__init__.py", line 666, in formatException
+    tb = ei[2]
+         ~~^^^
+TypeError: 'traceback' object is not subscriptable
+2026-03-14 03:55:54,506INFO N/A N/A N/A {"timestamp": "2026-03-14T07:55:54.506692+00:00Z", "level": "INFO", "request_id": "c2e99082-a113-4657-9ad2-206a4448abd3", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 03:55:54,507ERROR N/A N/A N/A 认证校验失败：flask-jwt-extended is required but not installed
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 76, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 23, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+2026-03-14 03:55:54,508WARNING c2e99082-a113-4657-9ad2-206a4448abd3 N/A -0.0 [CUSTOM ERROR] request_id=c2e99082-a113-4657-9ad2-206a4448abd3, error_code=10004, msg=认证失败，请重新登录
+2026-03-14 03:55:54,513ERROR N/A N/A N/A Error on request:
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2193, in wsgi_app
+    response = self.handle_exception(e)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1487, in full_dispatch_request
+    return self.finalize_request(rv)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1508, in finalize_request
+    response = self.process_response(response)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2002, in process_response
+    response = self.ensure_sync(func)(response)
+  File "/home/app/weibo-platform/middlewares/request_hooks.py", line 46, in after_request_hook
+    g.log_extra["elapsed_time"]=elapsed_time
+    ^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/ctx.py", line 54, in __getattr__
+    raise AttributeError(name) from None
+AttributeError: log_extra
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/werkzeug/serving.py", line 370, in run_wsgi
+    execute(self.server.app)
+    ~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/werkzeug/serving.py", line 331, in execute
+    application_iter = app(environ, start_response)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2213, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2206, in wsgi_app
+    ctx.pop(error)
+    ~~~~~~~^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/ctx.py", line 401, in pop
+    self.app.do_teardown_request(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2038, in do_teardown_request
+    self.ensure_sync(func)(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "/home/app/weibo-platform/middlewares/logging_middleware.py", line 88, in teardown_request
+    "traceback": logging.Formatter().formatException(exception.__traceback__)
+                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/logging/__init__.py", line 666, in formatException
+    tb = ei[2]
+         ~~^^^
+TypeError: 'traceback' object is not subscriptable
+2026-03-14 03:55:56,006INFO N/A N/A N/A {"timestamp": "2026-03-14T07:55:56.006120+00:00Z", "level": "INFO", "request_id": "69a1fe15-3ae6-4194-afa2-fca4b5813ec3", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 03:55:56,006ERROR N/A N/A N/A 认证校验失败：flask-jwt-extended is required but not installed
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 76, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 23, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+2026-03-14 03:55:56,009WARNING 69a1fe15-3ae6-4194-afa2-fca4b5813ec3 N/A -0.0 [CUSTOM ERROR] request_id=69a1fe15-3ae6-4194-afa2-fca4b5813ec3, error_code=10004, msg=认证失败，请重新登录
+2026-03-14 03:55:56,014ERROR N/A N/A N/A Error on request:
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2193, in wsgi_app
+    response = self.handle_exception(e)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1487, in full_dispatch_request
+    return self.finalize_request(rv)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1508, in finalize_request
+    response = self.process_response(response)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2002, in process_response
+    response = self.ensure_sync(func)(response)
+  File "/home/app/weibo-platform/middlewares/request_hooks.py", line 46, in after_request_hook
+    g.log_extra["elapsed_time"]=elapsed_time
+    ^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/ctx.py", line 54, in __getattr__
+    raise AttributeError(name) from None
+AttributeError: log_extra
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/werkzeug/serving.py", line 370, in run_wsgi
+    execute(self.server.app)
+    ~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/werkzeug/serving.py", line 331, in execute
+    application_iter = app(environ, start_response)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2213, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2206, in wsgi_app
+    ctx.pop(error)
+    ~~~~~~~^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/ctx.py", line 401, in pop
+    self.app.do_teardown_request(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2038, in do_teardown_request
+    self.ensure_sync(func)(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "/home/app/weibo-platform/middlewares/logging_middleware.py", line 88, in teardown_request
+    "traceback": logging.Formatter().formatException(exception.__traceback__)
+                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/logging/__init__.py", line 666, in formatException
+    tb = ei[2]
+         ~~^^^
+TypeError: 'traceback' object is not subscriptable
+2026-03-14 03:58:32,529INFO N/A N/A N/A {"timestamp": "2026-03-14T07:58:32.529778+00:00Z", "level": "INFO", "request_id": "65f4c856-5cf2-4317-b68a-301515a2db87", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 03:58:32,530ERROR N/A N/A N/A 认证校验失败：flask-jwt-extended is required but not installed
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 76, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 23, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+2026-03-14 03:58:32,532WARNING 65f4c856-5cf2-4317-b68a-301515a2db87 N/A -0.0 [CUSTOM ERROR] request_id=65f4c856-5cf2-4317-b68a-301515a2db87, error_code=10004, msg=认证失败，请重新登录
+2026-03-14 03:58:32,536ERROR N/A N/A N/A Error on request:
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2193, in wsgi_app
+    response = self.handle_exception(e)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1487, in full_dispatch_request
+    return self.finalize_request(rv)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1508, in finalize_request
+    response = self.process_response(response)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2002, in process_response
+    response = self.ensure_sync(func)(response)
+  File "/home/app/weibo-platform/middlewares/request_hooks.py", line 46, in after_request_hook
+    g.log_extra["elapsed_time"]=elapsed_time
+    ^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/ctx.py", line 54, in __getattr__
+    raise AttributeError(name) from None
+AttributeError: log_extra
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/werkzeug/serving.py", line 370, in run_wsgi
+    execute(self.server.app)
+    ~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/werkzeug/serving.py", line 331, in execute
+    application_iter = app(environ, start_response)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2213, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2206, in wsgi_app
+    ctx.pop(error)
+    ~~~~~~~^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/ctx.py", line 401, in pop
+    self.app.do_teardown_request(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2038, in do_teardown_request
+    self.ensure_sync(func)(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "/home/app/weibo-platform/middlewares/logging_middleware.py", line 88, in teardown_request
+    "traceback": logging.Formatter().formatException(exception.__traceback__)
+                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/logging/__init__.py", line 666, in formatException
+    tb = ei[2]
+         ~~^^^
+TypeError: 'traceback' object is not subscriptable
+2026-03-14 03:58:32,627INFO N/A N/A N/A {"timestamp": "2026-03-14T07:58:32.627633+00:00Z", "level": "INFO", "request_id": "79e2aba5-0526-4432-8f9d-c03d4296ed71", "method": "GET", "path": "/favicon.ico", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 03:58:32,628ERROR N/A N/A N/A 认证校验失败：flask-jwt-extended is required but not installed
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 76, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 23, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+2026-03-14 03:58:32,630WARNING 79e2aba5-0526-4432-8f9d-c03d4296ed71 N/A -0.0 [CUSTOM ERROR] request_id=79e2aba5-0526-4432-8f9d-c03d4296ed71, error_code=10004, msg=认证失败，请重新登录
+2026-03-14 03:58:32,634ERROR N/A N/A N/A Error on request:
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2193, in wsgi_app
+    response = self.handle_exception(e)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1487, in full_dispatch_request
+    return self.finalize_request(rv)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1508, in finalize_request
+    response = self.process_response(response)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2002, in process_response
+    response = self.ensure_sync(func)(response)
+  File "/home/app/weibo-platform/middlewares/request_hooks.py", line 46, in after_request_hook
+    g.log_extra["elapsed_time"]=elapsed_time
+    ^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/ctx.py", line 54, in __getattr__
+    raise AttributeError(name) from None
+AttributeError: log_extra
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/werkzeug/serving.py", line 370, in run_wsgi
+    execute(self.server.app)
+    ~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/werkzeug/serving.py", line 331, in execute
+    application_iter = app(environ, start_response)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2213, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2206, in wsgi_app
+    ctx.pop(error)
+    ~~~~~~~^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/ctx.py", line 401, in pop
+    self.app.do_teardown_request(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2038, in do_teardown_request
+    self.ensure_sync(func)(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "/home/app/weibo-platform/middlewares/logging_middleware.py", line 88, in teardown_request
+    "traceback": logging.Formatter().formatException(exception.__traceback__)
+                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/logging/__init__.py", line 666, in formatException
+    tb = ei[2]
+         ~~^^^
+TypeError: 'traceback' object is not subscriptable
+2026-03-14 04:07:57,451INFO N/A N/A N/A 日志初始化完成，测试环境：False
+2026-03-14 04:07:57,458INFO N/A N/A N/A  所有异常处理器注册完成
+2026-03-14 04:07:57,464INFO N/A N/A N/A SELECT DATABASE()
+2026-03-14 04:07:57,464INFO N/A N/A N/A [raw sql] {}
+2026-03-14 04:07:57,467INFO N/A N/A N/A SELECT @@sql_mode
+2026-03-14 04:07:57,467INFO N/A N/A N/A [raw sql] {}
+2026-03-14 04:07:57,468INFO N/A N/A N/A SELECT @@lower_case_table_names
+2026-03-14 04:07:57,469INFO N/A N/A N/A [raw sql] {}
+2026-03-14 04:07:57,472INFO N/A N/A N/A BEGIN (implicit)
+2026-03-14 04:07:57,472INFO N/A N/A N/A DESCRIBE `weibo_platform`.`users`
+2026-03-14 04:07:57,473INFO N/A N/A N/A [raw sql] {}
+2026-03-14 04:07:57,475INFO N/A N/A N/A ROLLBACK
+2026-03-14 04:07:57,477INFO N/A N/A N/A ✅ 成功注册蓝图 comments_bp，前缀：根路径
+2026-03-14 04:07:57,477INFO N/A N/A N/A ✅ 成功注册蓝图 follows_bp，前缀：根路径
+2026-03-14 04:07:57,478INFO N/A N/A N/A ✅ 成功注册蓝图 posts_bp，前缀：根路径
+2026-03-14 04:07:57,479INFO N/A N/A N/A ✅ 成功注册蓝图 likes_bp，前缀：根路径
+2026-03-14 04:07:57,480INFO N/A N/A N/A ✅ 成功注册蓝图 notifications_bp，前缀：根路径
+2026-03-14 04:07:57,480INFO N/A N/A N/A ✅ 成功注册蓝图 users_bp，前缀：/users
+2026-03-14 04:07:57,482INFO N/A N/A N/A ✅ 成功注册蓝图 auth_bp，前缀：/auth
+2026-03-14 04:07:57,484INFO N/A N/A N/A ✅ 成功注册蓝图 feeds_bp，前缀：/feeds
+2026-03-14 04:07:57,484INFO N/A N/A N/A 📌 所有蓝图注册完成
+2026-03-14 04:08:19,196INFO N/A N/A N/A {"timestamp": "2026-03-14T08:08:19.196133+00:00Z", "level": "INFO", "request_id": "8340ef73-a437-4afa-93e2-b5f3a526adc2", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 04:08:19,196ERROR N/A N/A N/A 认证校验失败：flask-jwt-extended is required but not installed
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 95, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 42, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+2026-03-14 04:08:19,198WARNING 8340ef73-a437-4afa-93e2-b5f3a526adc2 N/A -0.0 [CUSTOM ERROR] request_id=8340ef73-a437-4afa-93e2-b5f3a526adc2, error_code=10004, msg=认证失败，请重新登录
+2026-03-14 04:08:19,202ERROR N/A N/A N/A Unhandled exception: Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2193, in wsgi_app
+    response = self.handle_exception(e)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1487, in full_dispatch_request
+    return self.finalize_request(rv)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1508, in finalize_request
+    response = self.process_response(response)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2002, in process_response
+    response = self.ensure_sync(func)(response)
+  File "/home/app/weibo-platform/middlewares/request_hooks.py", line 46, in after_request_hook
+    g.log_extra["elapsed_time"]=elapsed_time
+    ^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/ctx.py", line 54, in __getattr__
+    raise AttributeError(name) from None
+AttributeError: log_extra
+
+2026-03-14 04:08:19,214ERROR N/A N/A N/A Error on request:
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/werkzeug/serving.py", line 370, in run_wsgi
+    execute(self.server.app)
+    ~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/werkzeug/serving.py", line 331, in execute
+    application_iter = app(environ, start_response)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2213, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2193, in wsgi_app
+    response = self.handle_exception(e)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1487, in full_dispatch_request
+    return self.finalize_request(rv)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1508, in finalize_request
+    response = self.process_response(response)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2002, in process_response
+    response = self.ensure_sync(func)(response)
+  File "/home/app/weibo-platform/middlewares/request_hooks.py", line 46, in after_request_hook
+    g.log_extra["elapsed_time"]=elapsed_time
+    ^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/ctx.py", line 54, in __getattr__
+    raise AttributeError(name) from None
+AttributeError: log_extra
+2026-03-14 04:08:19,293INFO N/A N/A N/A {"timestamp": "2026-03-14T08:08:19.293312+00:00Z", "level": "INFO", "request_id": "ce65a12e-a4f8-4e9d-a100-6aa5019a0dab", "method": "GET", "path": "/favicon.ico", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 04:08:19,294ERROR N/A N/A N/A 认证校验失败：flask-jwt-extended is required but not installed
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 95, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 42, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+2026-03-14 04:08:19,298WARNING ce65a12e-a4f8-4e9d-a100-6aa5019a0dab N/A -0.0 [CUSTOM ERROR] request_id=ce65a12e-a4f8-4e9d-a100-6aa5019a0dab, error_code=10004, msg=认证失败，请重新登录
+2026-03-14 04:08:19,303ERROR N/A N/A N/A Unhandled exception: Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2193, in wsgi_app
+    response = self.handle_exception(e)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1487, in full_dispatch_request
+    return self.finalize_request(rv)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1508, in finalize_request
+    response = self.process_response(response)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2002, in process_response
+    response = self.ensure_sync(func)(response)
+  File "/home/app/weibo-platform/middlewares/request_hooks.py", line 46, in after_request_hook
+    g.log_extra["elapsed_time"]=elapsed_time
+    ^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/ctx.py", line 54, in __getattr__
+    raise AttributeError(name) from None
+AttributeError: log_extra
+
+2026-03-14 04:08:19,309ERROR N/A N/A N/A Error on request:
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/werkzeug/serving.py", line 370, in run_wsgi
+    execute(self.server.app)
+    ~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/werkzeug/serving.py", line 331, in execute
+    application_iter = app(environ, start_response)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2213, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2193, in wsgi_app
+    response = self.handle_exception(e)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1487, in full_dispatch_request
+    return self.finalize_request(rv)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1508, in finalize_request
+    response = self.process_response(response)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2002, in process_response
+    response = self.ensure_sync(func)(response)
+  File "/home/app/weibo-platform/middlewares/request_hooks.py", line 46, in after_request_hook
+    g.log_extra["elapsed_time"]=elapsed_time
+    ^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/ctx.py", line 54, in __getattr__
+    raise AttributeError(name) from None
+AttributeError: log_extra
+2026-03-14 04:10:53,776INFO N/A N/A N/A {"timestamp": "2026-03-14T08:10:53.776635+00:00Z", "level": "INFO", "request_id": "93dbeda6-c50b-412c-bb02-45d2dd53a025", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 04:10:53,777ERROR N/A N/A N/A 认证校验失败：flask-jwt-extended is required but not installed
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 95, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 42, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+2026-03-14 04:10:53,778WARNING 93dbeda6-c50b-412c-bb02-45d2dd53a025 N/A -0.0 [CUSTOM ERROR] request_id=93dbeda6-c50b-412c-bb02-45d2dd53a025, error_code=10004, msg=认证失败，请重新登录
+2026-03-14 04:10:53,780ERROR N/A N/A N/A Unhandled exception: Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2193, in wsgi_app
+    response = self.handle_exception(e)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1487, in full_dispatch_request
+    return self.finalize_request(rv)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1508, in finalize_request
+    response = self.process_response(response)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2002, in process_response
+    response = self.ensure_sync(func)(response)
+  File "/home/app/weibo-platform/middlewares/request_hooks.py", line 46, in after_request_hook
+    g.log_extra["elapsed_time"]=elapsed_time
+    ^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/ctx.py", line 54, in __getattr__
+    raise AttributeError(name) from None
+AttributeError: log_extra
+
+2026-03-14 04:10:53,785ERROR N/A N/A N/A Error on request:
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/werkzeug/serving.py", line 370, in run_wsgi
+    execute(self.server.app)
+    ~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/werkzeug/serving.py", line 331, in execute
+    application_iter = app(environ, start_response)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2213, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2193, in wsgi_app
+    response = self.handle_exception(e)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1487, in full_dispatch_request
+    return self.finalize_request(rv)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1508, in finalize_request
+    response = self.process_response(response)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2002, in process_response
+    response = self.ensure_sync(func)(response)
+  File "/home/app/weibo-platform/middlewares/request_hooks.py", line 46, in after_request_hook
+    g.log_extra["elapsed_time"]=elapsed_time
+    ^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/ctx.py", line 54, in __getattr__
+    raise AttributeError(name) from None
+AttributeError: log_extra
+2026-03-14 04:10:58,913INFO N/A N/A N/A {"timestamp": "2026-03-14T08:10:58.913163+00:00Z", "level": "INFO", "request_id": "f0fee333-1f00-458b-bc57-0d06647db6f3", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 04:10:58,913ERROR N/A N/A N/A 认证校验失败：flask-jwt-extended is required but not installed
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 95, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 42, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+2026-03-14 04:10:58,915WARNING f0fee333-1f00-458b-bc57-0d06647db6f3 N/A -0.0 [CUSTOM ERROR] request_id=f0fee333-1f00-458b-bc57-0d06647db6f3, error_code=10004, msg=认证失败，请重新登录
+2026-03-14 04:10:58,919ERROR N/A N/A N/A Unhandled exception: Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2193, in wsgi_app
+    response = self.handle_exception(e)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1487, in full_dispatch_request
+    return self.finalize_request(rv)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1508, in finalize_request
+    response = self.process_response(response)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2002, in process_response
+    response = self.ensure_sync(func)(response)
+  File "/home/app/weibo-platform/middlewares/request_hooks.py", line 46, in after_request_hook
+    g.log_extra["elapsed_time"]=elapsed_time
+    ^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/ctx.py", line 54, in __getattr__
+    raise AttributeError(name) from None
+AttributeError: log_extra
+
+2026-03-14 04:10:58,925ERROR N/A N/A N/A Error on request:
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/werkzeug/serving.py", line 370, in run_wsgi
+    execute(self.server.app)
+    ~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/werkzeug/serving.py", line 331, in execute
+    application_iter = app(environ, start_response)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2213, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2193, in wsgi_app
+    response = self.handle_exception(e)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1487, in full_dispatch_request
+    return self.finalize_request(rv)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1508, in finalize_request
+    response = self.process_response(response)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2002, in process_response
+    response = self.ensure_sync(func)(response)
+  File "/home/app/weibo-platform/middlewares/request_hooks.py", line 46, in after_request_hook
+    g.log_extra["elapsed_time"]=elapsed_time
+    ^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/ctx.py", line 54, in __getattr__
+    raise AttributeError(name) from None
+AttributeError: log_extra
+2026-03-14 04:10:59,213INFO N/A N/A N/A {"timestamp": "2026-03-14T08:10:59.213755+00:00Z", "level": "INFO", "request_id": "88193e72-6021-42f9-82fb-d554171931d8", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 04:10:59,214ERROR N/A N/A N/A 认证校验失败：flask-jwt-extended is required but not installed
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 95, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 42, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+2026-03-14 04:10:59,216WARNING 88193e72-6021-42f9-82fb-d554171931d8 N/A -0.0 [CUSTOM ERROR] request_id=88193e72-6021-42f9-82fb-d554171931d8, error_code=10004, msg=认证失败，请重新登录
+2026-03-14 04:10:59,219ERROR N/A N/A N/A Unhandled exception: Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2193, in wsgi_app
+    response = self.handle_exception(e)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1487, in full_dispatch_request
+    return self.finalize_request(rv)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1508, in finalize_request
+    response = self.process_response(response)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2002, in process_response
+    response = self.ensure_sync(func)(response)
+  File "/home/app/weibo-platform/middlewares/request_hooks.py", line 46, in after_request_hook
+    g.log_extra["elapsed_time"]=elapsed_time
+    ^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/ctx.py", line 54, in __getattr__
+    raise AttributeError(name) from None
+AttributeError: log_extra
+
+2026-03-14 04:10:59,225ERROR N/A N/A N/A Error on request:
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/werkzeug/serving.py", line 370, in run_wsgi
+    execute(self.server.app)
+    ~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/werkzeug/serving.py", line 331, in execute
+    application_iter = app(environ, start_response)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2213, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2193, in wsgi_app
+    response = self.handle_exception(e)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1487, in full_dispatch_request
+    return self.finalize_request(rv)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1508, in finalize_request
+    response = self.process_response(response)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2002, in process_response
+    response = self.ensure_sync(func)(response)
+  File "/home/app/weibo-platform/middlewares/request_hooks.py", line 46, in after_request_hook
+    g.log_extra["elapsed_time"]=elapsed_time
+    ^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/ctx.py", line 54, in __getattr__
+    raise AttributeError(name) from None
+AttributeError: log_extra
+2026-03-14 04:18:39,413INFO N/A N/A N/A 日志初始化完成，测试环境：False
+2026-03-14 04:21:23,406INFO N/A N/A N/A 日志初始化完成，测试环境：False
+2026-03-14 04:21:23,427INFO N/A N/A N/A  所有异常处理器注册完成
+2026-03-14 04:21:23,432INFO N/A N/A N/A SELECT DATABASE()
+2026-03-14 04:21:23,433INFO N/A N/A N/A [raw sql] {}
+2026-03-14 04:21:23,435INFO N/A N/A N/A SELECT @@sql_mode
+2026-03-14 04:21:23,436INFO N/A N/A N/A [raw sql] {}
+2026-03-14 04:21:23,437INFO N/A N/A N/A SELECT @@lower_case_table_names
+2026-03-14 04:21:23,438INFO N/A N/A N/A [raw sql] {}
+2026-03-14 04:21:23,440INFO N/A N/A N/A BEGIN (implicit)
+2026-03-14 04:21:23,441INFO N/A N/A N/A DESCRIBE `weibo_platform`.`users`
+2026-03-14 04:21:23,441INFO N/A N/A N/A [raw sql] {}
+2026-03-14 04:21:23,444INFO N/A N/A N/A ROLLBACK
+2026-03-14 04:21:23,445INFO N/A N/A N/A ✅ 成功注册蓝图 comments_bp，前缀：根路径
+2026-03-14 04:21:23,446INFO N/A N/A N/A ✅ 成功注册蓝图 follows_bp，前缀：根路径
+2026-03-14 04:21:23,447INFO N/A N/A N/A ✅ 成功注册蓝图 posts_bp，前缀：根路径
+2026-03-14 04:21:23,448INFO N/A N/A N/A ✅ 成功注册蓝图 likes_bp，前缀：根路径
+2026-03-14 04:21:23,449INFO N/A N/A N/A ✅ 成功注册蓝图 notifications_bp，前缀：根路径
+2026-03-14 04:21:23,450INFO N/A N/A N/A ✅ 成功注册蓝图 users_bp，前缀：/users
+2026-03-14 04:21:23,451INFO N/A N/A N/A ✅ 成功注册蓝图 auth_bp，前缀：/auth
+2026-03-14 04:21:23,453INFO N/A N/A N/A ✅ 成功注册蓝图 feeds_bp，前缀：/feeds
+2026-03-14 04:21:23,453INFO N/A N/A N/A 📌 所有蓝图注册完成
+2026-03-14 04:21:24,581INFO N/A N/A N/A 日志初始化完成，测试环境：False
+2026-03-14 04:21:24,601INFO N/A N/A N/A  所有异常处理器注册完成
+2026-03-14 04:21:24,606INFO N/A N/A N/A SELECT DATABASE()
+2026-03-14 04:21:24,607INFO N/A N/A N/A [raw sql] {}
+2026-03-14 04:21:24,609INFO N/A N/A N/A SELECT @@sql_mode
+2026-03-14 04:21:24,609INFO N/A N/A N/A [raw sql] {}
+2026-03-14 04:21:24,611INFO N/A N/A N/A SELECT @@lower_case_table_names
+2026-03-14 04:21:24,611INFO N/A N/A N/A [raw sql] {}
+2026-03-14 04:21:24,614INFO N/A N/A N/A BEGIN (implicit)
+2026-03-14 04:21:24,615INFO N/A N/A N/A DESCRIBE `weibo_platform`.`users`
+2026-03-14 04:21:24,615INFO N/A N/A N/A [raw sql] {}
+2026-03-14 04:21:24,617INFO N/A N/A N/A ROLLBACK
+2026-03-14 04:21:24,619INFO N/A N/A N/A ✅ 成功注册蓝图 comments_bp，前缀：根路径
+2026-03-14 04:21:24,619INFO N/A N/A N/A ✅ 成功注册蓝图 follows_bp，前缀：根路径
+2026-03-14 04:21:24,620INFO N/A N/A N/A ✅ 成功注册蓝图 posts_bp，前缀：根路径
+2026-03-14 04:21:24,620INFO N/A N/A N/A ✅ 成功注册蓝图 likes_bp，前缀：根路径
+2026-03-14 04:21:24,621INFO N/A N/A N/A ✅ 成功注册蓝图 notifications_bp，前缀：根路径
+2026-03-14 04:21:24,621INFO N/A N/A N/A ✅ 成功注册蓝图 users_bp，前缀：/users
+2026-03-14 04:21:24,623INFO N/A N/A N/A ✅ 成功注册蓝图 auth_bp，前缀：/auth
+2026-03-14 04:21:24,624INFO N/A N/A N/A ✅ 成功注册蓝图 feeds_bp，前缀：/feeds
+2026-03-14 04:21:24,624INFO N/A N/A N/A 📌 所有蓝图注册完成
+2026-03-14 04:21:24,641WARNING N/A N/A N/A  * Debugger is active!
+2026-03-14 04:22:05,686INFO N/A N/A N/A {"timestamp": "2026-03-14T08:22:05.686576+00:00Z", "level": "INFO", "request_id": "61a4a6f0-b211-4e85-b546-d0f0a9d7f141", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 04:22:05,687ERROR 61a4a6f0-b211-4e85-b546-d0f0a9d7f141 N/A -0.0 [UNEXPECTED EXCEPTION] request_id=61a4a6f0-b211-4e85-b546-d0f0a9d7f141, error=name 'DatabaseError' is not defined
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 91, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 38, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1482, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1974, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 124, in pre_auth_check
+    except (AuthenticationError, DatabaseError):
+                                 ^^^^^^^^^^^^^
+NameError: name 'DatabaseError' is not defined
+2026-03-14 04:22:05,691WARNING N/A N/A N/A {"timestamp": "2026-03-14T08:22:05.691882+00:00Z", "level": "WARNING", "request_id": "61a4a6f0-b211-4e85-b546-d0f0a9d7f141", "status_code": 500, "duration_ms": 5.28, "path": "/", "response_length": 128}
+2026-03-14 04:22:05,781INFO N/A N/A N/A {"timestamp": "2026-03-14T08:22:05.781107+00:00Z", "level": "INFO", "request_id": "1313d4ce-4b56-4cc6-bd87-fdce1d1e1339", "method": "GET", "path": "/favicon.ico", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 04:22:05,781ERROR 1313d4ce-4b56-4cc6-bd87-fdce1d1e1339 N/A -0.0 [UNEXPECTED EXCEPTION] request_id=1313d4ce-4b56-4cc6-bd87-fdce1d1e1339, error=name 'DatabaseError' is not defined
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 91, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 38, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1482, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1974, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 124, in pre_auth_check
+    except (AuthenticationError, DatabaseError):
+                                 ^^^^^^^^^^^^^
+NameError: name 'DatabaseError' is not defined
+2026-03-14 04:22:05,785WARNING N/A N/A N/A {"timestamp": "2026-03-14T08:22:05.785289+00:00Z", "level": "WARNING", "request_id": "1313d4ce-4b56-4cc6-bd87-fdce1d1e1339", "status_code": 500, "duration_ms": 4.17, "path": "/favicon.ico", "response_length": 128}
+2026-03-14 04:25:52,151INFO N/A N/A N/A {"timestamp": "2026-03-14T08:25:52.151325+00:00Z", "level": "INFO", "request_id": "5ffc3077-a673-4061-b0de-6d79a1c4ccd4", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 04:25:52,151ERROR 5ffc3077-a673-4061-b0de-6d79a1c4ccd4 N/A -0.0 [UNEXPECTED EXCEPTION] request_id=5ffc3077-a673-4061-b0de-6d79a1c4ccd4, error=name 'DatabaseError' is not defined
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 91, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 38, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1482, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1974, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 124, in pre_auth_check
+    except (AuthenticationError, DatabaseError):
+                                 ^^^^^^^^^^^^^
+NameError: name 'DatabaseError' is not defined
+2026-03-14 04:25:52,153WARNING N/A N/A N/A {"timestamp": "2026-03-14T08:25:52.153761+00:00Z", "level": "WARNING", "request_id": "5ffc3077-a673-4061-b0de-6d79a1c4ccd4", "status_code": 500, "duration_ms": 2.42, "path": "/", "response_length": 128}
+2026-03-14 04:25:52,333INFO N/A N/A N/A {"timestamp": "2026-03-14T08:25:52.333098+00:00Z", "level": "INFO", "request_id": "4a6caf7d-3ff5-4b32-b8be-3ff77ec2b856", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 04:25:52,333ERROR 4a6caf7d-3ff5-4b32-b8be-3ff77ec2b856 N/A -0.0 [UNEXPECTED EXCEPTION] request_id=4a6caf7d-3ff5-4b32-b8be-3ff77ec2b856, error=name 'DatabaseError' is not defined
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 91, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 38, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1482, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1974, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 124, in pre_auth_check
+    except (AuthenticationError, DatabaseError):
+                                 ^^^^^^^^^^^^^
+NameError: name 'DatabaseError' is not defined
+2026-03-14 04:25:52,338WARNING N/A N/A N/A {"timestamp": "2026-03-14T08:25:52.338166+00:00Z", "level": "WARNING", "request_id": "4a6caf7d-3ff5-4b32-b8be-3ff77ec2b856", "status_code": 500, "duration_ms": 5.04, "path": "/", "response_length": 128}
+2026-03-14 04:25:53,304INFO N/A N/A N/A {"timestamp": "2026-03-14T08:25:53.304654+00:00Z", "level": "INFO", "request_id": "76fcffee-2348-47e9-96ec-6ab95e453316", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 04:25:53,305ERROR 76fcffee-2348-47e9-96ec-6ab95e453316 N/A -0.0 [UNEXPECTED EXCEPTION] request_id=76fcffee-2348-47e9-96ec-6ab95e453316, error=name 'DatabaseError' is not defined
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 91, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 38, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1482, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1974, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 124, in pre_auth_check
+    except (AuthenticationError, DatabaseError):
+                                 ^^^^^^^^^^^^^
+NameError: name 'DatabaseError' is not defined
+2026-03-14 04:25:53,309WARNING N/A N/A N/A {"timestamp": "2026-03-14T08:25:53.309372+00:00Z", "level": "WARNING", "request_id": "76fcffee-2348-47e9-96ec-6ab95e453316", "status_code": 500, "duration_ms": 4.69, "path": "/", "response_length": 128}
+2026-03-14 04:25:54,174INFO N/A N/A N/A {"timestamp": "2026-03-14T08:25:54.174656+00:00Z", "level": "INFO", "request_id": "4aa218b8-9f0d-41a1-8dd5-5767b165c1b7", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 04:25:54,175ERROR 4aa218b8-9f0d-41a1-8dd5-5767b165c1b7 N/A -0.0 [UNEXPECTED EXCEPTION] request_id=4aa218b8-9f0d-41a1-8dd5-5767b165c1b7, error=name 'DatabaseError' is not defined
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 91, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 38, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1482, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1974, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 124, in pre_auth_check
+    except (AuthenticationError, DatabaseError):
+                                 ^^^^^^^^^^^^^
+NameError: name 'DatabaseError' is not defined
+2026-03-14 04:25:54,179WARNING N/A N/A N/A {"timestamp": "2026-03-14T08:25:54.179178+00:00Z", "level": "WARNING", "request_id": "4aa218b8-9f0d-41a1-8dd5-5767b165c1b7", "status_code": 500, "duration_ms": 4.5, "path": "/", "response_length": 128}
+2026-03-14 04:26:41,336INFO N/A N/A N/A 日志初始化完成，测试环境：False
+2026-03-14 04:26:41,358INFO N/A N/A N/A  所有异常处理器注册完成
+2026-03-14 04:26:41,363INFO N/A N/A N/A SELECT DATABASE()
+2026-03-14 04:26:41,365INFO N/A N/A N/A [raw sql] {}
+2026-03-14 04:26:41,367INFO N/A N/A N/A SELECT @@sql_mode
+2026-03-14 04:26:41,367INFO N/A N/A N/A [raw sql] {}
+2026-03-14 04:26:41,369INFO N/A N/A N/A SELECT @@lower_case_table_names
+2026-03-14 04:26:41,369INFO N/A N/A N/A [raw sql] {}
+2026-03-14 04:26:41,372INFO N/A N/A N/A BEGIN (implicit)
+2026-03-14 04:26:41,372INFO N/A N/A N/A DESCRIBE `weibo_platform`.`users`
+2026-03-14 04:26:41,373INFO N/A N/A N/A [raw sql] {}
+2026-03-14 04:26:41,375INFO N/A N/A N/A ROLLBACK
+2026-03-14 04:26:41,377INFO N/A N/A N/A ✅ 成功注册蓝图 comments_bp，前缀：根路径
+2026-03-14 04:26:41,378INFO N/A N/A N/A ✅ 成功注册蓝图 follows_bp，前缀：根路径
+2026-03-14 04:26:41,378INFO N/A N/A N/A ✅ 成功注册蓝图 posts_bp，前缀：根路径
+2026-03-14 04:26:41,379INFO N/A N/A N/A ✅ 成功注册蓝图 likes_bp，前缀：根路径
+2026-03-14 04:26:41,380INFO N/A N/A N/A ✅ 成功注册蓝图 notifications_bp，前缀：根路径
+2026-03-14 04:26:41,380INFO N/A N/A N/A ✅ 成功注册蓝图 users_bp，前缀：/users
+2026-03-14 04:26:41,382INFO N/A N/A N/A ✅ 成功注册蓝图 auth_bp，前缀：/auth
+2026-03-14 04:26:41,384INFO N/A N/A N/A ✅ 成功注册蓝图 feeds_bp，前缀：/feeds
+2026-03-14 04:26:41,384INFO N/A N/A N/A 📌 所有蓝图注册完成
+2026-03-14 04:26:41,403WARNING N/A N/A N/A  * Debugger is active!
+2026-03-14 04:26:52,628INFO N/A N/A N/A {"timestamp": "2026-03-14T08:26:52.628600+00:00Z", "level": "INFO", "request_id": "d034ba61-0fa0-4273-bda3-3df409dbb20f", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 04:26:52,629ERROR d034ba61-0fa0-4273-bda3-3df409dbb20f N/A -0.0 [UNEXPECTED EXCEPTION] request_id=d034ba61-0fa0-4273-bda3-3df409dbb20f, error=name 'TokenNotFoundError' is not defined
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 107, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 59, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1482, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1974, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 134, in pre_auth_check
+    except TokenNotFoundError:
+           ^^^^^^^^^^^^^^^^^^
+NameError: name 'TokenNotFoundError' is not defined. Did you mean: 'FileNotFoundError'?
+2026-03-14 04:26:52,634WARNING N/A N/A N/A {"timestamp": "2026-03-14T08:26:52.634069+00:00Z", "level": "WARNING", "request_id": "d034ba61-0fa0-4273-bda3-3df409dbb20f", "status_code": 500, "duration_ms": 5.45, "path": "/", "response_length": 128}
+2026-03-14 04:26:52,722INFO N/A N/A N/A {"timestamp": "2026-03-14T08:26:52.722039+00:00Z", "level": "INFO", "request_id": "c0fd9987-f47e-413c-8350-75c5fc358f01", "method": "GET", "path": "/favicon.ico", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 04:26:52,722ERROR c0fd9987-f47e-413c-8350-75c5fc358f01 N/A -0.0 [UNEXPECTED EXCEPTION] request_id=c0fd9987-f47e-413c-8350-75c5fc358f01, error=name 'TokenNotFoundError' is not defined
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 107, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 59, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1482, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1974, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 134, in pre_auth_check
+    except TokenNotFoundError:
+           ^^^^^^^^^^^^^^^^^^
+NameError: name 'TokenNotFoundError' is not defined. Did you mean: 'FileNotFoundError'?
+2026-03-14 04:26:52,726WARNING N/A N/A N/A {"timestamp": "2026-03-14T08:26:52.726695+00:00Z", "level": "WARNING", "request_id": "c0fd9987-f47e-413c-8350-75c5fc358f01", "status_code": 500, "duration_ms": 4.64, "path": "/favicon.ico", "response_length": 128}
+2026-03-14 04:26:58,880INFO N/A N/A N/A {"timestamp": "2026-03-14T08:26:58.880197+00:00Z", "level": "INFO", "request_id": "ba686fbb-f9e0-4466-8849-dae3be42f393", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 04:26:58,880ERROR ba686fbb-f9e0-4466-8849-dae3be42f393 N/A -0.0 [UNEXPECTED EXCEPTION] request_id=ba686fbb-f9e0-4466-8849-dae3be42f393, error=name 'TokenNotFoundError' is not defined
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 107, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 59, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1482, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1974, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 134, in pre_auth_check
+    except TokenNotFoundError:
+           ^^^^^^^^^^^^^^^^^^
+NameError: name 'TokenNotFoundError' is not defined. Did you mean: 'FileNotFoundError'?
+2026-03-14 04:26:58,882WARNING N/A N/A N/A {"timestamp": "2026-03-14T08:26:58.882301+00:00Z", "level": "WARNING", "request_id": "ba686fbb-f9e0-4466-8849-dae3be42f393", "status_code": 500, "duration_ms": 2.09, "path": "/", "response_length": 128}
+2026-03-14 04:26:59,004INFO N/A N/A N/A {"timestamp": "2026-03-14T08:26:59.004167+00:00Z", "level": "INFO", "request_id": "bfef0816-4c5c-4814-8af2-0ba692c0244e", "method": "GET", "path": "/favicon.ico", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 04:26:59,004ERROR bfef0816-4c5c-4814-8af2-0ba692c0244e N/A -0.0 [UNEXPECTED EXCEPTION] request_id=bfef0816-4c5c-4814-8af2-0ba692c0244e, error=name 'TokenNotFoundError' is not defined
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 107, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 59, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1482, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1974, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 134, in pre_auth_check
+    except TokenNotFoundError:
+           ^^^^^^^^^^^^^^^^^^
+NameError: name 'TokenNotFoundError' is not defined. Did you mean: 'FileNotFoundError'?
+2026-03-14 04:26:59,007WARNING N/A N/A N/A {"timestamp": "2026-03-14T08:26:59.007682+00:00Z", "level": "WARNING", "request_id": "bfef0816-4c5c-4814-8af2-0ba692c0244e", "status_code": 500, "duration_ms": 3.5, "path": "/favicon.ico", "response_length": 128}
+2026-03-14 04:27:21,350INFO N/A N/A N/A {"timestamp": "2026-03-14T08:27:21.349967+00:00Z", "level": "INFO", "request_id": "80ca21af-b7e4-4dd4-9a55-669ded159e00", "method": "GET", "path": "/register", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 04:27:21,350ERROR 80ca21af-b7e4-4dd4-9a55-669ded159e00 N/A -0.0 [UNEXPECTED EXCEPTION] request_id=80ca21af-b7e4-4dd4-9a55-669ded159e00, error=name 'TokenNotFoundError' is not defined
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 107, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 59, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1482, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1974, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 134, in pre_auth_check
+    except TokenNotFoundError:
+           ^^^^^^^^^^^^^^^^^^
+NameError: name 'TokenNotFoundError' is not defined. Did you mean: 'FileNotFoundError'?
+2026-03-14 04:27:21,354WARNING N/A N/A N/A {"timestamp": "2026-03-14T08:27:21.353904+00:00Z", "level": "WARNING", "request_id": "80ca21af-b7e4-4dd4-9a55-669ded159e00", "status_code": 500, "duration_ms": 3.92, "path": "/register", "response_length": 128}
+2026-03-14 04:27:21,427INFO N/A N/A N/A {"timestamp": "2026-03-14T08:27:21.427820+00:00Z", "level": "INFO", "request_id": "17164b8e-ce78-4d10-a749-838d9bbba841", "method": "GET", "path": "/favicon.ico", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 04:27:21,428ERROR 17164b8e-ce78-4d10-a749-838d9bbba841 N/A -0.0 [UNEXPECTED EXCEPTION] request_id=17164b8e-ce78-4d10-a749-838d9bbba841, error=name 'TokenNotFoundError' is not defined
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 107, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 59, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1482, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1974, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 134, in pre_auth_check
+    except TokenNotFoundError:
+           ^^^^^^^^^^^^^^^^^^
+NameError: name 'TokenNotFoundError' is not defined. Did you mean: 'FileNotFoundError'?
+2026-03-14 04:27:21,432WARNING N/A N/A N/A {"timestamp": "2026-03-14T08:27:21.432103+00:00Z", "level": "WARNING", "request_id": "17164b8e-ce78-4d10-a749-838d9bbba841", "status_code": 500, "duration_ms": 4.26, "path": "/favicon.ico", "response_length": 128}
+2026-03-14 04:27:24,583INFO N/A N/A N/A {"timestamp": "2026-03-14T08:27:24.583531+00:00Z", "level": "INFO", "request_id": "e740fce0-f4ed-4320-8f41-e4ce08851c82", "method": "GET", "path": "/register", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 04:27:24,584ERROR e740fce0-f4ed-4320-8f41-e4ce08851c82 N/A -0.0 [UNEXPECTED EXCEPTION] request_id=e740fce0-f4ed-4320-8f41-e4ce08851c82, error=name 'TokenNotFoundError' is not defined
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 107, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 59, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1482, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1974, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 134, in pre_auth_check
+    except TokenNotFoundError:
+           ^^^^^^^^^^^^^^^^^^
+NameError: name 'TokenNotFoundError' is not defined. Did you mean: 'FileNotFoundError'?
+2026-03-14 04:27:24,587WARNING N/A N/A N/A {"timestamp": "2026-03-14T08:27:24.587183+00:00Z", "level": "WARNING", "request_id": "e740fce0-f4ed-4320-8f41-e4ce08851c82", "status_code": 500, "duration_ms": 3.63, "path": "/register", "response_length": 128}
+2026-03-14 04:27:24,715INFO N/A N/A N/A {"timestamp": "2026-03-14T08:27:24.714403+00:00Z", "level": "INFO", "request_id": "8aeae600-e481-4e8f-9947-3a7821cdf345", "method": "GET", "path": "/favicon.ico", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 04:27:24,716ERROR 8aeae600-e481-4e8f-9947-3a7821cdf345 N/A -0.0 [UNEXPECTED EXCEPTION] request_id=8aeae600-e481-4e8f-9947-3a7821cdf345, error=name 'TokenNotFoundError' is not defined
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 107, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 59, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1482, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1974, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 134, in pre_auth_check
+    except TokenNotFoundError:
+           ^^^^^^^^^^^^^^^^^^
+NameError: name 'TokenNotFoundError' is not defined. Did you mean: 'FileNotFoundError'?
+2026-03-14 04:27:24,718WARNING N/A N/A N/A {"timestamp": "2026-03-14T08:27:24.718466+00:00Z", "level": "WARNING", "request_id": "8aeae600-e481-4e8f-9947-3a7821cdf345", "status_code": 500, "duration_ms": 4.04, "path": "/favicon.ico", "response_length": 128}
+2026-03-14 04:27:30,016INFO N/A N/A N/A {"timestamp": "2026-03-14T08:27:30.016357+00:00Z", "level": "INFO", "request_id": "88bf16a1-11d6-41a9-92c2-84afa791e28a", "method": "GET", "path": "/register", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 04:27:30,017ERROR 88bf16a1-11d6-41a9-92c2-84afa791e28a N/A -0.0 [UNEXPECTED EXCEPTION] request_id=88bf16a1-11d6-41a9-92c2-84afa791e28a, error=name 'TokenNotFoundError' is not defined
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 107, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 59, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1482, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1974, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 134, in pre_auth_check
+    except TokenNotFoundError:
+           ^^^^^^^^^^^^^^^^^^
+NameError: name 'TokenNotFoundError' is not defined. Did you mean: 'FileNotFoundError'?
+2026-03-14 04:27:30,020WARNING N/A N/A N/A {"timestamp": "2026-03-14T08:27:30.020645+00:00Z", "level": "WARNING", "request_id": "88bf16a1-11d6-41a9-92c2-84afa791e28a", "status_code": 500, "duration_ms": 4.27, "path": "/register", "response_length": 128}
+2026-03-14 04:27:30,135INFO N/A N/A N/A {"timestamp": "2026-03-14T08:27:30.135864+00:00Z", "level": "INFO", "request_id": "d0bf2de0-789a-47e3-8459-a55635dd6fce", "method": "GET", "path": "/favicon.ico", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 04:27:30,136ERROR d0bf2de0-789a-47e3-8459-a55635dd6fce N/A -0.0 [UNEXPECTED EXCEPTION] request_id=d0bf2de0-789a-47e3-8459-a55635dd6fce, error=name 'TokenNotFoundError' is not defined
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 107, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 59, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1482, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1974, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 134, in pre_auth_check
+    except TokenNotFoundError:
+           ^^^^^^^^^^^^^^^^^^
+NameError: name 'TokenNotFoundError' is not defined. Did you mean: 'FileNotFoundError'?
+2026-03-14 04:27:30,140WARNING N/A N/A N/A {"timestamp": "2026-03-14T08:27:30.140847+00:00Z", "level": "WARNING", "request_id": "d0bf2de0-789a-47e3-8459-a55635dd6fce", "status_code": 500, "duration_ms": 4.96, "path": "/favicon.ico", "response_length": 128}
+2026-03-14 04:30:52,405INFO N/A N/A N/A {"timestamp": "2026-03-14T08:30:52.405619+00:00Z", "level": "INFO", "request_id": "4d5fdd51-e49e-4be6-8c26-cc1aa7816e75", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 04:30:52,406ERROR 4d5fdd51-e49e-4be6-8c26-cc1aa7816e75 N/A -0.0 [UNEXPECTED EXCEPTION] request_id=4d5fdd51-e49e-4be6-8c26-cc1aa7816e75, error=name 'TokenNotFoundError' is not defined
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 107, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 59, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1482, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1974, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 134, in pre_auth_check
+    except TokenNotFoundError:
+           ^^^^^^^^^^^^^^^^^^
+NameError: name 'TokenNotFoundError' is not defined. Did you mean: 'FileNotFoundError'?
+2026-03-14 04:30:52,409WARNING N/A N/A N/A {"timestamp": "2026-03-14T08:30:52.409273+00:00Z", "level": "WARNING", "request_id": "4d5fdd51-e49e-4be6-8c26-cc1aa7816e75", "status_code": 500, "duration_ms": 3.64, "path": "/", "response_length": 128}
+2026-03-14 04:30:52,985INFO N/A N/A N/A {"timestamp": "2026-03-14T08:30:52.985813+00:00Z", "level": "INFO", "request_id": "61164010-9cdd-4e02-a64f-fcbfbb896f13", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 04:30:52,986ERROR 61164010-9cdd-4e02-a64f-fcbfbb896f13 N/A -0.0 [UNEXPECTED EXCEPTION] request_id=61164010-9cdd-4e02-a64f-fcbfbb896f13, error=name 'TokenNotFoundError' is not defined
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 107, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 59, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1482, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1974, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 134, in pre_auth_check
+    except TokenNotFoundError:
+           ^^^^^^^^^^^^^^^^^^
+NameError: name 'TokenNotFoundError' is not defined. Did you mean: 'FileNotFoundError'?
+2026-03-14 04:30:52,989WARNING N/A N/A N/A {"timestamp": "2026-03-14T08:30:52.989548+00:00Z", "level": "WARNING", "request_id": "61164010-9cdd-4e02-a64f-fcbfbb896f13", "status_code": 500, "duration_ms": 3.71, "path": "/", "response_length": 128}
+2026-03-14 04:30:53,440INFO N/A N/A N/A {"timestamp": "2026-03-14T08:30:53.440663+00:00Z", "level": "INFO", "request_id": "5ae5ed27-f94c-43ab-bdf5-e94f5d4551fe", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 04:30:53,441ERROR 5ae5ed27-f94c-43ab-bdf5-e94f5d4551fe N/A -0.0 [UNEXPECTED EXCEPTION] request_id=5ae5ed27-f94c-43ab-bdf5-e94f5d4551fe, error=name 'TokenNotFoundError' is not defined
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 107, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 59, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1482, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1974, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 134, in pre_auth_check
+    except TokenNotFoundError:
+           ^^^^^^^^^^^^^^^^^^
+NameError: name 'TokenNotFoundError' is not defined. Did you mean: 'FileNotFoundError'?
+2026-03-14 04:30:53,444WARNING N/A N/A N/A {"timestamp": "2026-03-14T08:30:53.444309+00:00Z", "level": "WARNING", "request_id": "5ae5ed27-f94c-43ab-bdf5-e94f5d4551fe", "status_code": 500, "duration_ms": 3.63, "path": "/", "response_length": 128}
+2026-03-14 04:34:04,674INFO N/A N/A N/A 日志初始化完成，测试环境：False
+2026-03-14 04:34:04,696INFO N/A N/A N/A  所有异常处理器注册完成
+2026-03-14 04:34:04,702INFO N/A N/A N/A SELECT DATABASE()
+2026-03-14 04:34:04,702INFO N/A N/A N/A [raw sql] {}
+2026-03-14 04:34:04,704INFO N/A N/A N/A SELECT @@sql_mode
+2026-03-14 04:34:04,705INFO N/A N/A N/A [raw sql] {}
+2026-03-14 04:34:04,707INFO N/A N/A N/A SELECT @@lower_case_table_names
+2026-03-14 04:34:04,707INFO N/A N/A N/A [raw sql] {}
+2026-03-14 04:34:04,710INFO N/A N/A N/A BEGIN (implicit)
+2026-03-14 04:34:04,711INFO N/A N/A N/A DESCRIBE `weibo_platform`.`users`
+2026-03-14 04:34:04,712INFO N/A N/A N/A [raw sql] {}
+2026-03-14 04:34:04,714INFO N/A N/A N/A ROLLBACK
+2026-03-14 04:34:04,716INFO N/A N/A N/A ✅ 成功注册蓝图 comments_bp，前缀：根路径
+2026-03-14 04:34:04,717INFO N/A N/A N/A ✅ 成功注册蓝图 follows_bp，前缀：根路径
+2026-03-14 04:34:04,718INFO N/A N/A N/A ✅ 成功注册蓝图 posts_bp，前缀：根路径
+2026-03-14 04:34:04,719INFO N/A N/A N/A ✅ 成功注册蓝图 likes_bp，前缀：根路径
+2026-03-14 04:34:04,720INFO N/A N/A N/A ✅ 成功注册蓝图 notifications_bp，前缀：根路径
+2026-03-14 04:34:04,721INFO N/A N/A N/A ✅ 成功注册蓝图 users_bp，前缀：/users
+2026-03-14 04:34:04,723INFO N/A N/A N/A ✅ 成功注册蓝图 auth_bp，前缀：/auth
+2026-03-14 04:34:04,725INFO N/A N/A N/A ✅ 成功注册蓝图 feeds_bp，前缀：/feeds
+2026-03-14 04:34:04,725INFO N/A N/A N/A 📌 所有蓝图注册完成
+2026-03-14 04:34:04,748INFO N/A N/A N/A [ENV] development=False,testing=True
+2026-03-14 04:34:37,476INFO N/A N/A N/A 日志初始化完成，测试环境：False
+2026-03-14 04:34:37,496INFO N/A N/A N/A  所有异常处理器注册完成
+2026-03-14 04:34:37,501INFO N/A N/A N/A SELECT DATABASE()
+2026-03-14 04:34:37,501INFO N/A N/A N/A [raw sql] {}
+2026-03-14 04:34:37,503INFO N/A N/A N/A SELECT @@sql_mode
+2026-03-14 04:34:37,503INFO N/A N/A N/A [raw sql] {}
+2026-03-14 04:34:37,504INFO N/A N/A N/A SELECT @@lower_case_table_names
+2026-03-14 04:34:37,505INFO N/A N/A N/A [raw sql] {}
+2026-03-14 04:34:37,507INFO N/A N/A N/A BEGIN (implicit)
+2026-03-14 04:34:37,507INFO N/A N/A N/A DESCRIBE `weibo_platform`.`users`
+2026-03-14 04:34:37,508INFO N/A N/A N/A [raw sql] {}
+2026-03-14 04:34:37,509INFO N/A N/A N/A ROLLBACK
+2026-03-14 04:34:37,511INFO N/A N/A N/A ✅ 成功注册蓝图 comments_bp，前缀：根路径
+2026-03-14 04:34:37,512INFO N/A N/A N/A ✅ 成功注册蓝图 follows_bp，前缀：根路径
+2026-03-14 04:34:37,513INFO N/A N/A N/A ✅ 成功注册蓝图 posts_bp，前缀：根路径
+2026-03-14 04:34:37,513INFO N/A N/A N/A ✅ 成功注册蓝图 likes_bp，前缀：根路径
+2026-03-14 04:34:37,514INFO N/A N/A N/A ✅ 成功注册蓝图 notifications_bp，前缀：根路径
+2026-03-14 04:34:37,514INFO N/A N/A N/A ✅ 成功注册蓝图 users_bp，前缀：/users
+2026-03-14 04:34:37,516INFO N/A N/A N/A ✅ 成功注册蓝图 auth_bp，前缀：/auth
+2026-03-14 04:34:37,517INFO N/A N/A N/A ✅ 成功注册蓝图 feeds_bp，前缀：/feeds
+2026-03-14 04:34:37,518INFO N/A N/A N/A 📌 所有蓝图注册完成
+2026-03-14 04:34:37,534WARNING N/A N/A N/A  * Debugger is active!
+2026-03-14 04:35:50,949INFO N/A N/A N/A {"timestamp": "2026-03-14T08:35:50.949137+00:00Z", "level": "INFO", "request_id": "7bcb1e73-e580-4c31-826a-44728d8e9cdf", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 04:35:50,949ERROR 7bcb1e73-e580-4c31-826a-44728d8e9cdf N/A -0.0 [UNEXPECTED EXCEPTION] request_id=7bcb1e73-e580-4c31-826a-44728d8e9cdf, error=name 'TokenNotFoundError' is not defined
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 107, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 59, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1482, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1974, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 134, in pre_auth_check
+    except TokenNotFoundError:
+           ^^^^^^^^^^^^^^^^^^
+NameError: name 'TokenNotFoundError' is not defined. Did you mean: 'FileNotFoundError'?
+2026-03-14 04:35:50,957WARNING N/A N/A N/A {"timestamp": "2026-03-14T08:35:50.957672+00:00Z", "level": "WARNING", "request_id": "7bcb1e73-e580-4c31-826a-44728d8e9cdf", "status_code": 500, "duration_ms": 8.52, "path": "/", "response_length": 128}
+2026-03-14 04:35:51,466INFO N/A N/A N/A {"timestamp": "2026-03-14T08:35:51.466328+00:00Z", "level": "INFO", "request_id": "011c8666-b62e-4540-bf5e-51515dd461c5", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 04:35:51,467ERROR 011c8666-b62e-4540-bf5e-51515dd461c5 N/A -0.0 [UNEXPECTED EXCEPTION] request_id=011c8666-b62e-4540-bf5e-51515dd461c5, error=name 'TokenNotFoundError' is not defined
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 107, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 59, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1482, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1974, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 134, in pre_auth_check
+    except TokenNotFoundError:
+           ^^^^^^^^^^^^^^^^^^
+NameError: name 'TokenNotFoundError' is not defined. Did you mean: 'FileNotFoundError'?
+2026-03-14 04:35:51,471WARNING N/A N/A N/A {"timestamp": "2026-03-14T08:35:51.471649+00:00Z", "level": "WARNING", "request_id": "011c8666-b62e-4540-bf5e-51515dd461c5", "status_code": 500, "duration_ms": 5.3, "path": "/", "response_length": 128}
+2026-03-14 04:35:52,591INFO N/A N/A N/A {"timestamp": "2026-03-14T08:35:52.591431+00:00Z", "level": "INFO", "request_id": "9540b1da-5b28-4f73-99b5-dd39ac79cec4", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 04:35:52,592ERROR 9540b1da-5b28-4f73-99b5-dd39ac79cec4 N/A -0.0 [UNEXPECTED EXCEPTION] request_id=9540b1da-5b28-4f73-99b5-dd39ac79cec4, error=name 'TokenNotFoundError' is not defined
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 107, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 59, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1482, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1974, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 134, in pre_auth_check
+    except TokenNotFoundError:
+           ^^^^^^^^^^^^^^^^^^
+NameError: name 'TokenNotFoundError' is not defined. Did you mean: 'FileNotFoundError'?
+2026-03-14 04:35:52,595WARNING N/A N/A N/A {"timestamp": "2026-03-14T08:35:52.595640+00:00Z", "level": "WARNING", "request_id": "9540b1da-5b28-4f73-99b5-dd39ac79cec4", "status_code": 500, "duration_ms": 4.19, "path": "/", "response_length": 128}
+2026-03-14 04:35:52,847INFO N/A N/A N/A {"timestamp": "2026-03-14T08:35:52.847541+00:00Z", "level": "INFO", "request_id": "33b30123-3f21-4757-8eaf-4352013d2d6f", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 04:35:52,847ERROR 33b30123-3f21-4757-8eaf-4352013d2d6f N/A -0.0 [UNEXPECTED EXCEPTION] request_id=33b30123-3f21-4757-8eaf-4352013d2d6f, error=name 'TokenNotFoundError' is not defined
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 107, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 59, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1482, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1974, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 134, in pre_auth_check
+    except TokenNotFoundError:
+           ^^^^^^^^^^^^^^^^^^
+NameError: name 'TokenNotFoundError' is not defined. Did you mean: 'FileNotFoundError'?
+2026-03-14 04:35:52,850WARNING N/A N/A N/A {"timestamp": "2026-03-14T08:35:52.850480+00:00Z", "level": "WARNING", "request_id": "33b30123-3f21-4757-8eaf-4352013d2d6f", "status_code": 500, "duration_ms": 2.92, "path": "/", "response_length": 128}
+2026-03-14 04:37:38,816INFO N/A N/A N/A 日志初始化完成，测试环境：False
+2026-03-14 04:37:38,836INFO N/A N/A N/A  所有异常处理器注册完成
+2026-03-14 04:37:38,841INFO N/A N/A N/A SELECT DATABASE()
+2026-03-14 04:37:38,842INFO N/A N/A N/A [raw sql] {}
+2026-03-14 04:37:38,844INFO N/A N/A N/A SELECT @@sql_mode
+2026-03-14 04:37:38,845INFO N/A N/A N/A [raw sql] {}
+2026-03-14 04:37:38,846INFO N/A N/A N/A SELECT @@lower_case_table_names
+2026-03-14 04:37:38,846INFO N/A N/A N/A [raw sql] {}
+2026-03-14 04:37:38,849INFO N/A N/A N/A BEGIN (implicit)
+2026-03-14 04:37:38,850INFO N/A N/A N/A DESCRIBE `weibo_platform`.`users`
+2026-03-14 04:37:38,850INFO N/A N/A N/A [raw sql] {}
+2026-03-14 04:37:38,852INFO N/A N/A N/A ROLLBACK
+2026-03-14 04:37:38,854INFO N/A N/A N/A ✅ 成功注册蓝图 comments_bp，前缀：根路径
+2026-03-14 04:37:38,854INFO N/A N/A N/A ✅ 成功注册蓝图 follows_bp，前缀：根路径
+2026-03-14 04:37:38,855INFO N/A N/A N/A ✅ 成功注册蓝图 posts_bp，前缀：根路径
+2026-03-14 04:37:38,856INFO N/A N/A N/A ✅ 成功注册蓝图 likes_bp，前缀：根路径
+2026-03-14 04:37:38,856INFO N/A N/A N/A ✅ 成功注册蓝图 notifications_bp，前缀：根路径
+2026-03-14 04:37:38,857INFO N/A N/A N/A ✅ 成功注册蓝图 users_bp，前缀：/users
+2026-03-14 04:37:38,859INFO N/A N/A N/A ✅ 成功注册蓝图 auth_bp，前缀：/auth
+2026-03-14 04:37:38,861INFO N/A N/A N/A ✅ 成功注册蓝图 feeds_bp，前缀：/feeds
+2026-03-14 04:37:38,862INFO N/A N/A N/A 📌 所有蓝图注册完成
+2026-03-14 04:37:38,878WARNING N/A N/A N/A  * Debugger is active!
+2026-03-14 04:39:54,598INFO N/A N/A N/A 日志初始化完成，测试环境：False
+2026-03-14 04:39:54,617INFO N/A N/A N/A  所有异常处理器注册完成
+2026-03-14 04:39:54,623INFO N/A N/A N/A SELECT DATABASE()
+2026-03-14 04:39:54,623INFO N/A N/A N/A [raw sql] {}
+2026-03-14 04:39:54,625INFO N/A N/A N/A SELECT @@sql_mode
+2026-03-14 04:39:54,625INFO N/A N/A N/A [raw sql] {}
+2026-03-14 04:39:54,626INFO N/A N/A N/A SELECT @@lower_case_table_names
+2026-03-14 04:39:54,627INFO N/A N/A N/A [raw sql] {}
+2026-03-14 04:39:54,629INFO N/A N/A N/A BEGIN (implicit)
+2026-03-14 04:39:54,630INFO N/A N/A N/A DESCRIBE `weibo_platform`.`users`
+2026-03-14 04:39:54,630INFO N/A N/A N/A [raw sql] {}
+2026-03-14 04:39:54,632INFO N/A N/A N/A ROLLBACK
+2026-03-14 04:39:54,634INFO N/A N/A N/A ✅ 成功注册蓝图 comments_bp，前缀：根路径
+2026-03-14 04:39:54,635INFO N/A N/A N/A ✅ 成功注册蓝图 follows_bp，前缀：根路径
+2026-03-14 04:39:54,635INFO N/A N/A N/A ✅ 成功注册蓝图 posts_bp，前缀：根路径
+2026-03-14 04:39:54,636INFO N/A N/A N/A ✅ 成功注册蓝图 likes_bp，前缀：根路径
+2026-03-14 04:39:54,637INFO N/A N/A N/A ✅ 成功注册蓝图 notifications_bp，前缀：根路径
+2026-03-14 04:39:54,637INFO N/A N/A N/A ✅ 成功注册蓝图 users_bp，前缀：/users
+2026-03-14 04:39:54,639INFO N/A N/A N/A ✅ 成功注册蓝图 auth_bp，前缀：/auth
+2026-03-14 04:39:54,640INFO N/A N/A N/A ✅ 成功注册蓝图 feeds_bp，前缀：/feeds
+2026-03-14 04:39:54,641INFO N/A N/A N/A 📌 所有蓝图注册完成
+2026-03-14 04:39:54,658WARNING N/A N/A N/A  * Debugger is active!
+2026-03-14 04:48:06,939INFO N/A N/A N/A 日志初始化完成，测试环境：False
+2026-03-14 04:48:06,959INFO N/A N/A N/A  所有异常处理器注册完成
+2026-03-14 04:48:06,964INFO N/A N/A N/A SELECT DATABASE()
+2026-03-14 04:48:06,965INFO N/A N/A N/A [raw sql] {}
+2026-03-14 04:48:06,967INFO N/A N/A N/A SELECT @@sql_mode
+2026-03-14 04:48:06,967INFO N/A N/A N/A [raw sql] {}
+2026-03-14 04:48:06,969INFO N/A N/A N/A SELECT @@lower_case_table_names
+2026-03-14 04:48:06,969INFO N/A N/A N/A [raw sql] {}
+2026-03-14 04:48:06,971INFO N/A N/A N/A BEGIN (implicit)
+2026-03-14 04:48:06,972INFO N/A N/A N/A DESCRIBE `weibo_platform`.`users`
+2026-03-14 04:48:06,972INFO N/A N/A N/A [raw sql] {}
+2026-03-14 04:48:06,974INFO N/A N/A N/A ROLLBACK
+2026-03-14 04:48:06,975INFO N/A N/A N/A ✅ 成功注册蓝图 comments_bp，前缀：根路径
+2026-03-14 04:48:06,976INFO N/A N/A N/A ✅ 成功注册蓝图 follows_bp，前缀：根路径
+2026-03-14 04:48:06,977INFO N/A N/A N/A ✅ 成功注册蓝图 posts_bp，前缀：根路径
+2026-03-14 04:48:06,978INFO N/A N/A N/A ✅ 成功注册蓝图 likes_bp，前缀：根路径
+2026-03-14 04:48:06,978INFO N/A N/A N/A ✅ 成功注册蓝图 notifications_bp，前缀：根路径
+2026-03-14 04:48:06,978INFO N/A N/A N/A ✅ 成功注册蓝图 users_bp，前缀：/users
+2026-03-14 04:48:06,980INFO N/A N/A N/A ✅ 成功注册蓝图 auth_bp，前缀：/auth
+2026-03-14 04:48:06,981INFO N/A N/A N/A ✅ 成功注册蓝图 feeds_bp，前缀：/feeds
+2026-03-14 04:48:06,982INFO N/A N/A N/A 📌 所有蓝图注册完成
+2026-03-14 04:48:08,014INFO N/A N/A N/A 日志初始化完成，测试环境：False
+2026-03-14 04:48:08,034INFO N/A N/A N/A  所有异常处理器注册完成
+2026-03-14 04:48:08,039INFO N/A N/A N/A SELECT DATABASE()
+2026-03-14 04:48:08,039INFO N/A N/A N/A [raw sql] {}
+2026-03-14 04:48:08,041INFO N/A N/A N/A SELECT @@sql_mode
+2026-03-14 04:48:08,041INFO N/A N/A N/A [raw sql] {}
+2026-03-14 04:48:08,042INFO N/A N/A N/A SELECT @@lower_case_table_names
+2026-03-14 04:48:08,043INFO N/A N/A N/A [raw sql] {}
+2026-03-14 04:48:08,044INFO N/A N/A N/A BEGIN (implicit)
+2026-03-14 04:48:08,045INFO N/A N/A N/A DESCRIBE `weibo_platform`.`users`
+2026-03-14 04:48:08,045INFO N/A N/A N/A [raw sql] {}
+2026-03-14 04:48:08,047INFO N/A N/A N/A ROLLBACK
+2026-03-14 04:48:08,048INFO N/A N/A N/A ✅ 成功注册蓝图 comments_bp，前缀：根路径
+2026-03-14 04:48:08,049INFO N/A N/A N/A ✅ 成功注册蓝图 follows_bp，前缀：根路径
+2026-03-14 04:48:08,050INFO N/A N/A N/A ✅ 成功注册蓝图 posts_bp，前缀：根路径
+2026-03-14 04:48:08,050INFO N/A N/A N/A ✅ 成功注册蓝图 likes_bp，前缀：根路径
+2026-03-14 04:48:08,051INFO N/A N/A N/A ✅ 成功注册蓝图 notifications_bp，前缀：根路径
+2026-03-14 04:48:08,051INFO N/A N/A N/A ✅ 成功注册蓝图 users_bp，前缀：/users
+2026-03-14 04:48:08,052INFO N/A N/A N/A ✅ 成功注册蓝图 auth_bp，前缀：/auth
+2026-03-14 04:48:08,054INFO N/A N/A N/A ✅ 成功注册蓝图 feeds_bp，前缀：/feeds
+2026-03-14 04:48:08,054INFO N/A N/A N/A 📌 所有蓝图注册完成
+2026-03-14 04:48:08,070WARNING N/A N/A N/A  * Debugger is active!
+2026-03-14 04:48:16,024INFO N/A N/A N/A {"timestamp": "2026-03-14T08:48:16.023934+00:00Z", "level": "INFO", "request_id": "18447b3e-9b95-44e7-9b88-6671327292f4", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 04:48:16,024WARNING 3b6439d6-abc8-44f3-9673-17dd876012ed N/A -0.0 [CUSTOM ERROR] request_id=3b6439d6-abc8-44f3-9673-17dd876012ed, error_code=10002, msg=访问的接口/资源不存在
+2026-03-14 04:48:16,026WARNING N/A N/A N/A {"timestamp": "2026-03-14T08:48:16.026009+00:00Z", "level": "WARNING", "request_id": "3b6439d6-abc8-44f3-9673-17dd876012ed", "status_code": 404, "duration_ms": 1.15, "path": "/", "response_length": 121}
+2026-03-14 04:48:16,108INFO N/A N/A N/A {"timestamp": "2026-03-14T08:48:16.108780+00:00Z", "level": "INFO", "request_id": "4ecf488c-9997-4099-b6e9-bdcf71fe8a65", "method": "GET", "path": "/favicon.ico", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 04:48:16,109WARNING 7934a5ac-f84d-4d4d-bab3-2362c7dfbf24 N/A -0.0 [CUSTOM ERROR] request_id=7934a5ac-f84d-4d4d-bab3-2362c7dfbf24, error_code=10002, msg=访问的接口/资源不存在
+2026-03-14 04:48:16,109WARNING N/A N/A N/A {"timestamp": "2026-03-14T08:48:16.109823+00:00Z", "level": "WARNING", "request_id": "7934a5ac-f84d-4d4d-bab3-2362c7dfbf24", "status_code": 404, "duration_ms": 0.54, "path": "/favicon.ico", "response_length": 121}
+2026-03-14 04:48:34,556INFO N/A N/A N/A {"timestamp": "2026-03-14T08:48:34.556841+00:00Z", "level": "INFO", "request_id": "1e4f9ddb-8aa6-492f-8d12-3e04537cd426", "method": "GET", "path": "/register", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 04:48:34,557WARNING 99f2eaa1-322f-4bb0-9be4-c34b794e61fc N/A -0.0 [CUSTOM ERROR] request_id=99f2eaa1-322f-4bb0-9be4-c34b794e61fc, error_code=10002, msg=访问的接口/资源不存在
+2026-03-14 04:48:34,559WARNING N/A N/A N/A {"timestamp": "2026-03-14T08:48:34.559514+00:00Z", "level": "WARNING", "request_id": "99f2eaa1-322f-4bb0-9be4-c34b794e61fc", "status_code": 404, "duration_ms": 1.49, "path": "/register", "response_length": 121}
+2026-03-14 04:48:34,665INFO N/A N/A N/A {"timestamp": "2026-03-14T08:48:34.665209+00:00Z", "level": "INFO", "request_id": "3bfeee65-8e2c-48c1-bec3-69ddfb1e0214", "method": "GET", "path": "/favicon.ico", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 04:48:34,666WARNING 5d1ab517-add3-487e-b6bf-7b83d1463736 N/A -0.0 [CUSTOM ERROR] request_id=5d1ab517-add3-487e-b6bf-7b83d1463736, error_code=10002, msg=访问的接口/资源不存在
+2026-03-14 04:48:34,667WARNING N/A N/A N/A {"timestamp": "2026-03-14T08:48:34.667899+00:00Z", "level": "WARNING", "request_id": "5d1ab517-add3-487e-b6bf-7b83d1463736", "status_code": 404, "duration_ms": 1.27, "path": "/favicon.ico", "response_length": 121}
+2026-03-14 04:50:50,944INFO N/A N/A N/A {"timestamp": "2026-03-14T08:50:50.944260+00:00Z", "level": "INFO", "request_id": "9f038166-0d58-4a2a-8bc5-255c58c72ef4", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 04:50:50,945WARNING 7e41e071-e7ab-4eaf-af79-1022d2d372eb N/A -0.0 [CUSTOM ERROR] request_id=7e41e071-e7ab-4eaf-af79-1022d2d372eb, error_code=10002, msg=访问的接口/资源不存在
+2026-03-14 04:50:50,946WARNING N/A N/A N/A {"timestamp": "2026-03-14T08:50:50.946375+00:00Z", "level": "WARNING", "request_id": "7e41e071-e7ab-4eaf-af79-1022d2d372eb", "status_code": 404, "duration_ms": 1.17, "path": "/", "response_length": 121}
+2026-03-14 04:50:50,988INFO N/A N/A N/A {"timestamp": "2026-03-14T08:50:50.988237+00:00Z", "level": "INFO", "request_id": "edb3402c-7f83-4b39-b692-512156601636", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 04:50:50,989WARNING e99797c5-1933-4353-ac12-85a671aaf6d8 N/A -0.0 [CUSTOM ERROR] request_id=e99797c5-1933-4353-ac12-85a671aaf6d8, error_code=10002, msg=访问的接口/资源不存在
+2026-03-14 04:50:50,990WARNING N/A N/A N/A {"timestamp": "2026-03-14T08:50:50.990627+00:00Z", "level": "WARNING", "request_id": "e99797c5-1933-4353-ac12-85a671aaf6d8", "status_code": 404, "duration_ms": 1.45, "path": "/", "response_length": 121}
+2026-03-14 04:50:59,263INFO N/A N/A N/A {"timestamp": "2026-03-14T08:50:59.263194+00:00Z", "level": "INFO", "request_id": "ebb269ff-00dc-4651-8422-bde50f718afb", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 04:50:59,264WARNING 60b10193-374c-4b0e-97fb-f7381e306e7a N/A -0.0 [CUSTOM ERROR] request_id=60b10193-374c-4b0e-97fb-f7381e306e7a, error_code=10002, msg=访问的接口/资源不存在
+2026-03-14 04:50:59,265WARNING N/A N/A N/A {"timestamp": "2026-03-14T08:50:59.264997+00:00Z", "level": "WARNING", "request_id": "60b10193-374c-4b0e-97fb-f7381e306e7a", "status_code": 404, "duration_ms": 1.01, "path": "/", "response_length": 121}
+2026-03-14 04:51:00,178INFO N/A N/A N/A {"timestamp": "2026-03-14T08:51:00.178713+00:00Z", "level": "INFO", "request_id": "4b15bd29-6135-4e31-aaad-6036818f0f1e", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 04:51:00,179WARNING 55283ad5-d82e-43dc-9144-0981358d5222 N/A -0.0 [CUSTOM ERROR] request_id=55283ad5-d82e-43dc-9144-0981358d5222, error_code=10002, msg=访问的接口/资源不存在
+2026-03-14 04:51:00,180WARNING N/A N/A N/A {"timestamp": "2026-03-14T08:51:00.180725+00:00Z", "level": "WARNING", "request_id": "55283ad5-d82e-43dc-9144-0981358d5222", "status_code": 404, "duration_ms": 1.07, "path": "/", "response_length": 121}
+2026-03-14 04:51:27,985INFO N/A N/A N/A {"timestamp": "2026-03-14T08:51:27.984939+00:00Z", "level": "INFO", "request_id": "495ca800-45b0-48ef-a327-60fa23f9cbd2", "method": "GET", "path": "/register", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 04:51:27,985WARNING 18b7def4-5007-46a2-b6c1-d101179c0394 N/A -0.0 [CUSTOM ERROR] request_id=18b7def4-5007-46a2-b6c1-d101179c0394, error_code=10002, msg=访问的接口/资源不存在
+2026-03-14 04:51:27,986WARNING N/A N/A N/A {"timestamp": "2026-03-14T08:51:27.986074+00:00Z", "level": "WARNING", "request_id": "18b7def4-5007-46a2-b6c1-d101179c0394", "status_code": 404, "duration_ms": 0.56, "path": "/register", "response_length": 121}
+2026-03-14 04:51:40,508INFO N/A N/A N/A {"timestamp": "2026-03-14T08:51:40.508056+00:00Z", "level": "INFO", "request_id": "de384d99-da62-4c97-952c-92b698e8e90e", "method": "GET", "path": "/users/register", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 04:51:40,509WARNING de384d99-da62-4c97-952c-92b698e8e90e N/A -0.0 [CUSTOM ERROR] request_id=de384d99-da62-4c97-952c-92b698e8e90e, error_code=10004, msg=未检测到 Token，请先登录
+2026-03-14 04:51:40,510WARNING N/A N/A N/A {"timestamp": "2026-03-14T08:51:40.510666+00:00Z", "level": "WARNING", "request_id": "de384d99-da62-4c97-952c-92b698e8e90e", "status_code": 401, "duration_ms": 2.59, "path": "/users/register", "response_length": 120}
+2026-03-14 04:51:43,824INFO N/A N/A N/A {"timestamp": "2026-03-14T08:51:43.824709+00:00Z", "level": "INFO", "request_id": "aa4db824-a1b1-4593-921d-1e459d9854cc", "method": "GET", "path": "/users/register", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 04:51:43,825WARNING aa4db824-a1b1-4593-921d-1e459d9854cc N/A -0.0 [CUSTOM ERROR] request_id=aa4db824-a1b1-4593-921d-1e459d9854cc, error_code=10004, msg=未检测到 Token，请先登录
+2026-03-14 04:51:43,826WARNING N/A N/A N/A {"timestamp": "2026-03-14T08:51:43.826645+00:00Z", "level": "WARNING", "request_id": "aa4db824-a1b1-4593-921d-1e459d9854cc", "status_code": 401, "duration_ms": 1.92, "path": "/users/register", "response_length": 120}
+2026-03-14 04:55:54,051INFO N/A N/A N/A {"timestamp": "2026-03-14T08:55:54.051086+00:00Z", "level": "INFO", "request_id": "048dc521-da42-4e2f-bdc8-837da3a90d75", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 04:55:54,052WARNING b466dcd6-ef2e-4d31-8121-41653459c638 N/A -0.0 [CUSTOM ERROR] request_id=b466dcd6-ef2e-4d31-8121-41653459c638, error_code=10002, msg=访问的接口/资源不存在
+2026-03-14 04:55:54,053WARNING N/A N/A N/A {"timestamp": "2026-03-14T08:55:54.052957+00:00Z", "level": "WARNING", "request_id": "b466dcd6-ef2e-4d31-8121-41653459c638", "status_code": 404, "duration_ms": 1.02, "path": "/", "response_length": 121}
+2026-03-14 04:55:54,720INFO N/A N/A N/A {"timestamp": "2026-03-14T08:55:54.720721+00:00Z", "level": "INFO", "request_id": "a483af67-1383-42aa-ad4c-782d30a329aa", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 04:55:54,721WARNING 80e543f5-62f8-4238-8130-d5416f6aeb63 N/A -0.0 [CUSTOM ERROR] request_id=80e543f5-62f8-4238-8130-d5416f6aeb63, error_code=10002, msg=访问的接口/资源不存在
+2026-03-14 04:55:54,722WARNING N/A N/A N/A {"timestamp": "2026-03-14T08:55:54.722642+00:00Z", "level": "WARNING", "request_id": "80e543f5-62f8-4238-8130-d5416f6aeb63", "status_code": 404, "duration_ms": 1.03, "path": "/", "response_length": 121}
+2026-03-14 04:55:57,592INFO N/A N/A N/A {"timestamp": "2026-03-14T08:55:57.592732+00:00Z", "level": "INFO", "request_id": "be1100ed-5e8c-4f86-8385-333be76be789", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 04:55:57,593WARNING a5b0e955-0efd-475d-af99-e3d2d85997e0 N/A -0.0 [CUSTOM ERROR] request_id=a5b0e955-0efd-475d-af99-e3d2d85997e0, error_code=10002, msg=访问的接口/资源不存在
+2026-03-14 04:55:57,594WARNING N/A N/A N/A {"timestamp": "2026-03-14T08:55:57.594696+00:00Z", "level": "WARNING", "request_id": "a5b0e955-0efd-475d-af99-e3d2d85997e0", "status_code": 404, "duration_ms": 1.04, "path": "/", "response_length": 121}
+2026-03-14 04:55:58,211INFO N/A N/A N/A {"timestamp": "2026-03-14T08:55:58.211647+00:00Z", "level": "INFO", "request_id": "e49b71d8-74f1-46b8-87a5-9d93827b8f6d", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 04:55:58,212WARNING 6ce992d9-cfa7-4480-a797-c172b1693e67 N/A -0.0 [CUSTOM ERROR] request_id=6ce992d9-cfa7-4480-a797-c172b1693e67, error_code=10002, msg=访问的接口/资源不存在
+2026-03-14 04:55:58,213WARNING N/A N/A N/A {"timestamp": "2026-03-14T08:55:58.213564+00:00Z", "level": "WARNING", "request_id": "6ce992d9-cfa7-4480-a797-c172b1693e67", "status_code": 404, "duration_ms": 1.0, "path": "/", "response_length": 121}
+2026-03-14 04:56:58,350INFO N/A N/A N/A 日志初始化完成，测试环境：False
+2026-03-14 04:56:58,378INFO N/A N/A N/A  所有异常处理器注册完成
+2026-03-14 04:56:58,385INFO N/A N/A N/A SELECT DATABASE()
+2026-03-14 04:56:58,385INFO N/A N/A N/A [raw sql] {}
+2026-03-14 04:56:58,388INFO N/A N/A N/A SELECT @@sql_mode
+2026-03-14 04:56:58,389INFO N/A N/A N/A [raw sql] {}
+2026-03-14 04:56:58,390INFO N/A N/A N/A SELECT @@lower_case_table_names
+2026-03-14 04:56:58,391INFO N/A N/A N/A [raw sql] {}
+2026-03-14 04:56:58,393INFO N/A N/A N/A BEGIN (implicit)
+2026-03-14 04:56:58,394INFO N/A N/A N/A DESCRIBE `weibo_platform`.`users`
+2026-03-14 04:56:58,395INFO N/A N/A N/A [raw sql] {}
+2026-03-14 04:56:58,397INFO N/A N/A N/A ROLLBACK
+2026-03-14 04:56:58,399INFO N/A N/A N/A ✅ 成功注册蓝图 comments_bp，前缀：根路径
+2026-03-14 04:56:58,400INFO N/A N/A N/A ✅ 成功注册蓝图 follows_bp，前缀：根路径
+2026-03-14 04:56:58,401INFO N/A N/A N/A ✅ 成功注册蓝图 posts_bp，前缀：根路径
+2026-03-14 04:56:58,402INFO N/A N/A N/A ✅ 成功注册蓝图 likes_bp，前缀：根路径
+2026-03-14 04:56:58,403INFO N/A N/A N/A ✅ 成功注册蓝图 notifications_bp，前缀：根路径
+2026-03-14 04:56:58,403INFO N/A N/A N/A ✅ 成功注册蓝图 users_bp，前缀：/users
+2026-03-14 04:56:58,405INFO N/A N/A N/A ✅ 成功注册蓝图 auth_bp，前缀：/auth
+2026-03-14 04:56:58,406INFO N/A N/A N/A ✅ 成功注册蓝图 feeds_bp，前缀：/feeds
+2026-03-14 04:56:58,407INFO N/A N/A N/A 📌 所有蓝图注册完成
+2026-03-14 04:56:58,427WARNING N/A N/A N/A  * Debugger is active!
+2026-03-14 04:57:04,486INFO N/A N/A N/A {"timestamp": "2026-03-14T08:57:04.485908+00:00Z", "level": "INFO", "request_id": "2a045387-c4aa-4257-a28b-bbac22c68a87", "method": "GET", "path": "/users/register", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 04:57:04,487WARNING b9f43a14-bdb9-4add-bcef-33d0256892c9 N/A -0.0 [CUSTOM ERROR] request_id=b9f43a14-bdb9-4add-bcef-33d0256892c9, error_code=10002, msg=访问的接口/资源不存在
+2026-03-14 04:57:04,488WARNING N/A N/A N/A {"timestamp": "2026-03-14T08:57:04.488289+00:00Z", "level": "WARNING", "request_id": "b9f43a14-bdb9-4add-bcef-33d0256892c9", "status_code": 404, "duration_ms": 1.41, "path": "/users/register", "response_length": 121}
+2026-03-14 04:57:15,998INFO N/A N/A N/A {"timestamp": "2026-03-14T08:57:15.997909+00:00Z", "level": "INFO", "request_id": "c76e4fae-8f18-4910-8aec-4a1bf7f3fff8", "method": "GET", "path": "/auth", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 04:57:15,999WARNING c76e4fae-8f18-4910-8aec-4a1bf7f3fff8 N/A -0.0 [CUSTOM ERROR] request_id=c76e4fae-8f18-4910-8aec-4a1bf7f3fff8, error_code=10004, msg=未检测到 Token，请先登录
+2026-03-14 04:57:16,000WARNING N/A N/A N/A {"timestamp": "2026-03-14T08:57:16.000338+00:00Z", "level": "WARNING", "request_id": "c76e4fae-8f18-4910-8aec-4a1bf7f3fff8", "status_code": 401, "duration_ms": 2.41, "path": "/auth", "response_length": 120}
+2026-03-14 05:00:39,387INFO N/A N/A N/A 日志初始化完成，测试环境：False
+2026-03-14 05:00:39,410INFO N/A N/A N/A  所有异常处理器注册完成
+2026-03-14 05:00:39,415INFO N/A N/A N/A SELECT DATABASE()
+2026-03-14 05:00:39,415INFO N/A N/A N/A [raw sql] {}
+2026-03-14 05:00:39,417INFO N/A N/A N/A SELECT @@sql_mode
+2026-03-14 05:00:39,418INFO N/A N/A N/A [raw sql] {}
+2026-03-14 05:00:39,419INFO N/A N/A N/A SELECT @@lower_case_table_names
+2026-03-14 05:00:39,420INFO N/A N/A N/A [raw sql] {}
+2026-03-14 05:00:39,422INFO N/A N/A N/A BEGIN (implicit)
+2026-03-14 05:00:39,423INFO N/A N/A N/A DESCRIBE `weibo_platform`.`users`
+2026-03-14 05:00:39,424INFO N/A N/A N/A [raw sql] {}
+2026-03-14 05:00:39,426INFO N/A N/A N/A ROLLBACK
+2026-03-14 05:00:39,428INFO N/A N/A N/A ✅ 成功注册蓝图 comments_bp，前缀：根路径
+2026-03-14 05:00:39,429INFO N/A N/A N/A ✅ 成功注册蓝图 follows_bp，前缀：根路径
+2026-03-14 05:00:39,430INFO N/A N/A N/A ✅ 成功注册蓝图 posts_bp，前缀：根路径
+2026-03-14 05:00:39,431INFO N/A N/A N/A ✅ 成功注册蓝图 likes_bp，前缀：根路径
+2026-03-14 05:00:39,432INFO N/A N/A N/A ✅ 成功注册蓝图 notifications_bp，前缀：根路径
+2026-03-14 05:00:39,433INFO N/A N/A N/A ✅ 成功注册蓝图 users_bp，前缀：/users
+2026-03-14 05:00:39,435INFO N/A N/A N/A ✅ 成功注册蓝图 auth_bp，前缀：/auth
+2026-03-14 05:00:39,436INFO N/A N/A N/A ✅ 成功注册蓝图 feeds_bp，前缀：/feeds
+2026-03-14 05:00:39,437INFO N/A N/A N/A 📌 所有蓝图注册完成
+2026-03-14 05:00:39,457WARNING N/A N/A N/A  * Debugger is active!
+2026-03-14 05:00:51,026INFO N/A N/A N/A {"timestamp": "2026-03-14T09:00:51.026459+00:00Z", "level": "INFO", "request_id": "340141f5-49be-4147-be3d-25ee440c3478", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 05:00:51,027WARNING b152daa0-3649-47f0-ab5d-7f3faa150840 N/A -0.0 [CUSTOM ERROR] request_id=b152daa0-3649-47f0-ab5d-7f3faa150840, error_code=10002, msg=访问的接口/资源不存在
+2026-03-14 05:00:51,028WARNING N/A N/A N/A {"timestamp": "2026-03-14T09:00:51.028551+00:00Z", "level": "WARNING", "request_id": "b152daa0-3649-47f0-ab5d-7f3faa150840", "status_code": 404, "duration_ms": 1.44, "path": "/", "response_length": 121}
+2026-03-14 05:00:51,076INFO N/A N/A N/A {"timestamp": "2026-03-14T09:00:51.076267+00:00Z", "level": "INFO", "request_id": "15e94aff-1202-4a13-9d1f-49dd99565292", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 05:00:51,077WARNING 11c4bef7-2109-4eca-93fe-389cf0509788 N/A -0.0 [CUSTOM ERROR] request_id=11c4bef7-2109-4eca-93fe-389cf0509788, error_code=10002, msg=访问的接口/资源不存在
+2026-03-14 05:00:51,079WARNING N/A N/A N/A {"timestamp": "2026-03-14T09:00:51.078799+00:00Z", "level": "WARNING", "request_id": "11c4bef7-2109-4eca-93fe-389cf0509788", "status_code": 404, "duration_ms": 1.43, "path": "/", "response_length": 121}
+2026-03-14 05:00:56,639INFO N/A N/A N/A {"timestamp": "2026-03-14T09:00:56.639074+00:00Z", "level": "INFO", "request_id": "1344c794-67c8-4e87-8a6f-ce3d47dac362", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 05:00:56,640WARNING 318fd6f5-42d0-4f15-97d7-700cabc1d73b N/A -0.0 [CUSTOM ERROR] request_id=318fd6f5-42d0-4f15-97d7-700cabc1d73b, error_code=10002, msg=访问的接口/资源不存在
+2026-03-14 05:00:56,641WARNING N/A N/A N/A {"timestamp": "2026-03-14T09:00:56.641024+00:00Z", "level": "WARNING", "request_id": "318fd6f5-42d0-4f15-97d7-700cabc1d73b", "status_code": 404, "duration_ms": 1.05, "path": "/", "response_length": 121}
+2026-03-14 05:00:56,724INFO N/A N/A N/A {"timestamp": "2026-03-14T09:00:56.724350+00:00Z", "level": "INFO", "request_id": "8df7000f-9cbd-485a-bfe7-528c9e3319c8", "method": "GET", "path": "/", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 05:00:56,725WARNING b4a46cba-501e-4379-8af2-9a1500989edb N/A -0.0 [CUSTOM ERROR] request_id=b4a46cba-501e-4379-8af2-9a1500989edb, error_code=10002, msg=访问的接口/资源不存在
+2026-03-14 05:00:56,726WARNING N/A N/A N/A {"timestamp": "2026-03-14T09:00:56.726541+00:00Z", "level": "WARNING", "request_id": "b4a46cba-501e-4379-8af2-9a1500989edb", "status_code": 404, "duration_ms": 1.18, "path": "/", "response_length": 121}
+2026-03-14 05:01:59,871INFO N/A N/A N/A {"timestamp": "2026-03-14T09:01:59.871637+00:00Z", "level": "INFO", "request_id": "467ffa9a-5993-4ac4-a66e-0652e2ab3017", "method": "GET", "path": "/users/register", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 05:01:59,872WARNING e4b9f9c2-f2aa-4ada-a5ca-59831ab89c76 N/A -0.0 [CUSTOM ERROR] request_id=e4b9f9c2-f2aa-4ada-a5ca-59831ab89c76, error_code=10002, msg=访问的接口/资源不存在
+2026-03-14 05:01:59,873WARNING N/A N/A N/A {"timestamp": "2026-03-14T09:01:59.873546+00:00Z", "level": "WARNING", "request_id": "e4b9f9c2-f2aa-4ada-a5ca-59831ab89c76", "status_code": 404, "duration_ms": 0.98, "path": "/users/register", "response_length": 121}
+2026-03-14 05:01:59,955INFO N/A N/A N/A {"timestamp": "2026-03-14T09:01:59.955623+00:00Z", "level": "INFO", "request_id": "d2d6b05a-a480-44c2-84c7-05be09234544", "method": "GET", "path": "/favicon.ico", "remote_addr": "10.10.10.136", "user_agent": null, "content_length": 0}
+2026-03-14 05:01:59,956WARNING 13a9de80-ef6d-45e0-9201-cb5d09cb7dfd N/A -0.0 [CUSTOM ERROR] request_id=13a9de80-ef6d-45e0-9201-cb5d09cb7dfd, error_code=10002, msg=访问的接口/资源不存在
+2026-03-14 05:01:59,957WARNING N/A N/A N/A {"timestamp": "2026-03-14T09:01:59.957470+00:00Z", "level": "WARNING", "request_id": "13a9de80-ef6d-45e0-9201-cb5d09cb7dfd", "status_code": 404, "duration_ms": 0.95, "path": "/favicon.ico", "response_length": 121}
+2026-03-14 05:03:32,312INFO N/A N/A N/A {"timestamp": "2026-03-14T09:03:32.312587+00:00Z", "level": "INFO", "request_id": "6772c935-1367-4ba1-8e19-9ccd1d4ac0fb", "method": "POST", "path": "/users/register", "remote_addr": "127.0.0.1", "user_agent": null, "content_length": 69}
+2026-03-14 05:03:32,313WARNING 668f784a-7894-48df-bc01-288cd40a767e N/A -0.0 [CUSTOM ERROR] request_id=668f784a-7894-48df-bc01-288cd40a767e, error_code=10002, msg=访问的接口/资源不存在
+2026-03-14 05:03:32,314WARNING N/A N/A N/A {"timestamp": "2026-03-14T09:03:32.314308+00:00Z", "level": "WARNING", "request_id": "668f784a-7894-48df-bc01-288cd40a767e", "status_code": 404, "duration_ms": 0.87, "path": "/users/register", "response_length": 121}

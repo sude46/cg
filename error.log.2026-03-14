@@ -1,0 +1,1070 @@
+2026-03-14 03:52:13,686ERROR N/A N/A N/A ❌ 注册蓝图 auth_bp 失败：No module named 'app.auth'
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/core/blueprint_registry.py", line 16, in register_all_blueprints
+    module = __import__(module_path, fromlist=[bp_name])
+ModuleNotFoundError: No module named 'app.auth'
+2026-03-14 03:52:13,688ERROR N/A N/A N/A ❌ 注册蓝图 feeds_bp 失败：No module named 'app.feeds'
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/core/blueprint_registry.py", line 16, in register_all_blueprints
+    module = __import__(module_path, fromlist=[bp_name])
+ModuleNotFoundError: No module named 'app.feeds'
+2026-03-14 03:55:51,163ERROR N/A N/A N/A 认证校验失败：flask-jwt-extended is required but not installed
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 76, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 23, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+2026-03-14 03:55:51,219ERROR N/A N/A N/A Error on request:
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2193, in wsgi_app
+    response = self.handle_exception(e)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1487, in full_dispatch_request
+    return self.finalize_request(rv)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1508, in finalize_request
+    response = self.process_response(response)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2002, in process_response
+    response = self.ensure_sync(func)(response)
+  File "/home/app/weibo-platform/middlewares/request_hooks.py", line 46, in after_request_hook
+    g.log_extra["elapsed_time"]=elapsed_time
+    ^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/ctx.py", line 54, in __getattr__
+    raise AttributeError(name) from None
+AttributeError: log_extra
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/werkzeug/serving.py", line 370, in run_wsgi
+    execute(self.server.app)
+    ~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/werkzeug/serving.py", line 331, in execute
+    application_iter = app(environ, start_response)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2213, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2206, in wsgi_app
+    ctx.pop(error)
+    ~~~~~~~^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/ctx.py", line 401, in pop
+    self.app.do_teardown_request(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2038, in do_teardown_request
+    self.ensure_sync(func)(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "/home/app/weibo-platform/middlewares/logging_middleware.py", line 88, in teardown_request
+    "traceback": logging.Formatter().formatException(exception.__traceback__)
+                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/logging/__init__.py", line 666, in formatException
+    tb = ei[2]
+         ~~^^^
+TypeError: 'traceback' object is not subscriptable
+2026-03-14 03:55:53,395ERROR N/A N/A N/A 认证校验失败：flask-jwt-extended is required but not installed
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 76, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 23, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+2026-03-14 03:55:53,402ERROR N/A N/A N/A Error on request:
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2193, in wsgi_app
+    response = self.handle_exception(e)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1487, in full_dispatch_request
+    return self.finalize_request(rv)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1508, in finalize_request
+    response = self.process_response(response)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2002, in process_response
+    response = self.ensure_sync(func)(response)
+  File "/home/app/weibo-platform/middlewares/request_hooks.py", line 46, in after_request_hook
+    g.log_extra["elapsed_time"]=elapsed_time
+    ^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/ctx.py", line 54, in __getattr__
+    raise AttributeError(name) from None
+AttributeError: log_extra
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/werkzeug/serving.py", line 370, in run_wsgi
+    execute(self.server.app)
+    ~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/werkzeug/serving.py", line 331, in execute
+    application_iter = app(environ, start_response)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2213, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2206, in wsgi_app
+    ctx.pop(error)
+    ~~~~~~~^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/ctx.py", line 401, in pop
+    self.app.do_teardown_request(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2038, in do_teardown_request
+    self.ensure_sync(func)(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "/home/app/weibo-platform/middlewares/logging_middleware.py", line 88, in teardown_request
+    "traceback": logging.Formatter().formatException(exception.__traceback__)
+                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/logging/__init__.py", line 666, in formatException
+    tb = ei[2]
+         ~~^^^
+TypeError: 'traceback' object is not subscriptable
+2026-03-14 03:55:54,507ERROR N/A N/A N/A 认证校验失败：flask-jwt-extended is required but not installed
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 76, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 23, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+2026-03-14 03:55:54,513ERROR N/A N/A N/A Error on request:
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2193, in wsgi_app
+    response = self.handle_exception(e)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1487, in full_dispatch_request
+    return self.finalize_request(rv)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1508, in finalize_request
+    response = self.process_response(response)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2002, in process_response
+    response = self.ensure_sync(func)(response)
+  File "/home/app/weibo-platform/middlewares/request_hooks.py", line 46, in after_request_hook
+    g.log_extra["elapsed_time"]=elapsed_time
+    ^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/ctx.py", line 54, in __getattr__
+    raise AttributeError(name) from None
+AttributeError: log_extra
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/werkzeug/serving.py", line 370, in run_wsgi
+    execute(self.server.app)
+    ~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/werkzeug/serving.py", line 331, in execute
+    application_iter = app(environ, start_response)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2213, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2206, in wsgi_app
+    ctx.pop(error)
+    ~~~~~~~^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/ctx.py", line 401, in pop
+    self.app.do_teardown_request(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2038, in do_teardown_request
+    self.ensure_sync(func)(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "/home/app/weibo-platform/middlewares/logging_middleware.py", line 88, in teardown_request
+    "traceback": logging.Formatter().formatException(exception.__traceback__)
+                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/logging/__init__.py", line 666, in formatException
+    tb = ei[2]
+         ~~^^^
+TypeError: 'traceback' object is not subscriptable
+2026-03-14 03:55:56,006ERROR N/A N/A N/A 认证校验失败：flask-jwt-extended is required but not installed
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 76, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 23, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+2026-03-14 03:55:56,014ERROR N/A N/A N/A Error on request:
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2193, in wsgi_app
+    response = self.handle_exception(e)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1487, in full_dispatch_request
+    return self.finalize_request(rv)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1508, in finalize_request
+    response = self.process_response(response)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2002, in process_response
+    response = self.ensure_sync(func)(response)
+  File "/home/app/weibo-platform/middlewares/request_hooks.py", line 46, in after_request_hook
+    g.log_extra["elapsed_time"]=elapsed_time
+    ^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/ctx.py", line 54, in __getattr__
+    raise AttributeError(name) from None
+AttributeError: log_extra
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/werkzeug/serving.py", line 370, in run_wsgi
+    execute(self.server.app)
+    ~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/werkzeug/serving.py", line 331, in execute
+    application_iter = app(environ, start_response)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2213, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2206, in wsgi_app
+    ctx.pop(error)
+    ~~~~~~~^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/ctx.py", line 401, in pop
+    self.app.do_teardown_request(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2038, in do_teardown_request
+    self.ensure_sync(func)(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "/home/app/weibo-platform/middlewares/logging_middleware.py", line 88, in teardown_request
+    "traceback": logging.Formatter().formatException(exception.__traceback__)
+                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/logging/__init__.py", line 666, in formatException
+    tb = ei[2]
+         ~~^^^
+TypeError: 'traceback' object is not subscriptable
+2026-03-14 03:58:32,530ERROR N/A N/A N/A 认证校验失败：flask-jwt-extended is required but not installed
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 76, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 23, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+2026-03-14 03:58:32,536ERROR N/A N/A N/A Error on request:
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2193, in wsgi_app
+    response = self.handle_exception(e)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1487, in full_dispatch_request
+    return self.finalize_request(rv)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1508, in finalize_request
+    response = self.process_response(response)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2002, in process_response
+    response = self.ensure_sync(func)(response)
+  File "/home/app/weibo-platform/middlewares/request_hooks.py", line 46, in after_request_hook
+    g.log_extra["elapsed_time"]=elapsed_time
+    ^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/ctx.py", line 54, in __getattr__
+    raise AttributeError(name) from None
+AttributeError: log_extra
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/werkzeug/serving.py", line 370, in run_wsgi
+    execute(self.server.app)
+    ~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/werkzeug/serving.py", line 331, in execute
+    application_iter = app(environ, start_response)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2213, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2206, in wsgi_app
+    ctx.pop(error)
+    ~~~~~~~^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/ctx.py", line 401, in pop
+    self.app.do_teardown_request(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2038, in do_teardown_request
+    self.ensure_sync(func)(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "/home/app/weibo-platform/middlewares/logging_middleware.py", line 88, in teardown_request
+    "traceback": logging.Formatter().formatException(exception.__traceback__)
+                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/logging/__init__.py", line 666, in formatException
+    tb = ei[2]
+         ~~^^^
+TypeError: 'traceback' object is not subscriptable
+2026-03-14 03:58:32,628ERROR N/A N/A N/A 认证校验失败：flask-jwt-extended is required but not installed
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 76, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 23, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+2026-03-14 03:58:32,634ERROR N/A N/A N/A Error on request:
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2193, in wsgi_app
+    response = self.handle_exception(e)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1487, in full_dispatch_request
+    return self.finalize_request(rv)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1508, in finalize_request
+    response = self.process_response(response)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2002, in process_response
+    response = self.ensure_sync(func)(response)
+  File "/home/app/weibo-platform/middlewares/request_hooks.py", line 46, in after_request_hook
+    g.log_extra["elapsed_time"]=elapsed_time
+    ^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/ctx.py", line 54, in __getattr__
+    raise AttributeError(name) from None
+AttributeError: log_extra
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/werkzeug/serving.py", line 370, in run_wsgi
+    execute(self.server.app)
+    ~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/werkzeug/serving.py", line 331, in execute
+    application_iter = app(environ, start_response)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2213, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2206, in wsgi_app
+    ctx.pop(error)
+    ~~~~~~~^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/ctx.py", line 401, in pop
+    self.app.do_teardown_request(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2038, in do_teardown_request
+    self.ensure_sync(func)(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "/home/app/weibo-platform/middlewares/logging_middleware.py", line 88, in teardown_request
+    "traceback": logging.Formatter().formatException(exception.__traceback__)
+                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/logging/__init__.py", line 666, in formatException
+    tb = ei[2]
+         ~~^^^
+TypeError: 'traceback' object is not subscriptable
+2026-03-14 04:08:19,196ERROR N/A N/A N/A 认证校验失败：flask-jwt-extended is required but not installed
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 95, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 42, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+2026-03-14 04:08:19,202ERROR N/A N/A N/A Unhandled exception: Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2193, in wsgi_app
+    response = self.handle_exception(e)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1487, in full_dispatch_request
+    return self.finalize_request(rv)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1508, in finalize_request
+    response = self.process_response(response)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2002, in process_response
+    response = self.ensure_sync(func)(response)
+  File "/home/app/weibo-platform/middlewares/request_hooks.py", line 46, in after_request_hook
+    g.log_extra["elapsed_time"]=elapsed_time
+    ^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/ctx.py", line 54, in __getattr__
+    raise AttributeError(name) from None
+AttributeError: log_extra
+
+2026-03-14 04:08:19,214ERROR N/A N/A N/A Error on request:
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/werkzeug/serving.py", line 370, in run_wsgi
+    execute(self.server.app)
+    ~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/werkzeug/serving.py", line 331, in execute
+    application_iter = app(environ, start_response)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2213, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2193, in wsgi_app
+    response = self.handle_exception(e)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1487, in full_dispatch_request
+    return self.finalize_request(rv)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1508, in finalize_request
+    response = self.process_response(response)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2002, in process_response
+    response = self.ensure_sync(func)(response)
+  File "/home/app/weibo-platform/middlewares/request_hooks.py", line 46, in after_request_hook
+    g.log_extra["elapsed_time"]=elapsed_time
+    ^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/ctx.py", line 54, in __getattr__
+    raise AttributeError(name) from None
+AttributeError: log_extra
+2026-03-14 04:08:19,294ERROR N/A N/A N/A 认证校验失败：flask-jwt-extended is required but not installed
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 95, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 42, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+2026-03-14 04:08:19,303ERROR N/A N/A N/A Unhandled exception: Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2193, in wsgi_app
+    response = self.handle_exception(e)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1487, in full_dispatch_request
+    return self.finalize_request(rv)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1508, in finalize_request
+    response = self.process_response(response)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2002, in process_response
+    response = self.ensure_sync(func)(response)
+  File "/home/app/weibo-platform/middlewares/request_hooks.py", line 46, in after_request_hook
+    g.log_extra["elapsed_time"]=elapsed_time
+    ^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/ctx.py", line 54, in __getattr__
+    raise AttributeError(name) from None
+AttributeError: log_extra
+
+2026-03-14 04:08:19,309ERROR N/A N/A N/A Error on request:
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/werkzeug/serving.py", line 370, in run_wsgi
+    execute(self.server.app)
+    ~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/werkzeug/serving.py", line 331, in execute
+    application_iter = app(environ, start_response)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2213, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2193, in wsgi_app
+    response = self.handle_exception(e)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1487, in full_dispatch_request
+    return self.finalize_request(rv)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1508, in finalize_request
+    response = self.process_response(response)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2002, in process_response
+    response = self.ensure_sync(func)(response)
+  File "/home/app/weibo-platform/middlewares/request_hooks.py", line 46, in after_request_hook
+    g.log_extra["elapsed_time"]=elapsed_time
+    ^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/ctx.py", line 54, in __getattr__
+    raise AttributeError(name) from None
+AttributeError: log_extra
+2026-03-14 04:10:53,777ERROR N/A N/A N/A 认证校验失败：flask-jwt-extended is required but not installed
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 95, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 42, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+2026-03-14 04:10:53,780ERROR N/A N/A N/A Unhandled exception: Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2193, in wsgi_app
+    response = self.handle_exception(e)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1487, in full_dispatch_request
+    return self.finalize_request(rv)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1508, in finalize_request
+    response = self.process_response(response)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2002, in process_response
+    response = self.ensure_sync(func)(response)
+  File "/home/app/weibo-platform/middlewares/request_hooks.py", line 46, in after_request_hook
+    g.log_extra["elapsed_time"]=elapsed_time
+    ^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/ctx.py", line 54, in __getattr__
+    raise AttributeError(name) from None
+AttributeError: log_extra
+
+2026-03-14 04:10:53,785ERROR N/A N/A N/A Error on request:
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/werkzeug/serving.py", line 370, in run_wsgi
+    execute(self.server.app)
+    ~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/werkzeug/serving.py", line 331, in execute
+    application_iter = app(environ, start_response)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2213, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2193, in wsgi_app
+    response = self.handle_exception(e)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1487, in full_dispatch_request
+    return self.finalize_request(rv)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1508, in finalize_request
+    response = self.process_response(response)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2002, in process_response
+    response = self.ensure_sync(func)(response)
+  File "/home/app/weibo-platform/middlewares/request_hooks.py", line 46, in after_request_hook
+    g.log_extra["elapsed_time"]=elapsed_time
+    ^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/ctx.py", line 54, in __getattr__
+    raise AttributeError(name) from None
+AttributeError: log_extra
+2026-03-14 04:10:58,913ERROR N/A N/A N/A 认证校验失败：flask-jwt-extended is required but not installed
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 95, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 42, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+2026-03-14 04:10:58,919ERROR N/A N/A N/A Unhandled exception: Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2193, in wsgi_app
+    response = self.handle_exception(e)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1487, in full_dispatch_request
+    return self.finalize_request(rv)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1508, in finalize_request
+    response = self.process_response(response)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2002, in process_response
+    response = self.ensure_sync(func)(response)
+  File "/home/app/weibo-platform/middlewares/request_hooks.py", line 46, in after_request_hook
+    g.log_extra["elapsed_time"]=elapsed_time
+    ^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/ctx.py", line 54, in __getattr__
+    raise AttributeError(name) from None
+AttributeError: log_extra
+
+2026-03-14 04:10:58,925ERROR N/A N/A N/A Error on request:
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/werkzeug/serving.py", line 370, in run_wsgi
+    execute(self.server.app)
+    ~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/werkzeug/serving.py", line 331, in execute
+    application_iter = app(environ, start_response)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2213, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2193, in wsgi_app
+    response = self.handle_exception(e)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1487, in full_dispatch_request
+    return self.finalize_request(rv)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1508, in finalize_request
+    response = self.process_response(response)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2002, in process_response
+    response = self.ensure_sync(func)(response)
+  File "/home/app/weibo-platform/middlewares/request_hooks.py", line 46, in after_request_hook
+    g.log_extra["elapsed_time"]=elapsed_time
+    ^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/ctx.py", line 54, in __getattr__
+    raise AttributeError(name) from None
+AttributeError: log_extra
+2026-03-14 04:10:59,214ERROR N/A N/A N/A 认证校验失败：flask-jwt-extended is required but not installed
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 95, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 42, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+2026-03-14 04:10:59,219ERROR N/A N/A N/A Unhandled exception: Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2193, in wsgi_app
+    response = self.handle_exception(e)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1487, in full_dispatch_request
+    return self.finalize_request(rv)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1508, in finalize_request
+    response = self.process_response(response)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2002, in process_response
+    response = self.ensure_sync(func)(response)
+  File "/home/app/weibo-platform/middlewares/request_hooks.py", line 46, in after_request_hook
+    g.log_extra["elapsed_time"]=elapsed_time
+    ^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/ctx.py", line 54, in __getattr__
+    raise AttributeError(name) from None
+AttributeError: log_extra
+
+2026-03-14 04:10:59,225ERROR N/A N/A N/A Error on request:
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/werkzeug/serving.py", line 370, in run_wsgi
+    execute(self.server.app)
+    ~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/werkzeug/serving.py", line 331, in execute
+    application_iter = app(environ, start_response)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2213, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2193, in wsgi_app
+    response = self.handle_exception(e)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1487, in full_dispatch_request
+    return self.finalize_request(rv)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1508, in finalize_request
+    response = self.process_response(response)
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 2002, in process_response
+    response = self.ensure_sync(func)(response)
+  File "/home/app/weibo-platform/middlewares/request_hooks.py", line 46, in after_request_hook
+    g.log_extra["elapsed_time"]=elapsed_time
+    ^^^^^^^^^^^
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/ctx.py", line 54, in __getattr__
+    raise AttributeError(name) from None
+AttributeError: log_extra
+2026-03-14 04:22:05,687ERROR 61a4a6f0-b211-4e85-b546-d0f0a9d7f141 N/A -0.0 [UNEXPECTED EXCEPTION] request_id=61a4a6f0-b211-4e85-b546-d0f0a9d7f141, error=name 'DatabaseError' is not defined
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 91, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 38, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1482, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1974, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 124, in pre_auth_check
+    except (AuthenticationError, DatabaseError):
+                                 ^^^^^^^^^^^^^
+NameError: name 'DatabaseError' is not defined
+2026-03-14 04:22:05,781ERROR 1313d4ce-4b56-4cc6-bd87-fdce1d1e1339 N/A -0.0 [UNEXPECTED EXCEPTION] request_id=1313d4ce-4b56-4cc6-bd87-fdce1d1e1339, error=name 'DatabaseError' is not defined
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 91, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 38, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1482, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1974, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 124, in pre_auth_check
+    except (AuthenticationError, DatabaseError):
+                                 ^^^^^^^^^^^^^
+NameError: name 'DatabaseError' is not defined
+2026-03-14 04:25:52,151ERROR 5ffc3077-a673-4061-b0de-6d79a1c4ccd4 N/A -0.0 [UNEXPECTED EXCEPTION] request_id=5ffc3077-a673-4061-b0de-6d79a1c4ccd4, error=name 'DatabaseError' is not defined
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 91, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 38, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1482, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1974, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 124, in pre_auth_check
+    except (AuthenticationError, DatabaseError):
+                                 ^^^^^^^^^^^^^
+NameError: name 'DatabaseError' is not defined
+2026-03-14 04:25:52,333ERROR 4a6caf7d-3ff5-4b32-b8be-3ff77ec2b856 N/A -0.0 [UNEXPECTED EXCEPTION] request_id=4a6caf7d-3ff5-4b32-b8be-3ff77ec2b856, error=name 'DatabaseError' is not defined
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 91, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 38, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1482, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1974, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 124, in pre_auth_check
+    except (AuthenticationError, DatabaseError):
+                                 ^^^^^^^^^^^^^
+NameError: name 'DatabaseError' is not defined
+2026-03-14 04:25:53,305ERROR 76fcffee-2348-47e9-96ec-6ab95e453316 N/A -0.0 [UNEXPECTED EXCEPTION] request_id=76fcffee-2348-47e9-96ec-6ab95e453316, error=name 'DatabaseError' is not defined
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 91, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 38, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1482, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1974, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 124, in pre_auth_check
+    except (AuthenticationError, DatabaseError):
+                                 ^^^^^^^^^^^^^
+NameError: name 'DatabaseError' is not defined
+2026-03-14 04:25:54,175ERROR 4aa218b8-9f0d-41a1-8dd5-5767b165c1b7 N/A -0.0 [UNEXPECTED EXCEPTION] request_id=4aa218b8-9f0d-41a1-8dd5-5767b165c1b7, error=name 'DatabaseError' is not defined
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 91, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 38, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1482, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1974, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 124, in pre_auth_check
+    except (AuthenticationError, DatabaseError):
+                                 ^^^^^^^^^^^^^
+NameError: name 'DatabaseError' is not defined
+2026-03-14 04:26:52,629ERROR d034ba61-0fa0-4273-bda3-3df409dbb20f N/A -0.0 [UNEXPECTED EXCEPTION] request_id=d034ba61-0fa0-4273-bda3-3df409dbb20f, error=name 'TokenNotFoundError' is not defined
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 107, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 59, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1482, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1974, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 134, in pre_auth_check
+    except TokenNotFoundError:
+           ^^^^^^^^^^^^^^^^^^
+NameError: name 'TokenNotFoundError' is not defined. Did you mean: 'FileNotFoundError'?
+2026-03-14 04:26:52,722ERROR c0fd9987-f47e-413c-8350-75c5fc358f01 N/A -0.0 [UNEXPECTED EXCEPTION] request_id=c0fd9987-f47e-413c-8350-75c5fc358f01, error=name 'TokenNotFoundError' is not defined
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 107, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 59, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1482, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1974, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 134, in pre_auth_check
+    except TokenNotFoundError:
+           ^^^^^^^^^^^^^^^^^^
+NameError: name 'TokenNotFoundError' is not defined. Did you mean: 'FileNotFoundError'?
+2026-03-14 04:26:58,880ERROR ba686fbb-f9e0-4466-8849-dae3be42f393 N/A -0.0 [UNEXPECTED EXCEPTION] request_id=ba686fbb-f9e0-4466-8849-dae3be42f393, error=name 'TokenNotFoundError' is not defined
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 107, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 59, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1482, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1974, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 134, in pre_auth_check
+    except TokenNotFoundError:
+           ^^^^^^^^^^^^^^^^^^
+NameError: name 'TokenNotFoundError' is not defined. Did you mean: 'FileNotFoundError'?
+2026-03-14 04:26:59,004ERROR bfef0816-4c5c-4814-8af2-0ba692c0244e N/A -0.0 [UNEXPECTED EXCEPTION] request_id=bfef0816-4c5c-4814-8af2-0ba692c0244e, error=name 'TokenNotFoundError' is not defined
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 107, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 59, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1482, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1974, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 134, in pre_auth_check
+    except TokenNotFoundError:
+           ^^^^^^^^^^^^^^^^^^
+NameError: name 'TokenNotFoundError' is not defined. Did you mean: 'FileNotFoundError'?
+2026-03-14 04:27:21,350ERROR 80ca21af-b7e4-4dd4-9a55-669ded159e00 N/A -0.0 [UNEXPECTED EXCEPTION] request_id=80ca21af-b7e4-4dd4-9a55-669ded159e00, error=name 'TokenNotFoundError' is not defined
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 107, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 59, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1482, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1974, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 134, in pre_auth_check
+    except TokenNotFoundError:
+           ^^^^^^^^^^^^^^^^^^
+NameError: name 'TokenNotFoundError' is not defined. Did you mean: 'FileNotFoundError'?
+2026-03-14 04:27:21,428ERROR 17164b8e-ce78-4d10-a749-838d9bbba841 N/A -0.0 [UNEXPECTED EXCEPTION] request_id=17164b8e-ce78-4d10-a749-838d9bbba841, error=name 'TokenNotFoundError' is not defined
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 107, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 59, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1482, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1974, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 134, in pre_auth_check
+    except TokenNotFoundError:
+           ^^^^^^^^^^^^^^^^^^
+NameError: name 'TokenNotFoundError' is not defined. Did you mean: 'FileNotFoundError'?
+2026-03-14 04:27:24,584ERROR e740fce0-f4ed-4320-8f41-e4ce08851c82 N/A -0.0 [UNEXPECTED EXCEPTION] request_id=e740fce0-f4ed-4320-8f41-e4ce08851c82, error=name 'TokenNotFoundError' is not defined
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 107, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 59, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1482, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1974, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 134, in pre_auth_check
+    except TokenNotFoundError:
+           ^^^^^^^^^^^^^^^^^^
+NameError: name 'TokenNotFoundError' is not defined. Did you mean: 'FileNotFoundError'?
+2026-03-14 04:27:24,716ERROR 8aeae600-e481-4e8f-9947-3a7821cdf345 N/A -0.0 [UNEXPECTED EXCEPTION] request_id=8aeae600-e481-4e8f-9947-3a7821cdf345, error=name 'TokenNotFoundError' is not defined
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 107, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 59, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1482, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1974, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 134, in pre_auth_check
+    except TokenNotFoundError:
+           ^^^^^^^^^^^^^^^^^^
+NameError: name 'TokenNotFoundError' is not defined. Did you mean: 'FileNotFoundError'?
+2026-03-14 04:27:30,017ERROR 88bf16a1-11d6-41a9-92c2-84afa791e28a N/A -0.0 [UNEXPECTED EXCEPTION] request_id=88bf16a1-11d6-41a9-92c2-84afa791e28a, error=name 'TokenNotFoundError' is not defined
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 107, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 59, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1482, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1974, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 134, in pre_auth_check
+    except TokenNotFoundError:
+           ^^^^^^^^^^^^^^^^^^
+NameError: name 'TokenNotFoundError' is not defined. Did you mean: 'FileNotFoundError'?
+2026-03-14 04:27:30,136ERROR d0bf2de0-789a-47e3-8459-a55635dd6fce N/A -0.0 [UNEXPECTED EXCEPTION] request_id=d0bf2de0-789a-47e3-8459-a55635dd6fce, error=name 'TokenNotFoundError' is not defined
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 107, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 59, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1482, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1974, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 134, in pre_auth_check
+    except TokenNotFoundError:
+           ^^^^^^^^^^^^^^^^^^
+NameError: name 'TokenNotFoundError' is not defined. Did you mean: 'FileNotFoundError'?
+2026-03-14 04:30:52,406ERROR 4d5fdd51-e49e-4be6-8c26-cc1aa7816e75 N/A -0.0 [UNEXPECTED EXCEPTION] request_id=4d5fdd51-e49e-4be6-8c26-cc1aa7816e75, error=name 'TokenNotFoundError' is not defined
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 107, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 59, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1482, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1974, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 134, in pre_auth_check
+    except TokenNotFoundError:
+           ^^^^^^^^^^^^^^^^^^
+NameError: name 'TokenNotFoundError' is not defined. Did you mean: 'FileNotFoundError'?
+2026-03-14 04:30:52,986ERROR 61164010-9cdd-4e02-a64f-fcbfbb896f13 N/A -0.0 [UNEXPECTED EXCEPTION] request_id=61164010-9cdd-4e02-a64f-fcbfbb896f13, error=name 'TokenNotFoundError' is not defined
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 107, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 59, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1482, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1974, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 134, in pre_auth_check
+    except TokenNotFoundError:
+           ^^^^^^^^^^^^^^^^^^
+NameError: name 'TokenNotFoundError' is not defined. Did you mean: 'FileNotFoundError'?
+2026-03-14 04:30:53,441ERROR 5ae5ed27-f94c-43ab-bdf5-e94f5d4551fe N/A -0.0 [UNEXPECTED EXCEPTION] request_id=5ae5ed27-f94c-43ab-bdf5-e94f5d4551fe, error=name 'TokenNotFoundError' is not defined
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 107, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 59, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1482, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1974, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 134, in pre_auth_check
+    except TokenNotFoundError:
+           ^^^^^^^^^^^^^^^^^^
+NameError: name 'TokenNotFoundError' is not defined. Did you mean: 'FileNotFoundError'?
+2026-03-14 04:35:50,949ERROR 7bcb1e73-e580-4c31-826a-44728d8e9cdf N/A -0.0 [UNEXPECTED EXCEPTION] request_id=7bcb1e73-e580-4c31-826a-44728d8e9cdf, error=name 'TokenNotFoundError' is not defined
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 107, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 59, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1482, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1974, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 134, in pre_auth_check
+    except TokenNotFoundError:
+           ^^^^^^^^^^^^^^^^^^
+NameError: name 'TokenNotFoundError' is not defined. Did you mean: 'FileNotFoundError'?
+2026-03-14 04:35:51,467ERROR 011c8666-b62e-4540-bf5e-51515dd461c5 N/A -0.0 [UNEXPECTED EXCEPTION] request_id=011c8666-b62e-4540-bf5e-51515dd461c5, error=name 'TokenNotFoundError' is not defined
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 107, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 59, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1482, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1974, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 134, in pre_auth_check
+    except TokenNotFoundError:
+           ^^^^^^^^^^^^^^^^^^
+NameError: name 'TokenNotFoundError' is not defined. Did you mean: 'FileNotFoundError'?
+2026-03-14 04:35:52,592ERROR 9540b1da-5b28-4f73-99b5-dd39ac79cec4 N/A -0.0 [UNEXPECTED EXCEPTION] request_id=9540b1da-5b28-4f73-99b5-dd39ac79cec4, error=name 'TokenNotFoundError' is not defined
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 107, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 59, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1482, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1974, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 134, in pre_auth_check
+    except TokenNotFoundError:
+           ^^^^^^^^^^^^^^^^^^
+NameError: name 'TokenNotFoundError' is not defined. Did you mean: 'FileNotFoundError'?
+2026-03-14 04:35:52,847ERROR 33b30123-3f21-4757-8eaf-4352013d2d6f N/A -0.0 [UNEXPECTED EXCEPTION] request_id=33b30123-3f21-4757-8eaf-4352013d2d6f, error=name 'TokenNotFoundError' is not defined
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 107, in pre_auth_check
+    verify_jwt_in_request(optional=False)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 59, in verify_jwt_in_request
+    raise RuntimeError("flask-jwt-extended is required but not installed")
+RuntimeError: flask-jwt-extended is required but not installed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1482, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/home/app/weibo-platform/venv/lib/python3.13/site-packages/flask/app.py", line 1974, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/home/app/weibo-platform/middlewares/auth_middleware.py", line 134, in pre_auth_check
+    except TokenNotFoundError:
+           ^^^^^^^^^^^^^^^^^^
+NameError: name 'TokenNotFoundError' is not defined. Did you mean: 'FileNotFoundError'?
