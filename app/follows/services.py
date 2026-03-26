@@ -8,7 +8,7 @@ from .schemas import (
     follow_list_schema,
 )
 from app.users.schemas import UserListSchema
-from app.common import pagination_utils
+ 
 from app.common.exceptions import (
     ResourceNotFoundError,
     ValidationError,
@@ -79,7 +79,7 @@ class FollowService:
             if not user or not getattr(user, 'is_active', True):
                 raise ResourceNotFoundError('用户不存在或已被禁用')
 
-            result = follow_repository.list_following(user_id, page=page, size=per_page)
+            result = follow_repository.list_following(user_id, page=page, per_page=per_page)
             items = follow_response_schema.dump(result.get('items', []), many=True)
             return {'follows': items, 'pagination': result.get('pagination', {})}
         except Exception as e:
@@ -95,7 +95,7 @@ class FollowService:
             if not user or not getattr(user, 'is_active', True):
                 raise ResourceNotFoundError('用户不存在或已被禁用')
 
-            result = follow_repository.list_followers(user_id, page=page, size=per_page)
+            result = follow_repository.list_followers(user_id, page=page, per_page=per_page)
             items = follow_response_schema.dump(result.get('items', []), many=True) 
             return {'follows': items, 'pagination': result.get('pagination', {})}
         except Exception as e:
@@ -103,35 +103,22 @@ class FollowService:
             if isinstance(e, ResourceNotFoundError):
                 raise
             raise DatabaseError('获取列表失败，请稍后重试')
-
+        
     @staticmethod
     def get_mutual_follows(user_id: int, page: int = 1, per_page: int = 20):
-        try:
-            user = user_repository.get_by_id(user_id)
-            if not user or not getattr(user, 'is_active', True):
-                raise ResourceNotFoundError('目标用户不存在或已被禁用')
-
-            F1 = aliased(Follow)
-            F2 = aliased(Follow)
-            # 用户 A 为 mutual 的条件：存在 F1(A -> user_id) 且存在 F2(user_id -> A)
-            mutual_q = (
-                User.query
-                .join(F1, User.id == F1.follower_id)
-                .join(F2, User.id == F2.followed_id)
-                .filter(F1.followed_id == user_id, F2.follower_id == user_id)
-                .filter(User.is_active == True)
-                .order_by(F1.created_at.desc())
-                .distinct()
-            )
-
-            result = pagination_utils.paginate(mutual_q, page=page, per_page=per_page)
-            users = UserListSchema.dump(result.get('items', []), many=True)
-            return {'mutual_users': users, 'pagination': result.get('pagination', {})}
-        except Exception as e:
-            logger.error('查询互相关注用户失败: %s', e)
-            if isinstance(e, ResourceNotFoundError):
-                raise
-            raise DatabaseError('查询互相关注用户失败，请稍后重试')
+        user = user_repository.get_by_id(user_id)
+        if not user or not getattr(user, 'is_active', True):
+            raise ResourceNotFoundError('目标用户不存在或已被禁用')
+        
+        result = follow_repository.get_mutual_follows(
+            user_id=user_id, 
+            page=page, 
+            per_page=per_page
+        )
+        
+        # Service 只负责序列化
+        users = UserListSchema().dump(result.get('items', []), many=True)
+        return {'mutual_users': users, 'pagination': result.get('pagination', {})}
 
     @staticmethod
     def is_following(follower_id: int, followed_id: int) -> bool:

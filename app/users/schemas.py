@@ -1,22 +1,16 @@
 from utils.validators import validate_username, validate_password, validate_email
 from marshmallow import validate
 from marshmallow import Schema, fields, validates_schema, post_dump, ValidationError
+from password_strength import PasswordPolicy
+# 使用默认密码策略，或根据项目需求自定义
+# password_strength 库的 PasswordPolicy 不接受初始化参数
+# 使用 PasswordStats 来检查具体密码
 try:
-	from password_strength import PasswordPolicy
-	try:
-		# 兼容不同版本的 password_strength 初始化参数
-		password_policy = PasswordPolicy(
-			length=8,
-			uppercase=1,
-			lowercase=1,
-			numbers=1,
-			special=1,
-		)
-	except TypeError:
-		# 某些发行版使用不同参数名，降级为 None，由下面的自定义校验器处理
-		password_policy = None
-except Exception:
-	password_policy = None
+    from password_strength import PasswordStats
+    password_policy = PasswordPolicy()
+except ImportError:
+    password_policy = None
+
 class LoginSchema(Schema):
 	'''登录请求模式'''
 	username=fields.Str(required=True,validate=validate.Length(min=3,max=65))
@@ -88,21 +82,15 @@ class UserSchema(Schema):
 	#基础字段
 	id=fields.Integer()
 	username=fields.String()
+	email=fields.Email()
 	is_active=fields.Boolean()
+	is_admin=fields.Boolean()
 	created_at=fields.DateTime()
 	last_login=fields.DateTime()
-	post_count = fields.Method('get_post_count')
-	follower_count = fields.Method('get_follower_count')
-	following_count = fields.Method('get_following_count')
+	post_count = fields.Integer(dump_default=0)
+	follower_count = fields.Integer(dump_default=0)
+	following_count = fields.Integer(dump_default=0)
 
-	def get_post_count(self, obj):
-		return obj.posts.count() if hasattr(obj, 'posts') and obj.posts else 0
-
-	def get_follower_count(self, obj):
-		return obj.followers.count() if hasattr(obj, 'followers') and obj.followers else 0
-
-	def get_following_count(self, obj):
-		return obj.following.count() if hasattr(obj, 'following') and obj.following else 0
 	@post_dump
 	def clean_null_values(self,data,**kawargs):
 		return {k:v for k,v in data.items() if v is not None}

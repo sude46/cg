@@ -59,37 +59,6 @@ def validate_json(schema_class):
         return wrapper
     return decorator
 
-
-def rate_limit(per_minute: int = 60):
-    """
-    简单的内存限流装饰器（开发环境用，生产环境需改用Redis）
-    """
-    def decorator(f):
-        @wraps(f)
-        def wrapper(*args, **kwargs):
-            # 先进行可选的JWT验证，避免直接调用 get_jwt_identity 出错
-            try:
-                verify_jwt_in_request(optional=True)
-                user_id = get_jwt_identity() or "anonymous"
-            except Exception:
-                user_id = "anonymous"
-
-            client_ip = request.remote_addr or "unknown"
-            endpoint = request.endpoint or f.__name__
-            current_min = int(time.time() / 60)
-            key = f"rate_limit:{client_ip}:{user_id}:{endpoint}:{current_min}"
-
-            if not hasattr(current_app, "rate_limits"):
-                current_app.rate_limits = {}
-
-            count = current_app.rate_limits.get(key, 0)
-            if count >= per_minute:
-                raise RateLimitError("请求过于频繁")
-
-            current_app.rate_limits[key] = count + 1
-            return f(*args, **kwargs)
-        return wrapper
-    return decorator
 # ---------- 新增装饰器 ----------
 def transactional(f):
     """

@@ -10,6 +10,7 @@ class Like(db.Model):
     post_id = db.Column(db.Integer, db.ForeignKey('posts.id', ondelete='CASCADE'), nullable=True, index=True)
     comment_id = db.Column(db.Integer, db.ForeignKey('comments.id', ondelete='CASCADE'), nullable=True, index=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    is_deleted = db.Column(db.Boolean, default=False, nullable=False, index=True)
 
     # 关系定义
     user = db.relationship('User', backref=db.backref('user_likes', lazy='dynamic', overlaps='likes'))

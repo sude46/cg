@@ -1,13 +1,15 @@
-from flask import request, jsonify, g
+from flask import request, jsonify, g,current_app
 from flask_jwt_extended import jwt_required,get_jwt_identity
 from flask_restx import Api,Resource,fields,Namespace
 from . import posts_bp
 from .services import PostService
 from .schemas import (
 	CreatePostSchema,
-	UpdatePostSchema
+	UpdatePostSchema,
+	post_schema,
+	posts_schema
 )
-from utils.decorators import validate_json, rate_limit, ownership_required
+from utils.decorators import validate_json, ownership_required
 from app.common.exceptions import (
     ResourceNotFoundError,
     ConflictError,
@@ -18,18 +20,40 @@ from app.common.exceptions import (
 
 from utils.response import success_response,fail_response,ResponseCode,pagination_response
 from utils.pagination import get_pagination_params
+from middlewares import route_limit
 
+
+authorizations = {
+    'Bearer': {
+        'type': 'apiKey',
+        'in': 'header',
+        'name': 'Authorization',
+        'description': 'JWT Token (Bearer token)'
+    }
+}
 
 api_restx=Api(
 	posts_bp,
 	version='1.0',	
 	title='帖子API',
 	description='提供帖子相关的API接口',
+	authorizations=authorizations,
 	security='Bearer',
 	doc='/docs'
 )
 
-api=Namespace('posts',description='帖子相关操作',security='Bearer')
+api=Namespace('posts',description='帖子相关操作')
+
+# Swagger请求模型
+post_create_model = api.model('PostCreate', {
+    'content': fields.String(required=True, description='帖子内容（1-1000字符）'),
+    'image_url': fields.String(required=False, description='图片URL（可选）')
+})
+
+post_update_model = api.model('PostUpdate', {
+    'content': fields.String(required=False, description='帖子内容（1-1000字符）'),
+    'image_url': fields.String(required=False, description='图片URL（可选）')
+})
 
 
 @api.route('')
@@ -41,10 +65,9 @@ class PostList(Resource):
 			'per_page': '每页数量,默认20',
 			'user_id': '用户ID（可选，获取指定用户的帖子）'
 		},
-		security='apiKey'
+		security='Bearer'
 	)
 	@api.response(200,'获取成功')
-	@api.response(400,'参数错误')
 	@jwt_required(optional=True)
 	def get(self):
 		page = request.args.get('page', 1, type=int)
@@ -52,239 +75,157 @@ class PostList(Resource):
 		user_id = request.args.get('user_id', type=int)
 		current_user_id = get_jwt_identity()
 
-		try:
-			result = PostService.get_posts(
+		
+		result = PostService.get_posts(
 				page=page,
 				per_page=per_page,
 				user_id=user_id,
 				current_user_id=current_user_id,
 			)
-			return success_response(
-				data=result,
+		# 序列化帖子列表
+		posts_data = posts_schema.dump(result['items'])
+		return success_response(
+				data={
+					'posts': posts_data,
+					'pagination': result['pagination'],
+					'liked_post_ids': list(result.get('liked_post_ids', []))
+				},
 				message='获取帖子列表成功'
 			), 200
-		except ValidationError as e:
-			return fail_response(
-				code=ResponseCode.PARAM_ERROR,
-				error_msg=str(e)
-			), 400
-		except Exception as e:
-			return fail_response(
-				code=ResponseCode.INTERNAL_ERROR,
-				error_msg='服务器内部错误'
-			), 500
 
-	@api.doc(description='创建新帖子',security='apiKey')
+	@api.doc(description='创建新帖子',security='Bearer')
+	@api.expect(post_create_model, validate=False)
 	@api.response(201,'创建成功')
-	@api.response(400,'参数错误')
-	@api.response(401,'未授权')
 	@jwt_required()
 	@validate_json(CreatePostSchema)
-	@rate_limit(30)
+	@route_limit("10 per minute")
 	def post(self):
 		'''创建新帖子'''
 		data = getattr(g, 'validated_json', request.get_json())
 		current_user_id = get_jwt_identity()
-		try:
-			result = PostService.create_post(
+		
+		post = PostService.create_post(
 				user_id=current_user_id,
 				content=data['content'],
 				image_url=data.get('image_url'),
 			)
-			return success_response(
-				data=result,
+		return success_response(
+				data=post_schema.dump(post),
 				message='创建帖子成功'
 			), 201
-		except ValidationError as e:
-			return fail_response(
-				code=ResponseCode.PARAM_ERROR,
-				error_msg=str(e)
-			) , 400
-		except Exception as e:
-			return fail_response(
-				code=ResponseCode.INTERNAL_ERROR,
-				error_msg='服务器内部错误'
-			), 500
 
 @api.route('/<int:post_id>')
 class PostDetail(Resource):
 	@api.doc(
 		description='获取帖子详情',
 		params={'post_id':'帖子ID'},
-		security='apiKey'
+		security='Bearer'
 		)
 	@api.response(200,'获取成功' )
-	@api.response(404,'帖子不存在',)
 	@jwt_required(optional=True)
 	def get(self,post_id):
 		current_user_id = get_jwt_identity()
-		try:
-			result = PostService.get_post_by_id(
+		
+		result = PostService.get_post(
 				post_id=post_id,
 				current_user_id=current_user_id,
 			)
-			return  success_response(
-				data=result,
+		# 序列化帖子数据
+		post_data = post_schema.dump(result['post'])
+		return success_response(
+				data={
+					'post': post_data,
+					'has_liked': result['has_liked']
+				},
 				message='获取帖子详情成功'
 			), 200
-		except ResourceNotFoundError as e:
-			return fail_response(
-				code=ResponseCode.RESOURCE_NOT_FOUND,
-				error_msg=str(e)
-			), 404
-		except Exception as e:
-			return fail_response(
-				code=ResponseCode.INTERNAL_ERROR,
-				error_msg='服务器内部错误'
-			), 500
 	@api.doc(
 		description='更新帖子',
 		params={'post_id':'帖子ID'},
-		security='apiKey'
+		security='Bearer'
 		)
 	@api.response(200,'更新成功')
-	@api.response(400,'参数错误')
-	@api.response(403,'无权操作')
-	@api.response(404,'帖子不存在')
 	@jwt_required()
 	@validate_json(UpdatePostSchema)
 	@ownership_required('Post','post_id')
 	def put(self,post_id):
 		data = getattr(g, 'validated_json', request.get_json())
 		current_user_id = get_jwt_identity()
-		try:
-			result = PostService.update_post(
+		
+		post = PostService.update_post(
 				post_id=post_id,
 				user_id=current_user_id,
 				content=data.get('content'),
 				image_url=data.get('image_url'),
-				)
-			return success_response(
-				data=result,
+			)
+		return success_response(
+				data=post_schema.dump(post),
 				message='更新帖子成功'
 			), 200
-		except ResourceNotFoundError as e:
-			return fail_response(
-				code=ResponseCode.RESOURCE_NOT_FOUND,
-				error_msg=str(e)
-			), 404
-		except PermissionError as e:
-			return fail_response(
-				code=ResponseCode.PERMISSION_DENIED,
-				error_msg=str(e)
-			), 403
 	@api.doc(
 		description='删除帖子',
 		params={'post_id':'帖子id'},
-		security='apiKey'
+		security='Bearer'
 		)
 	@api.response(200,'删除成功')
-	@api.response(403,'无权操作')
-	@api.response(404,'帖子不存在')
 	@jwt_required()
 	@ownership_required('Post','post_id')
 	def delete(self,post_id):
 		'''删除帖子'''
 		current_user_id = get_jwt_identity()
-		try:
-			result = PostService.delete_post(
+		
+		PostService.delete_post(
 				post_id=post_id,
 				user_id=current_user_id,
 			)
-			return  success_response(
-				data=result,
+		return success_response(
+				data=None,
 				message='删除帖子成功'
 			), 200
-		except ResourceNotFoundError as e:
-			return fail_response(
-				code=ResponseCode.RESOURCE_NOT_FOUND,
-				error_msg=str(e)
-			), 404
-		except PermissionError as e:
-			return fail_response(
-				code=ResponseCode.PERMISSION_DENIED,
-				error_msg=str(e)
-			), 403
-		except Exception as e:
-			return fail_response(
-				code=ResponseCode.INTERNAL_ERROR,
-				error_msg='服务器内部错误'
-			), 500
 
 @api.route('/<int:post_id>/likes')
 class PostLike(Resource):
 	@api.doc(
 		description='点赞帖子',
 		params={'post_id':'帖子'},
-		security='apiKey'
+		security='Bearer'
 		)
 	@api.response(201,'点赞成功')
-	@api.response(409,'已点赞')
-	@api.response(401,'未认证')
-	@api.response(404,'帖子不存在')
 	@jwt_required()
-	@rate_limit(60)
+	@route_limit("10 per minute")
 	def post(self,post_id):
 		current_user_id = get_jwt_identity()
-		try:
-			result = PostService.like_post(
+		
+		PostService.like_post(
 				post_id=post_id,
 				user_id=current_user_id,
 			)
-			return success_response(
-				data=result,
+		return success_response(
+				data=None,
 				message='点赞帖子成功'
 			), 201
-		except ConflictError as e:
-			return fail_response(
-				code=ResponseCode.CONFLICT,
-				error_msg=str(e)
-			), 409
-		except ResourceNotFoundError as e:
-			return fail_response(
-				code=ResponseCode.RESOURCE_NOT_FOUND,
-				error_msg=str(e)
-			), 404
-		except Exception as e:
-			return fail_response(
-				code=ResponseCode.INTERNAL_ERROR,
-				error_msg='服务器内部错误'
-			), 500
-
+		
 @api.route('/<int:post_id>/likes/<int:like_id>')
 class PostUnlike(Resource):
 	@api.doc(
 		description='取消点赞',
 		params={'post_id':'帖子ID','like_id':'点赞记录ID'},
-		security='apiKey'
+		security='Bearer'
 		)
 	@api.response(200,'取消成功')
-	@api.response(401,'未认证')
-	@api.response(404,'点赞记录不存在/帖子不存在')
 	@jwt_required()
 	def delete(self,post_id, like_id):
 		'''取消点赞'''
 		current_user_id = get_jwt_identity()
-		try:
-			result = PostService.unlike_post(
+		
+		PostService.unlike_post(
 				post_id=post_id,
-				like_id=like_id,  # 传入like_id
 				user_id=current_user_id,
 			)
-			return success_response(
-				data=result,
+		return success_response(
+				data=None,
 				message='取消点赞成功'
 			), 200
-		except ResourceNotFoundError as e:
-			return fail_response(
-				code=ResponseCode.RESOURCE_NOT_FOUND,
-				error_msg=str(e)
-			), 404
-		except Exception as e:
-			return fail_response(
-				code=ResponseCode.INTERNAL_ERROR,
-				error_msg='服务器内部错误'
-			), 500
 @api.route('/search')
 class PostSearch(Resource):
 	@api.doc(
@@ -294,39 +235,34 @@ class PostSearch(Resource):
 			'page':'页码，默认1',
 			'per_page':'每页数量,默认20'
 			},
-		security='apiKey'
+		security='Bearer'
 		)
 	@api.response(200,'搜索成功')
-	@api.response(400,'参数错误')
 	@jwt_required(optional=True)
 	def get(self):
 		'''搜索帖子'''
 		query = request.args.get('q', '').strip()
-		page,per_page=get_pagination_params
+		page,per_page=get_pagination_params()
 		current_user_id = get_jwt_identity()
 		if not query:
-			return {'error': '搜索关键词不能为空'}, 400
-		try:
-			result = PostService.search_posts(
+			return fail_response(ResponseCode.PARAM_ERROR, '搜索关键词不能为空'), 400
+		
+		result = PostService.search_posts(
 				query=query,
 				page=page,
 				per_page=per_page,
 				current_user_id=current_user_id,
 			)
-			return success_response(
-				data=result,
+		# 序列化帖子列表
+		posts_data = posts_schema.dump(result['items'])
+		return success_response(
+				data={
+					'posts': posts_data,
+					'pagination': result['pagination'],
+					'liked_post_ids': list(result.get('liked_post_ids', []))
+				},
 				message='搜索帖子成功'
 			), 200
-		except ValidationError as e:
-			return fail_response(
-				code=ResponseCode.VALIDATION_ERROR,
-				error_msg=str(e)
-			), 400
-		except Exception as e:	
-			return fail_response(
-				code=ResponseCode.INTERNAL_ERROR,
-				error_msg='服务器内部错误'
-			), 500
 
 api_restx.add_namespace(api)
 		

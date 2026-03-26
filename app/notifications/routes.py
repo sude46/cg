@@ -4,7 +4,16 @@ from flask import request,current_app
 from flask_jwt_extended import jwt_required,get_jwt_identity
 from flask_restx import Api,Namespace,Resource,fields,reqparse
 import traceback
-from .import notifications_bp
+
+authorizations = {
+    'Bearer': {
+        'type': 'apiKey',
+        'in': 'header',
+        'name': 'Authorization',
+        'description': 'JWT Token (Bearer token)'
+    }
+}
+
 from .services import NotificationService
 from .schemas import (
         notification_create_schema,
@@ -26,10 +35,11 @@ api_restx=Api(
         version='1.0',
         title='通知API',
         description='提供通知相关的API接口',
+        authorizations=authorizations,
         security='Bearer',
         doc='/docs'
         )
-api=Namespace('notifications',description='通知相关操作',security='Bearer')
+api=Namespace('notifications',description='通知相关操作')
 
 notification_response_model=api.model('NotificationResponse',{
     'id':fields.Integer(readOnly=True,description='通知ID'),
@@ -65,60 +75,36 @@ class NotificationListResource(Resource):
     @api.doc('get_user_notifications')
     @api.expect(notifications_parser)
     @api.response(200,'获取通知列表成功',notifications_list_response_model)
-    @api.response(401,'未认证')
     @jwt_required()
     def get(self):
         '''获取当前用户的通知列表'''
         current_user_id=get_jwt_identity()
         args=notifications_parser.parse_args()
         page=args.get('page',1)
+        per_page=args.get('per_page',20)
         unread_only=args.get('unread_only',False)
-        try:
-            notifications=NotificationService.get_user_notifications(
+        notifications=NotificationService.get_user_notifications(
                     user_id=current_user_id,
                     page=page,
                     per_page=per_page,
                     unread_only=unread_only
                     )
-            current_app.logger.info(f'用户{current_user_id}获取通知列表成功')
-            return success_response(data=notifications, message='获取通知列表成功'), 200
-        except ValidationError as e:
-            current_app.logger.error(f'用户{current_user_id}获取通知列表失败:{e}\n{traceback.format_exc()}')
-            return fail_response(code=ResponseCode.VALIDATION_ERROR, error_msg=str(e)), 400
-        except Exception as e:
-            current_app.logger.error(f'用户{current_user_id}获取通知列表失败:{e}\n{traceback.format_exc()}')
-            return fail_response(code=ResponseCode.INTERNAL_ERROR, error_msg='服务器内部错误'), 500
+        current_app.logger.info(f'用户{current_user_id}获取通知列表成功')
+        return success_response(data=notifications, message='获取通知列表成功'), 200
     @api.doc('create_notification',security='Bearer')
     @api.expect(notification_create_schema,validate=True)
     @api.response(201,'通知创建成功',notification_response_model)
-    @api.response(400,'参数错误')
-    @api.response(401,'未认证')
-    @api.response(409,'通知冲突')
     @jwt_required()
     @validate_json(notification_create_schema)
     def post(self):
         current_user_id=get_jwt_identity()
         data=request.get_json()
-        current_app.logger.info(f'用户{current_user_id}尝试床架通知:{data}')
-        try:
-            notification=NotificationService.create_notification(data)
-            current_app.logger.info(f'用户{current_user_id}成功创建通知,ID:{notification.id}')
-            return success_response(data=notification, message='通知创建成功'), 201
-        except ValidationError as e:
-            current_app.logger.error(f'用户{current_user_id}创建通知失败:{e}')
-            return fail_response(code=ResponseCode.VALIDATION_ERROR, error_msg=str(e)), 400
-        except ResourceNotFoundError as e:
-            current_app.logger.error(f'用户{current_user_id}创建通知失败:{e}')
-            return fail_response(code=ResponseCode.RESOURCE_NOT_FOUND, error_msg=str(e)), 404
-        except ConflictError as e:
-            current_app.logger.warning(f'用户{current_user_id}创建通知失败:{e}')
-            return fail_response(code=ResponseCode.CONFLICT, error_msg=str(e)), 409
-        except DatabaseError as e:
-            current_app.logger.error(f'用户{current_user_id}创建通知失败:{e}')
-            return fail_response(code=ResponseCode.INTERNAL_ERROR, error_msg=str(e)), 500
-        except Exception as e:
-            current_app.logger.error(f'用户{current_user_id}创建通知失败:未知错误-{e}\n{traceback.format_exc()}')
-            return fail_response(code=ResponseCode.INTERNAL_ERROR, error_msg='服务器内部错误'), 500
+        current_app.logger.info(f'用户{current_user_id}尝试创建通知:{data}')
+        
+        notification=NotificationService.create_notification(data)
+        notification_id = notification.get('id') if isinstance(notification, dict) else getattr(notification, 'id', None)
+        current_app.logger.info(f'用户{current_user_id}成功创建通知,ID:{notification_id}')
+        return success_response(data=notification, message='通知创建成功'), 201
 
 
 @api.route('/<int:notification_id>')
@@ -126,99 +112,51 @@ class NotificationListResource(Resource):
 class NotificationResource(Resource):
     @api.doc('get_notification')
     @api.response(200,'获取通知详情成功',notification_response_model)
-    @api.response(401,'未认证')
-    @api.response(403,'无权访问该通知')
-    @api.response(404,'通知不存在或无权访问')
     @jwt_required()
     def get(self,notification_id):
         current_user_id=get_jwt_identity()
         current_app.logger.info(f'用户{current_user_id}请求获取通知详情,ID:{notification_id}')
-        try:
-            notification=NotificationService.get_notification_by_id(notification_id,current_user_id)
-            current_app.logger.info(f'用户{current_user_id}成功获取通知详情,ID:{notification_id}')
-            return success_response(data=notification, message='获取通知详情成功'), 200
-        except ResourceNotFoundError as e:
-            current_app.logger.warning(f'用户{current_user_id}获取通知详情失败:{e}')
-            return fail_response(code=ResponseCode.RESOURCE_NOT_FOUND, error_msg=str(e)), 404
-        except PermissionError as e:
-            current_app.logger.warning(f'用户{current_user_id}无权访问通知详情,ID:{notification_id}')
-            return fail_response(code=ResponseCode.PERMISSION_DENIED, error_msg=str(e)), 403
-        except Exception as e:
-            current_app.logger.error(f'用户{current_user_id}获取通知详情失败:{e}\n{traceback.format_exc()}')
-            return fail_response(code=ResponseCode.INTERNAL_ERROR, error_msg='服务器内部错误'), 500
+        
+        notification=NotificationService.get_notification_by_id(notification_id,current_user_id)
+        current_app.logger.info(f'用户{current_user_id}成功获取通知详情,ID:{notification_id}')
+        return success_response(data=notification, message='获取通知详情成功'), 200
     @api.doc('delete_notification')
     @api.response(200,'通知删除成功')
-    @api.response(401,'未认证')
-    @api.response(403,'无权删除')
-    @api.response(404,'通知不存在')
     @jwt_required()
     def delete(self,notification_id):
         current_user_id=get_jwt_identity()
         current_app.logger.info(f'用户{current_user_id}尝试删除通知,ID:{notification_id}')
-        try:
-            NotificationService.delete_notification(notification_id,current_user_id)
-            current_app.logger.info(f'用户{current_user_id}成功删除通知,ID:{notification_id}')
-            return success_response(message='通知删除成功'), 200
-        except ResourceNotFoundError as e:
-            current_app.logger.warning(f'用户{current_user_id}删除通知失败:{e}')
-            return fail_response(code=ResponseCode.RESOURCE_NOT_FOUND, error_msg=str(e)), 404
-        except PermissionError as e:
-            current_app.logger.warning(f'用户{current_user_id}无权删除通知,ID:{notification_id}')
-            return fail_response(code=ResponseCode.PERMISSION_DENIED, error_msg=str(e)), 403
-        except DatabaseError as e:
-            current_app.logger.error(f'用户{current_user_id}删除通知失败:{e}')
-            return fail_response(code=ResponseCode.INTERNAL_ERROR, error_msg=str(e)), 500
-        except Exception as e:
-            current_app.logger.error(f'用户{current_user_id}删除通知失败:未知错误-{e}\n{traceback.format_exc()}')
-            return fail_response(code=ResponseCode.INTERNAL_ERROR, error_msg='服务器内部错误'), 500        
+        
+        NotificationService.delete_notification(notification_id,current_user_id)
+        current_app.logger.info(f'用户{current_user_id}成功删除通知,ID:{notification_id}')
+        return success_response(message='通知删除成功'), 200    
 
 @api.route('/<int:notification_id>/read')
 @api.param('notification_id','通知ID')
 class NotificationReadResource(Resource):
     @api.doc('mark_notification_as_read')
     @api.response(200,'标记通知为已读成功',notification_response_model)
-    @api.response(401,'未认证')
-    @api.response(404,'通知不存在')
-    @api.response(403,'无权操作')
     @jwt_required()
     def patch(self,notification_id):
         current_user_id=get_jwt_identity()
         current_app.logger.info(f'用户{current_user_id}尝试标记通知已读,ID:{notification_id}')
-        try:
-            notification=NotificationService.mark_all_as_read(notification_id,current_user_id)
-            current_app.logger.info(f'用户{current_user_id}成功标记通知为已读,ID:{notification_id}')
-            return success_response(data=notification, message='标记通知为已读成功'), 200
-        except ResourceNotFoundError as e:
-            current_app.logger.warning(f'用户{current_user_id}标记为已读失败:{e}')
-            return fail_response(code=ResponseCode.RESOURCE_NOT_FOUND, error_msg=str(e)), 404
-        except PermissionError as e:
-            current_app.logger.warning(f'用户{current_user_id}无权标记通知为已读,ID:{notification_id}')
-            return fail_response(code=ResponseCode.PERMISSION_DENIED, error_msg=str(e)), 403
-        except DatabaseError as e:
-            current_app.logger.error(f'用户{current_user_id}标记通知为已读失败:{e}')
-            return fail_response(code=ResponseCode.INTERNAL_ERROR, error_msg=str(e)), 500
-        except Exception as e:
-            current_app.logger.error(f'用户{current_user_id}标记通知为已读失败:未知错误-{e}\n{traceback.format_exc()}')
-            return fail_response(code=ResponseCode.INTERNAL_ERROR, error_msg='服务器内部错误'), 500
+        
+        notification=NotificationService.mark_as_read(notification_id,current_user_id)
+        current_app.logger.info(f'用户{current_user_id}成功标记通知为已读,ID:{notification_id}')
+        return success_response(data=notification, message='标记通知为已读成功'), 200
 @api.route('/read-all')
 class NotificationReadAllResource(Resource):
-    @api.doc('mar_all_notifications_as_read')
+    @api.doc('mark_all_notifications_as_read')
     @api.response(200,'标记所有通知为已读成功')
-    @api.response(401,'未认证')
     @jwt_required()
     def patch(self):
         current_user_id=get_jwt_identity()
         current_app.logger.info(f'用户{current_user_id}尝试标记所有通知为已读')
-        try:
-            NotificationService.mark_all_as_read(current_user_id)
-            current_app.logger.info(f'用户{current_user_id}成功标记所有通知为已读')
-            return success_response(message='所有通知已标记为已读'), 200
-        except DatabaseError as e:
-            current_app.logger.error(f'用户{current_user_id}标记所有通知已读失败:{e}')
-            return fail_response(code=ResponseCode.INTERNAL_ERROR, error_msg=str(e)), 500
-        except Exception as e:
-            current_app.logger.error(f'用户{current_user_id}标记所有通知为已读失败:未知错误-{e}\n{traceback.format_exc()}')
-            return fail_response(code=ResponseCode.INTERNAL_ERROR, error_msg='服务器内部错误'), 500
+        
+        NotificationService.mark_all_as_read(current_user_id)
+        current_app.logger.info(f'用户{current_user_id}成功标记所有通知为已读')
+        return success_response(message='所有通知已标记为已读'), 200
+
 
 api_restx.add_namespace(api)
 

@@ -6,8 +6,7 @@ def register_all_blueprints(app):
         ("app.posts", "posts_bp", ""),
         ("app.likes", "likes_bp", ""),
         ("app.notifications", "notifications_bp", ""),
-        ("app.users", "users_bp", ""),  # 沿用模块内的 /users
-        ("app.auth", "auth_bp", ""),
+        ("app.users", "users_bp", ""), 
         ("app.feeds", "feeds_bp", ""),
     ]
 

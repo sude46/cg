@@ -26,10 +26,6 @@ EXCLUDE_ATTRS = {
     '__module__', '__doc__', '__dict__', '__weakref__', '__class__'
 }
 
-from config.development import DevelopmentConfig
-from config.testing import TestingConfig
-from config.production import ProductionConfig
-
 def get_config(config_name: str = None):
     config_name = config_name or os.getenv("FLASK_ENV", "development")
     config_map={

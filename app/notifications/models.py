@@ -23,6 +23,7 @@ class Notification(db.Model):
     resource_type=db.Column(db.String,nullable=True)
     content=db.Column(db.Text,nullable=False)
     is_read=db.Column(db.Boolean,default=False)
+    is_deleted=db.Column(db.Boolean,default=False,nullable=False,index=True)
     created_at=db.Column(db.DateTime,default=lambda:datetime.now(timezone.utc),nullable=False)
 
     #关系

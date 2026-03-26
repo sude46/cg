@@ -46,7 +46,7 @@ def get_config():
     安全加固：配置脱敏
     """
     env=os.getenv("APP_ENV",DEFAULT_ENV)  
-    if env in ALLOWED_ENVS:
+    if env not in ALLOWED_ENVS:
         raise InvalidEnvConfigError(env,ALLOWED_ENVS)
     base_config={
         'DEBUG':False,

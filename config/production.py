@@ -53,14 +53,14 @@ class ProductionConfig(BaseConfig):
 	# 生产环境JWT过期时间可缩短（比如30分钟）
 	JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=30)
 
-    # ========== 覆盖：CORS配置（生产环境限制域名） ==========
-    # 不要用/*，指定前端真实域名，比如：
+	# ========== 覆盖：CORS配置（生产环境限制域名） ==========
+	# 不要用/*，指定前端真实域名，比如：
 	CORS_RESOURCES = {
-        r"/api/*": {
-            "origins": ["https://your-frontend-domain.com"],
-            "supports_credentials": True
-        }
-    }
+		r"/api/*": {
+			"origins": ["https://your-frontend-domain.com"],
+			"supports_credentials": True
+		}
+	}
 
 
 	# 生产环境安全配置
@@ -73,7 +73,7 @@ class ProductionConfig(BaseConfig):
 
 	# 生产环境按机器性能调整：CPU 性能强则设 13-14，性能一般则保持 12
 	BCRYPT_LOG_ROUNDS = 13  # 生产环境推荐值（需压测后微调）
-    # 生产环境登录极限配置（更严格）
+	# 生产环境登录极限配置（更严格）
 	LOGIN_MAX_ATTEMPTS = 3  # 生产环境登录失败次数更严格
 	LOGIN_LOCK_DURATION = 600  # 锁定时长延长至 10 分钟	
 
@@ -108,4 +108,3 @@ class ProductionConfig(BaseConfig):
 			response.headers['X-XSS-Protection']='1;mode=block'
 			response.headers['Strict-Transport-Security'] = 'max-age=31536000;includeSubDomains'
 			return response
-

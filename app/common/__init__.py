@@ -1,85 +1,67 @@
-"""Common package exports: pagination helpers, exceptions and constants.
-
-This module re-exports selected names from submodules so other parts
-of the application can import from `app.common`.
-"""
-
-from .database import pagination_utils
 from .exceptions import (
-        BaseError,
-        ValidationError,
-        ResourceNotFoundError,
-        PermissionError,
-        AuthenticationError,
-        DatabaseError,
-        RateLimitError,
+    BaseError,
+    ValidationError,
+    ResourceNotFoundError,
+    PermissionError,
+    AuthenticationError,
+    DatabaseError,
+    RateLimitError,
+    ConflictError,
 )
+
+# 导出常量（业务规则）
 from .constants import (
-        PAGE_SIZE,
-        MAX_PAGE_SIZE,
-        NOTIFICATION_TYPES,
-        RESOURCE_TYPES,
-        USER_ROLES,
-        REGEX_PHONE,
-        REGEX_EMAIL,
-        REGEX_USERNAME,
-        REGEX_PASSWORD,
-        CONTENT_MIN_LENGTH,
-        CONTENT_MAX_LENGTH,
-        USERNAME_MIN_LENGTH,
-        USERNAME_MAX_LENGTH,
-        PASSWORD_MIN_LENGTH,
-        PASSWORD_MAX_LENGTH,
-        JWT_ACCESS_TOKEN_EXPIRES_MINUTES,
-        JWT_REFRESH_TOKEN_EXPIRES_DAYS,
-        CACHE_KEY_USER,
-        CACHE_KEY_POST,
-        CACHE_KEY_NOTIFICATION_UNREAD_COUNT,
-        STATUS_SUCCESS,
-        STATUS_ERROR,
-        STATUS_VALIDATION_ERROR,
-        STATUS_NOT_FOUND,
-        STATUS_PERMISSION_DENIED,
-        STATUS_UNAUTHORIZED,
+    # 枚举
+    NotificationType,
+    ResourceType,
+    UserRole,
+    BizCode,
+    # 业务限制
+    CONTENT_MIN_LENGTH,
+    CONTENT_MAX_LENGTH,
+    POST_CONTENT_MAX_LENGTH,
+    USERNAME_MIN_LENGTH,
+    USERNAME_MAX_LENGTH,
+    PASSWORD_MIN_LENGTH,
+    PASSWORD_MAX_LENGTH,
+    PAGE_SIZE_DEFAULT,
+    PAGE_SIZE_MAX,
+    # 缓存前缀
+    CACHE_KEY_PREFIX,
 )
+
+# 导出工具
+from .database import pagination_utils, TimestampMixin, SoftDeleteMixin
 
 __all__ = [
-        # pagination
-        "pagination_utils",
-        # exceptions
-        "BaseError",
-        "ValidationError",
-        "ResourceNotFoundError",
-        "PermissionError",
-        "AuthenticationError",
-        "DatabaseError",
-        "RateLimitError",
-        # constants
-        "PAGE_SIZE",
-        "MAX_PAGE_SIZE",
-        "NOTIFICATION_TYPES",
-        "RESOURCE_TYPES",
-        "USER_ROLES",
-        "REGEX_PHONE",
-        "REGEX_EMAIL",
-        "REGEX_USERNAME",
-        "REGEX_PASSWORD",
-        "CONTENT_MIN_LENGTH",
-        "CONTENT_MAX_LENGTH",
-        "USERNAME_MIN_LENGTH",
-        "USERNAME_MAX_LENGTH",
-        "PASSWORD_MIN_LENGTH",
-        "PASSWORD_MAX_LENGTH",
-        "JWT_ACCESS_TOKEN_EXPIRES_MINUTES",
-        "JWT_REFRESH_TOKEN_EXPIRES_DAYS",
-        "CACHE_KEY_USER",
-        "CACHE_KEY_POST",
-        "CACHE_KEY_NOTIFICATION_UNREAD_COUNT",
-        "STATUS_SUCCESS",
-        "STATUS_ERROR",
-        "STATUS_VALIDATION_ERROR",
-        "STATUS_NOT_FOUND",
-        "STATUS_PERMISSION_DENIED",
-        "STATUS_UNAUTHORIZED",
+    # 异常
+    'BaseError',
+    'ValidationError',
+    'ResourceNotFoundError',
+    'PermissionError',
+    'AuthenticationError',
+    'DatabaseError',
+    'RateLimitError',
+    'ConflictError',
+    # 枚举
+    'NotificationType',
+    'ResourceType',
+    'UserRole',
+    'BizCode',
+    # 限制
+    'CONTENT_MIN_LENGTH',
+    'CONTENT_MAX_LENGTH',
+    'POST_CONTENT_MAX_LENGTH',
+    'USERNAME_MIN_LENGTH',
+    'USERNAME_MAX_LENGTH',
+    'PASSWORD_MIN_LENGTH',
+    'PASSWORD_MAX_LENGTH',
+    'PAGE_SIZE_DEFAULT',
+    'PAGE_SIZE_MAX',
+    # 工具
+    'pagination_utils',
+    'TimestampMixin',
+    'SoftDeleteMixin',
+    'CACHE_KEY_PREFIX',
 ]
 

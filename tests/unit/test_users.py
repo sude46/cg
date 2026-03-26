@@ -1,5 +1,5 @@
 import pytest
-from app.users.services import AuthService
+from app.users.services.auth_service import AuthService
 from app.users.models import User
 from app.common.exceptions import BusinessException, AuthenticationError, ValidationError
 from tests.unit.factories import UserFactory

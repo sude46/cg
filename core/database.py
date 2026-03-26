@@ -15,13 +15,13 @@ logger=logging.getLogger(__name__)
 class SoftDeleteQuery(Query):
     def __iter__(self):
         filtered_query=self._add_soft_delete_filter()
-        return super(filtered_query.__class__,filtered_query)
+        return iter(filtered_query)
     def _add_soft_delete_filter(self):
         if self.column_descriptions and len(self.column_descriptions)>0:
             entity = self.column_descriptions[0]["entity"]
-            # 仅对包含 deleted 字段的模型生效
-            if hasattr(entity, "deleted"):
-                return self.filter(entity.deleted == False)
+            # 仅对包含 is_deleted 字段的模型生效
+            if hasattr(entity, "is_deleted"):
+                return self.filter(entity.is_deleted == False)
         return self          
 # 创建数据库实例
 db = SQLAlchemy(query_class=SoftDeleteQuery)
@@ -32,22 +32,22 @@ migrate = Migrate()
 class BaseModel(db.Model):
     __abstract__=True
     #软删除字段，默认未删除
-    deleted=db.Column(db.Boolean,default=False,nullable=False,index=True)
+    is_deleted=db.Column(db.Boolean,default=False,nullable=False,index=True)
     
     #重写查询方法
     @classmethod
     def query(cls):
-        return super().query.filter_by(deleted=False)
+        return super().query.filter_by(is_deleted=False)
 class DatabaseManager:
     """数据库管理器，处理初始化，连接池，会话管理，异常处理"""
     @staticmethod
     def init_app(app):
         """初始化数据库配置(核心修复点)"""
         #配置数据库连接池连接参数，解决高并发泄露问题
-        app.config.setdefault('SQLALCHEMEY_POOL_SIZE',10)  #连接池默认大小
+        app.config.setdefault('SQLALCHEMY_POOL_SIZE',10)  #连接池默认大小
         app.config.setdefault('SQLALCHEMY_POOL_RECYCLE',3600)  #1小时回收连接（防止数据库端断开未释放)
         app.config.setdefault('SQLALCHEMY_POOL_PRE_PING',True)   #执行SQL前检查连接有效性
-        app.config.setdefault('SQLALCHMEY_MAX_OVERFLOW',20)      #超出池大小的临时链接数
+        app.config.setdefault('SQLALCHEMY_MAX_OVERFLOW',20)      #超出池大小的临时链接数
         app.config.setdefault('SQLALCHEMY_TRACK_MODIFICATIONS', False)  # 关闭不必要的性能损耗
 
         # 初始化Flask-SQLAlchemy和Migrate
@@ -92,7 +92,7 @@ class DatabaseManager:
             try:
                 with app.app_context():
                     db.drop_all()
-                db.create_all()
+                    db.create_all()
                 logger.info("数据库重置成功")
                 print("数据库重置成功")
             except SQLAlchemyError as e:

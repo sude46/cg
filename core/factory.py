@@ -12,7 +12,6 @@ from core.logging_config import init_structured_logger
 from core.blueprint_registry import register_all_blueprints
 from app.common.error_handlers import register_error_handlers
 
-from middlewares.request_hooks import register_request_hook
 
 # 导入所有模型，确保 db.create_all() 创建完整表结构
 from app.users.models import User
@@ -22,6 +21,9 @@ from app.likes.models import Like
 from app.follows.models import Follow
 from app.notifications.models import Notification
 # 如果有其他模型，继续导入
+
+# 导入服务以注册事件订阅（EventBus 模式）
+from app.notifications.services import NotificationService  # noqa: F401
 
 def create_app(config_name: str = None) -> Flask:
     app = Flask(__name__)
@@ -65,14 +67,12 @@ def create_app(config_name: str = None) -> Flask:
 
     # 初始化中间件
     from middlewares.logging_middleware import init_logging_middleware
-    from middlewares.error_middleware import init_error_handlers
     from middlewares.auth_middleware import init_auth_middleware
     from middlewares.rate_limit_middleware import init_rate_limit_middleware
     from middlewares.cors_middleware import init_cors
     from middlewares.security_mw import init_security_headers
 
     init_logging_middleware(app)
-    init_error_handlers(app)
     init_auth_middleware(app)
     init_rate_limit_middleware(app)
     init_cors(app)
@@ -80,7 +80,6 @@ def create_app(config_name: str = None) -> Flask:
 
     # 注册全局异常处理器
     register_error_handlers(app)
-    register_request_hook(app)
 
     # 开发环境自动建表
     with app.app_context():

@@ -31,9 +31,9 @@ class DevelopmentConfig(BaseConfig):
 		missing_configs=[]
 		if not mysql_user:
 			if not mysql_user:
-				missing_configs.append['MYSQL_USER']
+				missing_configs.append('MYSQL_USER')
 			if not mysql_db:
-				missing_configs.append['MYSQL_DB']
+				missing_configs.append('MYSQL_DB')
 			if missing_configs:
 				raise EnvironmentError(
 					f"开发环境数据库配置缺失：{', '.join(missing_configs)}，请通过环境变量设置"
@@ -87,18 +87,18 @@ class DevelopmentConfig(BaseConfig):
 		cls._setup_development_loging()
 	@classmethod
 	def _setup_development_loging(cls):
-		        # 根日志级别设为INFO，减少基础冗余日志
-			logging.basicConfig(
-            level=logging.INFO,
-            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-            datefmt='%Y-%m-%d %H:%M:%S'
-        )
-        # 单独设置SQLAlchemy的日志级别为DEBUG（仅输出SQL语句，不冗余打印其他日志）
-			sqlalchemy_logger = logging.getLogger('sqlalchemy.engine')
-			sqlalchemy_logger.setLevel(logging.DEBUG)
-			# 关闭其他冗余模块的DEBUG日志
-			for logger_name in ['werkzeug', 'urllib3', 'chardet']:
-				logging.getLogger(logger_name).setLevel(logging.WARNING)
+		# 根日志级别设为INFO，减少基础冗余日志
+		logging.basicConfig(
+			level=logging.INFO,
+			format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+			datefmt='%Y-%m-%d %H:%M:%S'
+		)
+		# 单独设置SQLAlchemy的日志级别为DEBUG（仅输出SQL语句，不冗余打印其他日志）
+		sqlalchemy_logger = logging.getLogger('sqlalchemy.engine')
+		sqlalchemy_logger.setLevel(logging.DEBUG)
+		# 关闭其他冗余模块的DEBUG日志
+		for logger_name in ['werkzeug', 'urllib3', 'chardet']:
+			logging.getLogger(logger_name).setLevel(logging.WARNING)
 	@classmethod
 	def _check_development_security(cls,app):
 		warnings = []

@@ -56,7 +56,7 @@ def init_jwt(app):
     #添加黑名单Token提示
     @jwt.revoked_token_loader
     def revoked_token_callback(jwt_header,jwt_payload):
-        return {'msg':"该Token已被等处，无法使用"},401
+        return {'msg':"该Token已被注销，无法使用"},401
     
     app.logger.info("JWT初始化完成(已启用 黑名单校验)")
 

@@ -96,5 +96,6 @@ class PostListSchema(Schema):
 create_post_schema = CreatePostSchema()
 update_post_schema = UpdatePostSchema()
 post_schema = PostSchema()
+posts_schema = PostSchema(many=True)
 post_list_schema = PostListSchema()
 

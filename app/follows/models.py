@@ -8,6 +8,7 @@ class Follow(db.Model):
 	follower_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
 	followed_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
 	created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+	is_deleted = db.Column(db.Boolean, default=False, nullable=False, index=True)
 
 	__table_args__ = (
 			db.UniqueConstraint('follower_id', 'followed_id', name='unique_follow_relationship'),

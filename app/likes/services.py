@@ -1,7 +1,7 @@
 from core import db
 from typing import Optional, Dict, Any
 from sqlalchemy.exc import IntegrityError
-from app.common.exceptions import ValidationError, ResourceNotFoundError, DatabaseError,ConflictError
+from app.common.exceptions import ValidationError, ResourceNotFoundError, DatabaseError, ConflictError, PermissionError
 from app.users.repositories import user_repository
 from app.comments.repositories import comment_repository
 from app.likes.repositories import like_repository
@@ -35,11 +35,12 @@ class LikeService:
         try:
             if post_id:
                 like = like_repository.create_post_like(user_id=user_id, post_id=post_id)
-                # 更新计数（简单策略：+1）
-                post.like_count = getattr(post, 'like_count', 0) + 1
+                # 更新计数（通过 Repository 原子操作，避免并发问题）
+                post_repository.increment_like_count(post_id)
             else:
                 like = like_repository.create_comment_like(user_id=user_id, comment_id=comment_id)
-                comment.like_count = getattr(comment, 'like_count', 0) + 1
+                # 更新计数（通过 Repository 原子操作，避免并发问题）
+                comment_repository.increment_like_count(comment_id)
 
             db.session.commit()
             logger.info('用户%d点赞成功', user_id)
@@ -68,10 +69,11 @@ class LikeService:
             raise ResourceNotFoundError(f'未找到该{target}的点赞记录')
 
         try:
-            if like.post_id and like.post:
-                like.post.like_count = max(0, getattr(like.post, 'like_count', 0) - 1)
-            if like.comment_id and like.comment:
-                like.comment.like_count = max(0, getattr(like.comment, 'like_count', 0) - 1)
+            if like.post_id:
+                # 更新计数（通过 Repository 原子操作，避免并发问题）
+                post_repository.decrement_like_count(like.post_id)
+            if like.comment_id:
+                comment_repository.decrement_like_count(like.comment_id)
 
             like_repository.delete_like(like)
             db.session.commit()
@@ -81,6 +83,7 @@ class LikeService:
             db.session.rollback()
             logger.error('取消点赞失败: %s', e)
             raise DatabaseError('取消点赞操作失败，请稍后重试')
+
     @staticmethod
     def delete_like_by_id(user_id: int, like_id: int, post_id: int = None):
         """通过 like_id 删除点赞，需验证用户权限"""
@@ -95,10 +98,11 @@ class LikeService:
 
         # 复用 delete_like 的核心逻辑，但需要传入 like 对象
         try:
-            if like.post_id and like.post:
-                like.post.like_count = max(0, getattr(like.post, 'like_count', 0) - 1)
-            if like.comment_id and like.comment:
-                like.comment.like_count = max(0, getattr(like.comment, 'like_count', 0) - 1)
+            if like.post_id:
+                # 更新计数（通过 Repository 原子操作，避免并发问题）
+                post_repository.decrement_like_count(like.post_id)
+            if like.comment_id:
+                comment_repository.decrement_like_count(like.comment_id)
 
             like_repository.delete_like(like)
             db.session.commit()
@@ -114,18 +118,10 @@ class LikeService:
         if not user:
             raise ResourceNotFoundError('用户不存在')
         per_page = min(100, max(1, per_page))
-        from app.likes.models import Like
-        pag=Like.query.filter_by(user_id=user_id).order_by(Like.created_at.desc()).paginate(
-                page=page,per_page=per_page,error_out=False
-                )
-        likes_data=likes_schema.dump(pag.items,many=True)
+        result = like_repository.list_by_user(user_id, page=page, per_page=per_page)
+        likes_data = likes_schema.dump(result['items'], many=True)
         return {
-                'items':likes_data,
-                'pagination':{
-                    'page':pag.page,
-                    'per_page':pag.per_page,
-                    'total':pag.total,
-                    'pages':pag.pages
-                    }
-                }
+            'items': likes_data,
+            'pagination': result['pagination']
+        }
     

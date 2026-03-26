@@ -10,9 +10,35 @@ from app.common.exceptions import (
 )
 from app.notifications.schemas import notification_schema, notifications_schema
 from app.notifications.repositories import notification_repository
+from app.common.events import event_bus
 import logging
 
 logger = logging.getLogger(__name__)
+
+
+def _handle_comment_created(event_data: dict):
+    """
+    处理评论创建事件，创建通知
+    事件数据格式：{
+        'user_id': 被通知用户ID（帖子作者）,
+        'actor_id': 评论者ID,
+        'type': 'comment',
+        'comment_id': 评论ID,
+        'post_id': 帖子ID,
+        'content': 评论内容
+    }
+    """
+    try:
+        NotificationService.create_notification({
+            'user_id': event_data.get('user_id'),
+            'actor_id': event_data.get('actor_id'),
+            'type': 'comment',
+            'comment_id': event_data.get('comment_id'),
+            'content': event_data.get('content')
+        })
+    except Exception as e:
+        # 通知创建失败不应影响评论创建流程
+        logger.error(f"Failed to create notification for comment: {e}")
 
 
 class NotificationService:
@@ -138,4 +164,8 @@ class NotificationService:
             if isinstance(e, ResourceNotFoundError):
                 raise
             raise DatabaseError(f'删除通知失败: {e}')
+
+
+# 注册事件订阅（放在文件末尾，确保 NotificationService 已定义）
+event_bus.subscribe('comment.created', _handle_comment_created)
 

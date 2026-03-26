@@ -1,7 +1,7 @@
 from sqlalchemy.exc import IntegrityError
 from core import db
 from .models import Comment
-from app.posts.models import Post
+from app.posts.repositories import post_repository
 from app.users.repositories import user_repository
 from app.common.exceptions import (
     ResourceNotFoundError,
@@ -10,7 +10,7 @@ from app.common.exceptions import (
     DatabaseError,
 )
 from app.comments.repositories import comment_repository
-from app.notifications.services import NotificationService
+from app.common.events import event_bus
 from datetime import datetime, timezone
 import logging
 from .schemas import (comment_create_schema,comment_update_schema,comment_schema,comments_schema)
@@ -28,7 +28,7 @@ class CommentService:
         if not content or len(content) > 500:
             raise ValidationError('评论内容不能为空且长度不能超过500字符')
 
-        post = Post.query.filter_by(id=post_id, is_deleted=False).first()
+        post = post_repository.get_by_id(post_id)
         if not post:
             raise ResourceNotFoundError(f'帖子(ID:{post_id})不存在')
 
@@ -37,14 +37,15 @@ class CommentService:
             post.comment_count = (post.comment_count or 0) + 1
             db.session.commit()
 
-            # 触发通知（排除作者自评论）
+            # 触发通知事件（排除作者自评论）
             if post.user_id != user_id:
-                NotificationService.create_notification({
+                event_bus.publish('comment.created', {
                     'user_id': post.user_id,
                     'actor_id': user_id,
                     'type': 'comment',
-                    'comment_id': comment.id,   # 用于转换 resource_id
-                    'content': content          # 可选，通知内容
+                    'comment_id': comment.id,
+                    'post_id': post_id,
+                    'content': content
                 })
 
             logger.info('用户%d为帖子%d创建评论%d', user_id, post_id, comment.id)
@@ -68,11 +69,11 @@ class CommentService:
 
     @staticmethod
     def get_comments_by_post_id(post_id: int, page: int = 1, per_page: int = 20) -> dict:
-        post = Post.query.filter_by(id=post_id, is_deleted=False).first()
+        post = post_repository.get_by_id(post_id)
         if not post:
             raise ResourceNotFoundError(f'帖子(ID:{post_id})不存在')
 
-        result = comment_repository.list_by_post(post_id=post_id, page=page, size=per_page)
+        result = comment_repository.list_by_post(post_id=post_id, page=page, per_page=per_page)
         items = comment_schema.dump(result.get('items', []), many=True)
         return {'items': items, 'pagination': result.get('pagination', {})}
 
