@@ -33,6 +33,7 @@ from .constants import (
 # 导出工具
 from .database import pagination_utils, TimestampMixin, SoftDeleteMixin
 
+from .events import event_bus 
 __all__ = [
     # 异常
     'BaseError',
@@ -63,5 +64,6 @@ __all__ = [
     'TimestampMixin',
     'SoftDeleteMixin',
     'CACHE_KEY_PREFIX',
+    'event_bus',
 ]
 

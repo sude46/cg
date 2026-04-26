@@ -8,13 +8,34 @@ class Post(db.Model):
 	id=db.Column(db.Integer,primary_key=True)
 	content=db.Column(db.Text,nullable=False)
 	image_url=db.Column(db.String(500))
-	user_id=db.Column(db.Integer,db.ForeignKey('users.id'),nullable=False)
-	created_at=db.Column(db.DateTime,default=lambda: datetime.now(timezone.utc))
+	user_id=db.Column(db.Integer,db.ForeignKey('users.id'),nullable=False,index=True)
+	created_at=db.Column(db.DateTime,default=lambda: datetime.now(timezone.utc),index=True)
 	updated_at=db.Column(db.DateTime,default=lambda: datetime.now(timezone.utc),onupdate=lambda: datetime.now(timezone.utc))
-	is_published=db.Column(db.Boolean,default=True)
+	is_published=db.Column(db.Boolean,default=True,index=True)
 	like_count=db.Column(db.Integer,default=0)
 	comment_count=db.Column(db.Integer,default=0)
-	is_deleted=db.Column(db.Boolean,default=False)
+	is_deleted=db.Column(db.Boolean,default=False,index=True)
+
+	
+	version_id=db.Column(db.Integer,default=0,nullable=False)
+
+	__mapper_args__={
+		'version_id_col':version_id
+	}
+
+	#复合索引
+	__table__args__=(
+		#查询某个用户帖子列表(按时间倒序)
+		db.Index('index_post_created','user_id','created_at'),
+		#查询公开的帖子列表（按时间倒序）
+		db.Index('idx_post_published_created','is_published','is_deleted','created_at'),
+		#查询热门帖子（按点赞数倒序）
+		db.Index('idx_post_hot','is_published','is_deleted','like_count'),
+		#覆盖公共feed中按用户筛选的场景
+		db.Index('idx_post_user_created','is_published','is_deleted','user_id'),
+
+
+	)
 
 	#关系定义
 	author=db.relationship('User',back_populates='posts')

@@ -59,23 +59,35 @@ def validate_json(schema_class):
         return wrapper
     return decorator
 
-# ---------- 新增装饰器 ----------
-def transactional(f):
+
+def transactional(rollback_on=None):
     """
     数据库事务装饰器：自动提交事务，异常时回滚
+
+    用法：@transactional()
+    def creat_something(...):...
+    #或指定某些异常不需要回滚（极少用）
+    @transactional(rollback_on=(Exception,))
     """
-    @wraps(f)
-    def wrapper(*args, **kwargs):
-        try:
-            result = f(*args, **kwargs)
+    #如果没有传参默认所有异常都会触发回滚
+    if rollback_on is None:
+        rollback_on=(Exception,)
+    def decorator(f):
+        @wraps(f)
+        def wrapper(*args,**kwargs):
             from core.database import db
-            db.session.commit()
-            return result
-        except Exception as e:
-            from core.database import db
-            db.session.rollback()
-            raise e
-    return wrapper
+            try:
+                #执行业务代码
+                result=f(*args,**kwargs)
+                #无异常，提交事务
+                db.session.commit()
+                return result
+            except rollback_on as e:
+                db.session.rollback()
+                logger.warning(f'事务回滚[{f.__name__}]:{type(e).__name__}:{e}')
+                raise
+        return wrapper
+    return decorator
 
 def handle_errors(default_error_msg="操作失败", default_code=500):
     """

@@ -6,9 +6,11 @@ from app.users.repositories import user_repository
 from app.comments.repositories import comment_repository
 from app.likes.repositories import like_repository
 from app.posts.repositories import post_repository
+from app.likes.cache import LikeCache
+from services.search import PostSearchService
 import logging
 from .schemas import like_schema, likes_schema
-
+from app.common import event_bus
 logger = logging.getLogger(__name__)
 
 
@@ -18,7 +20,12 @@ class LikeService:
         """创建点赞，返回序列化字典"""
         if not (post_id or comment_id) or (post_id and comment_id):
             raise ValidationError('只能传入 post_id 或 comment_id')
-
+        target_type='post' if post_id else 'comment'
+        target_id=post_id or comment_id
+        #Redis预检查
+        if LikeCache.is_liked(user_id,target_id,target_type):
+            raise ConflictError('你已经点过赞了(Redis校验)')
+        
         user = user_repository.get_by_id(user_id)
         if not user:
             raise ResourceNotFoundError('用户不存在')
@@ -43,6 +50,16 @@ class LikeService:
                 comment_repository.increment_like_count(comment_id)
 
             db.session.commit()
+
+            LikeCache.add_like(user_id,target_id,target_type)
+
+            # 同步更新 ES 点赞数
+            if post_id:
+                post = post_repository.get_by_id(post_id)
+                event_bus.publish('post.like_count_changed',{
+                        'post_id':post_id,
+                        'like_count':post.like_count if post else 0
+                    })
             logger.info('用户%d点赞成功', user_id)
             return like_schema.dump(like)
         except IntegrityError as e:
@@ -77,6 +94,19 @@ class LikeService:
 
             like_repository.delete_like(like)
             db.session.commit()
+
+            #删除Redis缓存
+            target_type='post' if like.post_id else 'comment'
+            target_id=like.post_id or like.comment_id
+            LikeCache.remove_like(user_id,target_id,target_type)
+
+            # 同步更新 ES 点赞数
+            if like.post_id:
+                post=post_repository.get_by_id(like.post_id)
+                event_bus.publish('post.like_count_changed',{
+                    'post_id':like.post_id,
+                    'like_count':post.like_count if post else 0
+                })
             logger.info('用户%d取消点赞成功', user_id)
             return True
         except Exception as e:
@@ -106,6 +136,13 @@ class LikeService:
 
             like_repository.delete_like(like)
             db.session.commit()
+            # 同步更新 ES 点赞数
+            if like.post_id:
+                post=post_repository.get_by_id(like.post_id)
+                event_bus.publish('post.like_count_changed',{
+                    'post_id':like.post_id,
+                    'like_count':post.like_count if post else 0
+                })
             logger.info('用户%d取消点赞成功', user_id)
             return True
         except Exception as e:

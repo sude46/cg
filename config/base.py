@@ -1,6 +1,7 @@
 import os
 import secrets
 import warnings
+import redis
 from datetime import timedelta
 
 # 加载环境变量
@@ -38,6 +39,7 @@ class BaseConfig:
     SQLALCHEMY_ENGINE_OPTIONS = {
         'pool_pre_ping': True,
         'pool_recycle': 3600,
+        'isolation_level':'READ COMMITTED',
     }
     
     # ==================== JWT 配置（基础设施）====================
@@ -53,10 +55,55 @@ class BaseConfig:
     REDIS_DB = int(os.getenv("REDIS_DB", 0))
     REDIS_PASSWORD = os.getenv("REDIS_PASSWORD", "")
     REDIS_URL = os.getenv('REDIS_URL') or f'redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}'
+    REDIS_SOCKET_TIMEOUT=2
+    REDIS_SOCKET_CONNECT_TIMEOUT=2
+    REDIS_DECODE_RESPONSES=True
+    REDIS_POOL_SIZE=10
+
+    _redis_client=None
+    @classmethod
+    def get_redis_client(cls):
+        '''获取Redis客户端'''
+        if cls._redis_client is None:
+            try:
+                if hasattr(cls,'REDIS_URL')and cls.REDIS_URL:
+                    cls._redis_client=redis.from_url(
+                       cls.REDIS_URL,
+                       decode_responses=cls.REDIS_DECODE_RESPONSES,
+                        socket_timeout=cls.REDIS_SOCKET_TIMEOUT,
+                    )
+                else:
+                    cls._redis_client=redis.Redis(
+                        host=cls.REDIS_HOST,
+                        port=cls.REDIS_PORT,
+                        db=cls.REDIS_DB,
+                        password=cls.REDIS_PASSWORD or None,
+                        decode_responses=cls.REDIS_DECODE_RESPONSES,
+                        socket_timeout=cls.REDIS_SOCKET_TIMEOUT,
+                    )
+                cls._redis_client.ping()
+            except Exception as e:
+                warnings.warn(f"Redis连接失败:{e}", UserWarning)
+                cls._redis_client=None
+        return cls._redis_client
+
     
     # Celery 使用相同的 Redis
     CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL') or REDIS_URL
     CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND') or f'{REDIS_URL}/1'
+
+    #=====================Elasticsearch配置=====================
+    ELASTICSEARCH_ENABLED=os.getenv('ELASTICSEARCH_ENABLED','true').lower()=='true'
+    ELASTICSEARCH_HOST=os.getenv('ELASTICSEARCH_HOSTS','http://localhost:9200')
+    ELASTICSEARCH_TIMEOUT=int(os.getenv('ELASTICSEARCH_TIMEOUT','30'))
+
+    @property
+    def ES_HOST_LIST(self):
+        '''将ES_HOST解析为列表'''
+        if isinstance(self.ELASTICSEARCH_HOST,list):
+            return self.ELASTICSEARCH_HOST
+        return [h.strip() for h in self.ELASTICSEARCH_HOST.split(",") if h.strip()]
+
     
     # ==================== 邮件配置 ====================
     MAIL_SERVER = os.getenv('MAIL_SERVER') or 'smtp.gmail.com'
@@ -93,40 +140,11 @@ class BaseConfig:
         # 创建上传目录
         os.makedirs(cls().UPLOAD_FOLDER, exist_ok=True)
         os.makedirs(cls.LOG_DIR, exist_ok=True)
+        redis_client=cls.get_redis_client()
+        app.config['REDIS_CLIENT']=redis_client
+        if redis_client:
+            app.logger.info('Redis连接成功，已注入app.config')
+        else:
+            app.logger.warning('Redis连接失败，app.config中未注入Redis客户端')
 
-
-class DevelopmentConfig(BaseConfig):
-    """开发环境配置"""
-    DEBUG = True
-    SQLALCHEMY_ECHO = True
-    JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=24)  # 开发时方便测试
-
-
-class TestingConfig(BaseConfig):
-    """测试环境配置"""
-    TESTING = True
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
-    WTF_CSRF_ENABLED = False
-
-
-class ProductionConfig(BaseConfig):
-    """生产环境配置"""
-    DEBUG = False
-    SESSION_COOKIE_SECURE = True  # HTTPS only
-    BCRYPT_LOG_ROUNDS = 14  # 更强的加密
-
-
-# 配置映射
-config = {
-    'development': DevelopmentConfig,
-    'testing': TestingConfig,
-    'production': ProductionConfig,
-    'default': DevelopmentConfig
-}
-
-
-def get_config(env=None):
-    """获取配置类"""
-    env = env or os.getenv('FLASK_ENV', 'development')
-    return config.get(env, DevelopmentConfig)
 

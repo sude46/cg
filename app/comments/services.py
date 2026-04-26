@@ -34,7 +34,7 @@ class CommentService:
 
         try:
             comment = comment_repository.create_comment(post_id=post_id, user_id=user_id, content=content)
-            post.comment_count = (post.comment_count or 0) + 1
+            post_repository.increment_comment_count(post_id)
             db.session.commit()
 
             # 触发通知事件（排除作者自评论）
@@ -120,9 +120,8 @@ class CommentService:
 
             comment_repository.soft_delete(comment)
             # 更新帖子统计
-            post = comment.post
-            if post and getattr(post, 'comment_count', 0) > 0:
-                post.comment_count -= 1
+            if comment.post_id:
+                post_repository.decrement_comment_count(comment.post_id)
 
             db.session.commit()
             return {'message': '评论删除成功'}

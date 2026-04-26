@@ -9,8 +9,11 @@ from .testing import TestingConfig
 # 配置映射（统一配置类映射，避免重复逻辑）
 CONFIG_MAPPING = {
     'development': DevelopmentConfig,
+    'dev': DevelopmentConfig,
     'production': ProductionConfig,
+    'prod': ProductionConfig,
     'testing': TestingConfig,
+    'test': TestingConfig,
     'default': DevelopmentConfig
 }
 
@@ -27,13 +30,10 @@ EXCLUDE_ATTRS = {
 }
 
 def get_config(config_name: str = None):
-    config_name = config_name or os.getenv("FLASK_ENV", "development")
-    config_map={
-            "development":DevelopmentConfig,
-            "testing":TestingConfig,
-            "production":ProductionConfig
-            }
-    return config_map.get(config_name.lower(),DevelopmentConfig)
+    # 如果传 None，从环境变量读取，兼容 APP_ENV 和 FLASK_ENV
+    env = config_name or os.getenv("FLASK_ENV") or os.getenv("APP_ENV", "development")
+    return CONFIG_MAPPING.get(env.lower(), DevelopmentConfig)
+
 
 
 def _get_config_attributes(config_obj: BaseConfig) -> Dict[str, Any]:
@@ -82,8 +82,6 @@ def load_config() -> BaseConfig:
     return get_config()
 
 
-# 导出核心对象/方法（满足模块导出规范）
-config = get_config()  # 保留原有变量名，兼容历史调用
-__all__ = ['get_config', 'sanitize_config', 'config', 'load_config']
+__all__ = ['get_config', 'sanitize_config', 'load_config']
 
 

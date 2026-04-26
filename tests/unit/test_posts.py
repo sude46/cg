@@ -1,6 +1,7 @@
 from app.posts.models import Post
 import pytest
 from app.posts.services import PostService
+from app.likes.services import LikeService
 from app.posts.models import Post
 from app.common.exceptions import ValidationError, ResourceNotFoundError, AuthenticationError
 from tests.unit.factories import UserFactory, PostFactory
@@ -159,9 +160,11 @@ class TestPostService:
             post_id = post.id
             user_id = user.id
 
-            result = PostService.like_post(post_id, user_id)
+            result = LikeService.create_like(user_id=user_id, post_id=post_id)
 
-        assert result["message"] == "点赞成功"
+        # LikeService.create_like 返回点赞序列化数据
+        assert result["user_id"] == user_id
+        assert result["post_id"] == post_id
 
         with app.app_context():
             from app.likes.models import Like
@@ -178,15 +181,16 @@ class TestPostService:
             post_id = post.id
             user_id = user.id
             # 先点赞
-            PostService.like_post(post_id, user_id)
+            LikeService.create_like(user_id=user_id, post_id=post_id)
 
-            result = PostService.unlike_post(post_id, user_id)
+            result = LikeService.delete_like(user_id=user_id, post_id=post_id)
 
-        assert result["message"] == "取消点赞成功"
+        # LikeService.delete_like 返回 True
+        assert result is True
 
         with app.app_context():
             from app.likes.models import Like
-            like = Like.query.filter_by(user_id=user_id, post_id=post_id).first()
+            like = Like.query.filter_by(user_id=user_id, post_id=post_id, is_deleted=False).first()
             assert like is None
             updated_post = db_session.get(Post, post_id)
             assert updated_post.like_count == 0

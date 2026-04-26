@@ -24,18 +24,21 @@ def init_rate_limit_middleware(app):
         return
     
     # 生产环境：初始化 Flask-Limiter
+    storage_uri=app.config.get('RATE_LIMIT_STORAGE','memory://')
+    if storage_uri=='memory://':
+        logger.warning("使用内存存储限流数据，适合开发环境，不推荐生产环境")
     limiter = Limiter(
         app=app,
         key_func=_get_identifier,
         default_limits=app.config.get('RATE_LIMIT_DEFAULT', ['100 per minute']),
-        storage_uri=app.config.get('RATE_LIMIT_STORAGE', 'memory://'),
+        storage_uri=storage_uri,
         strategy="fixed-window"
     )
     
-    # 挂载到 app 实例（符合 Flask 扩展模式）
+    # 挂载到 app 实例
     app.limiter = limiter
     
-    # 提供路由限流装饰器
+    # 提供路由限流装饰器)
     app.route_limit = _make_route_limit(limiter)
     
     # 注册错误处理器
@@ -48,7 +51,7 @@ def init_rate_limit_middleware(app):
             "retry_after": retry_after
         }, 429
     
-    logger.info("Rate limiter initialized")
+    logger.info(f"Rate limiter initialized with storage: {storage_uri}")
 
 
 def _get_identifier():
@@ -66,16 +69,12 @@ def _get_identifier():
 def _make_route_limit(limiter):
     """
     创建路由限流装饰器工厂
-    解决模块导入时的应用上下文问题
+    提前绑定 limiter，避免每次请求动态创建函数对象
     """
     def decorator(limit_value):
+        limmit_decorator = limiter.limit(limit_value)
         def wrapper(f):
-            @wraps(f)
-            def decorated(*args, **kwargs):
-                # 在请求上下文中执行限流检查
-                limited_f = limiter.limit(limit_value)(f)
-                return limited_f(*args, **kwargs)
-            return decorated
+                return limmit_decorator(f)
         return wrapper
     return decorator
 

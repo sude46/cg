@@ -6,8 +6,8 @@ def init_security_headers(app):
 
     @app.after_request
     def add_security_headers(response):
-        # 防止点击劫持（仅允许同域嵌入可改为SAMEORIGIN，根据业务调整）
-        if 'X-Frame-Options' not in response.headers:  # 避免覆盖已有配置
+       
+        if 'X-Frame-Options' not in response.headers:  
             response.headers['X-Frame-Options'] = 'DENY'
         
         # 防止 MIME 类型嗅探
@@ -21,15 +21,29 @@ def init_security_headers(app):
                 hsts_value += '; preload'
             if 'Strict-Transport-Security' not in response.headers:
                 response.headers['Strict-Transport-Security'] = hsts_value
+        use_nonce=app.config.get('CSP_USE_NONCE', False)
+        if use_nonce:
+            import secrets
+            nonce=secrets.token_urlsafe(16)
+            response.headers['X-CSP-Nonce']=nonce
+            script_src=f"'self' 'nonce-{nonce}' "
+            style_src=f"'self' 'nonce-{nonce}' "
+        else:
+            # 警告：unsafe-inline 存在 XSS 风险，仅用于内联脚本无法避免的场景
+            script_src="'self' 'unsafe-inline'"
+            style_src="'self' 'unsafe-inline'"
         
         csp_policy = (
-            "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline'; "  
-            "style-src 'self' 'unsafe-inline'; "
-            "img-src 'self' data: https://trusted-cdn.com; "
-            "connect-src 'self'; "
-            "frame-ancestors 'none'; "  # 替代X-Frame-Options（CSP级别更强）
-            "upgrade-insecure-requests;"  # 强制HTTPS
+            f"default-src 'self'; "
+            f"script-src {script_src}; "
+            f"style-src {style_src}; "
+            f"img-src 'self' data: https:; "  # 允许 HTTPS 图片
+            f"connect-src 'self'; "
+            f"font-src 'self'; "
+            f"frame-ancestors 'none'; "  # 替代 X-Frame-Options
+            f"base-uri 'self'; "
+            f"form-action 'self'; "
+            f"upgrade-insecure-requests;"
         )
         if 'Content-Security-Policy' not in response.headers:
             response.headers['Content-Security-Policy'] = csp_policy
@@ -37,6 +51,9 @@ def init_security_headers(app):
         # 新增：防XSS基础头（补充）
         if 'X-XSS-Protection' not in response.headers:
             response.headers['X-XSS-Protection'] = '1; mode=block'
+        # 可选：Referrer 策略
+        if 'Referrer-Policy' not in response.headers:
+            response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
         
         return response
 

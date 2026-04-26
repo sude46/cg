@@ -4,6 +4,7 @@ from core.database import db
 from app.users.models import User
 from app.common.database import pagination_utils
 from .schemas import UserListSchema
+from sqlalchemy import case
 
 logger = logging.getLogger(__name__)
 
@@ -61,5 +62,33 @@ class UserRepository:
             'items':result['items'],
             'pagination':result['pagination']
         }
+    
+    @staticmethod
+    def increment_following_count(user_id: int) -> None:
+        """原子增加关注数"""
+        User.query.filter_by(id=user_id).update({
+            'following_count': User.following_count + 1
+        })
+
+    @staticmethod
+    def decrement_following_count(user_id: int) -> None:
+        """原子减少关注数（不小于0）"""
+        User.query.filter_by(id=user_id).update({
+            'following_count': case((User.following_count > 0, User.following_count - 1), else_=0)
+        })
+
+    @staticmethod
+    def increment_follower_count(user_id: int) -> None:
+        """原子增加粉丝数"""
+        User.query.filter_by(id=user_id).update({
+            'follower_count': User.follower_count + 1
+        })
+
+    @staticmethod
+    def decrement_follower_count(user_id: int) -> None:
+        """原子减少粉丝数（不小于0）"""
+        User.query.filter_by(id=user_id).update({
+            'follower_count': case((User.follower_count > 0, User.follower_count - 1), else_=0)
+        })
 
 user_repository = UserRepository()

@@ -8,19 +8,35 @@ from typing import Dict, Any
 import sys
 import traceback
 
-logger = logging.getLogger(__name__)  # 新增：独立logger
+logger = logging.getLogger(__name__)  
 
 
 def init_logging_middleware(app):
     """初始化结构化日志中间件：request_id + 请求/响应日志 + 敏感信息过滤"""
 
-    def filter_sensitive_data(data: Dict[str, Any]) -> Dict[str, Any]:
+    def filter_sensitive_data(data: Dict[str, Any],depth:int=0) -> Dict[str, Any]:
         """过滤敏感信息（密码、token等）"""
-        sensitive_keys = ['password', 'token', 'secret', 'authorization']
-        return {
-            k: '***' if k.lower() in sensitive_keys else v
-            for k, v in data.items()
+        if depth>3:
+            return '[nested]'
+        if not isinstance(data,dict):
+            return data
+        sensitive_keys = {
+            'password', 'token', 'secret', 'authorization', 
+            'cookie', 'session', 'api_key', 'apikey', 'access_token',
+            'refresh_token', 'jwt'
         }
+        filtered={}
+        for k,v in data.items():
+            key_lower=k.lower()
+            if key_lower in sensitive_keys:
+                filtered[k]='***'
+            elif isinstance(v,dict):
+                filtered[k]=filter_sensitive_data(v,depth+1)
+            elif isinstance(v,list) and depth<2:
+                filtered[k]=[filter_sensitive_data(item,depth+1) if isinstance(item,dict) else item for item in v[:10]]
+            else:
+                filtered[k]=v
+        return filtered
 
     @app.before_request
     def before_request():
@@ -41,14 +57,26 @@ def init_logging_middleware(app):
             "content_length": request.content_length or 0
         }
 
-        # 可选：记录请求体（仅非文件、非敏感）
+        
+        # 安全记录请求题，避免阻塞和内存溢出
         if request.method in ['POST', 'PUT', 'PATCH'] and not request.is_json:
             try:
-                log_data['request_body'] = filter_sensitive_data(request.get_json(silent=True) or {})
+                #限制请求体大小（防止json阻塞）
+                if request.content_length and request.content_length<10*1024:
+                    body=request.get_json(slient=True) or {}
+                    log_data['request_body']=filter_sensitive_data(body)
+                else:
+                    log_data['request_body']='[too large]'
             except Exception:
-                log_data['request_body'] = 'non-json body'
+                log_data['request_body'] = 'parse error'
 
-        logger.info(json.dumps(log_data, ensure_ascii=False))
+        #异步日志或异常捕获，防止主线程阻塞
+        try:
+            logger.info(json.dumps(log_data, ensure_ascii=False, default=str))
+        except (TypeError,ValueError) as e:
+            # 序列化失败时降级为字符串
+            logger.info(f"Request log serialization failed: {e}, data: {str(log_data)}")
+
 
     @app.after_request
     def after_request(response):
@@ -73,8 +101,10 @@ def init_logging_middleware(app):
             "path": request.path,
             "response_length": response.content_length or 0
         }
-
-        logger.log(log_level, json.dumps(log_data, ensure_ascii=False))
+        try:
+            logger.log(log_level,json.dumps(log_data,ensure_ascii=False,default=str))
+        except Exception as e:
+            logger.error(f'Failed to log response: {e}, data: {str(log_data)}')
         return response
 
     # 新增：请求异常日志（补充before_request未覆盖的场景）

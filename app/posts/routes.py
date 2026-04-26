@@ -3,6 +3,7 @@ from flask_jwt_extended import jwt_required,get_jwt_identity
 from flask_restx import Api,Resource,fields,Namespace
 from . import posts_bp
 from .services import PostService
+from app.likes.services import LikeService
 from .schemas import (
 	CreatePostSchema,
 	UpdatePostSchema,
@@ -196,9 +197,9 @@ class PostLike(Resource):
 	def post(self,post_id):
 		current_user_id = get_jwt_identity()
 		
-		PostService.like_post(
-				post_id=post_id,
-				user_id=current_user_id,
+		LikeService.create_like(
+			user_id=current_user_id,
+			post_id=post_id,
 			)
 		return success_response(
 				data=None,
@@ -218,9 +219,9 @@ class PostUnlike(Resource):
 		'''取消点赞'''
 		current_user_id = get_jwt_identity()
 		
-		PostService.unlike_post(
-				post_id=post_id,
-				user_id=current_user_id,
+		LikeService.delete_like(
+			user_id=current_user_id,
+			post_id=post_id,
 			)
 		return success_response(
 				data=None,
@@ -229,11 +230,12 @@ class PostUnlike(Resource):
 @api.route('/search')
 class PostSearch(Resource):
 	@api.doc(
-		description='搜索帖子',
+		description='搜索帖子（支持 ES 智能搜索）',
 		params={
-			'q':'搜索关键词',
-			'page':'页码，默认1',
-			'per_page':'每页数量,默认20'
+			'q': '搜索关键词',
+			'page': '页码，默认1',
+			'per_page': '每页数量，默认20',
+			'sort': '排序方式：relevance(相关度)、time(最新)、hot(最热)，默认relevance'
 			},
 		security='Bearer'
 		)
@@ -242,27 +244,88 @@ class PostSearch(Resource):
 	def get(self):
 		'''搜索帖子'''
 		query = request.args.get('q', '').strip()
-		page,per_page=get_pagination_params()
+		page, per_page = get_pagination_params()
+		sort_by = request.args.get('sort', 'relevance')
 		current_user_id = get_jwt_identity()
+		
 		if not query:
 			return fail_response(ResponseCode.PARAM_ERROR, '搜索关键词不能为空'), 400
+		
+		if sort_by not in ['relevance', 'time', 'hot']:
+			sort_by = 'relevance'
 		
 		result = PostService.search_posts(
 				query=query,
 				page=page,
 				per_page=per_page,
 				current_user_id=current_user_id,
+				sort_by=sort_by
 			)
-		# 序列化帖子列表
-		posts_data = posts_schema.dump(result['items'])
+		
+		# ES 搜索返回的已经是格式化数据，不需要再序列化
+		if result.get('is_es_search'):
+			posts_data = result['items']
+		else:
+			# 降级到数据库搜索，需要序列化
+			posts_data = posts_schema.dump(result['items'])
+		
 		return success_response(
 				data={
 					'posts': posts_data,
 					'pagination': result['pagination'],
-					'liked_post_ids': list(result.get('liked_post_ids', []))
+					'liked_post_ids': list(result.get('liked_post_ids', [])),
+					'search_engine': 'elasticsearch' if result.get('is_es_search') else 'database'
 				},
 				message='搜索帖子成功'
 			), 200
+
+
+@api.route('/hot-searches')
+class HotSearches(Resource):
+	@api.doc(
+		description='获取热搜榜',
+		params={'size': '返回数量，默认10'}
+	)
+	@api.response(200, '获取成功')
+	def get(self):
+		'''获取热搜榜'''
+		size = request.args.get('size', 10, type=int)
+		size = min(50, max(1, size))
+		
+		from  services.search import PostSearchService
+		hot_searches = PostSearchService.get_hot_searches(size=size)
+		
+		return success_response(
+			data={'hot_searches': hot_searches},
+			message='获取热搜榜成功'
+		), 200
+
+
+@api.route('/search/suggestions')
+class SearchSuggestions(Resource):
+	@api.doc(
+		description='搜索建议（自动补全）',
+		params={
+			'q': '输入的关键词',
+			'size': '返回数量，默认10'
+		}
+	)
+	@api.response(200, '获取成功')
+	def get(self):
+		'''获取搜索建议'''
+		keyword = request.args.get('q', '').strip()
+		size = request.args.get('size', 10, type=int)
+		
+		if not keyword or len(keyword) < 1:
+			return success_response(data={'suggestions': []}, message='获取成功'), 200
+		
+		from services.search import PostSearchService
+		suggestions = PostSearchService.get_search_suggestions(keyword, size)
+		
+		return success_response(
+			data={'suggestions': suggestions},
+			message='获取搜索建议成功'
+		), 200
 
 api_restx.add_namespace(api)
 		

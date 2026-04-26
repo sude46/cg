@@ -5,14 +5,20 @@ from sqlalchemy.orm import selectinload
 from core import db
 from app.posts.models import Post
 from app.common.database import pagination_utils
+from sqlalchemy import case
 
 
 class PostRepository:
     @staticmethod
-    def get_by_id(post_id: int) -> Optional[Post]:
-        return Post.query.options(
-            joinedload(Post.author)  # 只预加载作者
-        ).filter_by(id=post_id, is_deleted=False).first()
+    def get_by_id(post_id: int,lock:bool=False) -> Optional[Post]:
+        '''
+        根据ID获取帖子
+        lock=True:,使用Select for update,必须在是事务内调用
+        '''
+        query=Post.query.options(joinedload(Post.author)).filter_by(id=post_id,is_deleted=False)
+        if lock:
+            query=query.with_for_update()
+        return query.first()
 
     @staticmethod
     def create_post(user_id: int, content: str, image_url: str = None) -> Post:
@@ -22,7 +28,9 @@ class PostRepository:
 
     @staticmethod
     def list_posts(page: int = 1, per_page: int = 20, user_id: Optional[int] = None):
-        query=Post.query.filter_by(is_deleted=False,is_published=True)
+        query=Post.query.options(
+            joinedload(Post.author)
+        ).filter_by(is_deleted=False,is_published=True)
         if user_id:
             query=query.filter_by(user_id=user_id)
         query=query.order_by(Post.created_at.desc())
@@ -34,7 +42,9 @@ class PostRepository:
 
     @staticmethod
     def search_posts(query_str: str, page: int = 1, per_page: int = 20):
-        query=Post.query.filter(
+        query=Post.query.options(
+            joinedload(Post.author)
+            ).filter(
             Post.is_deleted==False,
             Post.is_published==True,
             Post.content.ilike(f'%{query_str}%')
@@ -66,10 +76,23 @@ class PostRepository:
     @staticmethod
     def decrement_like_count(post_id: int) -> None:
         """原子操作：减少帖子点赞计数（不小于0）"""
-        from sqlalchemy import func
+
         Post.query.filter_by(id=post_id).update({
-            'like_count': func.greatest(Post.like_count - 1, 0)
+            'like_count': case((Post.like_count > 0, Post.like_count - 1), else_=0)
         })
 
+    @staticmethod
+    def increment_comment_count(post_id:int):
+        '''原子操作:增加帖子评论计数'''
+        Post.query.filter_by(id=post_id).update({
+            'comment_count':Post.comment_count+1
+        })
+
+    @staticmethod
+    def decrement_comment_count(post_id:int):
+        '''原子操作：减少帖子评论计数（不小于0）'''
+        Post.query.filter_by(id=post_id).update({
+            'comment_count':case((Post.comment_count>0,Post.comment_count-1),else_=0)
+        })
 
 post_repository = PostRepository()

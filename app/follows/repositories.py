@@ -12,9 +12,12 @@ class FollowRepository:
     """关注关系仓储：封装关注/取关的数据访问。"""
 
     @staticmethod
-    def get_relation(follower_id: int, followed_id: int) -> Optional[Follow]:
+    def get_relation(follower_id: int, followed_id: int,lock:bool=False) -> Optional[Follow]:
         """获取某个关注关系（唯一约束，未删除）。"""
-        return Follow.query.options(joinedload(Follow.follower),joinedload(Follow.followed)).filter_by(follower_id=follower_id, followed_id=followed_id, is_deleted=False).first()
+        query = Follow.query.filter_by(follower_id=follower_id, followed_id=followed_id, is_deleted=False)
+        if lock:
+            query = query.with_for_update()
+        return query.first()
 
     @staticmethod
     def create_follow(follower_id: int, followed_id: int) -> Follow:

@@ -11,7 +11,7 @@ class CommentRepository:
     @staticmethod
     def get_by_id(comment_id: int) -> Optional[Comment]:
         """根据 ID 获取评论（包含已删除）。"""
-        return db.session.query(Comment).options(joinedload(Comment.author)).filter_by(id=comment_id).first()
+        return Comment.query.options(joinedload(Comment.author)).filter_by(id=comment_id).first()
 
     @staticmethod
     def get_active_by_id(comment_id: int) -> Optional[Comment]:
@@ -28,7 +28,9 @@ class CommentRepository:
     @staticmethod
     def list_by_post(post_id: int, page: int = 1, per_page: int = 20) -> Dict[str, Any]:
         """按帖子分页查询评论列表（只返回未删除评论）。"""
-        query=Comment.query.filter_by(
+        query=Comment.query.options(
+            joinedload(Comment.author)
+            ).filter_by(
             post_id=post_id,
             is_deleted=False
         ).order_by(Comment.created_at.desc())
@@ -54,9 +56,9 @@ class CommentRepository:
     @staticmethod
     def decrement_like_count(comment_id: int) -> None:
         """原子操作：减少评论点赞计数（不小于0）"""
-        from sqlalchemy import func
+        from sqlalchemy import case
         Comment.query.filter_by(id=comment_id).update({
-            'like_count': func.greatest(Comment.like_count - 1, 0)
+            'like_count': case((Comment.like_count > 0, Comment.like_count - 1), else_=0)
         })
 
 

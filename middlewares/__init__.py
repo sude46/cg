@@ -22,7 +22,16 @@ __all__ = [
 
 
 def init_all_middlewares(app):
-    """批量初始化所有中间件（按依赖顺序）"""
+    """
+    批量初始化所有中间件（按依赖顺序）
+    
+    顺序逻辑：
+    1. CORS 最先（处理 OPTIONS 预检，但预检在 auth 中已兼容）
+    2. 安全头（所有响应都需要）
+    3. 日志（记录所有请求）
+    4. 限流（在认证前拦截暴力请求）
+    5. 认证最后（依赖前面的中间件设置的环境）
+    """
     init_cors(app)
     init_security_headers(app)
     init_logging_middleware(app)

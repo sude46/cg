@@ -29,6 +29,10 @@ class User(db.Model):
 	created_at=db.Column(db.DateTime,default=lambda:datetime.now(timezone.utc))
 	last_login=db.Column(db.DateTime)
 	is_deleted=db.Column(db.Boolean,default=False,nullable=False,index=True)
+
+	following_count = db.Column(db.Integer, default=0, nullable=False)
+	follower_count = db.Column(db.Integer, default=0, nullable=False)
+
 	password_histories=db.relationship(
 		'PasswordHistory',
 		back_populates='user',

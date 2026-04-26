@@ -1,7 +1,8 @@
 # tests/integration/test_flows.py
 import pytest
-from app.auth.services import AuthService
-from app.posts.services import PostService, LikeService
+from app.users.services import AuthService
+from app.posts.services import PostService
+from app.likes.services import LikeService
 from app.comments.services import CommentService
 from app.posts.models import Post, Like
 from app.comments.models import Comment
@@ -49,8 +50,8 @@ class TestCoreBusinessFlow:
 
             # ---------------------- 步骤5：点赞帖子 ----------------------
             request_id = "integration_test_request_id"
-            like_result = LikeService.like_post(post_id, user_id, request_id)
-            assert like_result is True
+            like_result = LikeService.create_like(user_id=user_id, post_id=post_id)
+            assert like_result["post_id"] == post_id
 
             # 验证点赞已创建+帖子点赞数更新
             like = Like.query.filter_by(user_id=user_id, post_id=post_id).first()

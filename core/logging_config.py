@@ -4,24 +4,40 @@ import os
 from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
 
 def init_structured_logger(app):
-    """结构化日志初始化（修复测试环境目录为空问题+环境适配）"""
+    """结构化日志初始化（修复版）"""
     root_logger = logging.getLogger()
-    # 清空原有处理器（避免重复输出）
     root_logger.handlers.clear()
     root_logger.setLevel(app.config.get("LOG_LEVEL", logging.INFO))
 
-    # 1. 基础配置读取
-    log_format = app.config.get("LOG_FORMAT", "%(asctime)s %(levelname)s %(request_id)s %(message)s")
-    info_log_file = app.config.get("INFO_LOG_FILE", "logs/info.log")
-    error_log_file = app.config.get("ERROR_LOG_FILE", "logs/error.log")
+    # ========== 关键修改：使用 LOG_DIR 构建绝对路径 ==========
+    # 获取日志目录（绝对路径）
+    log_dir = app.config.get("LOG_DIR")
+    if not log_dir:
+        # 如果没有配置，默认使用项目根目录下的 logs/
+        project_root = app.root_path
+        log_dir = os.path.join(project_root, "logs")
+    
+    # 确保是绝对路径
+    log_dir = os.path.abspath(log_dir)
+    
+    # 强制使用 LOG_DIR 下的路径（忽略 INFO_LOG_FILE 配置）
+    info_log_file = os.path.join(log_dir, "info.log")
+    error_log_file = os.path.join(log_dir, "error.log")
+    
+    # 确保目录存在（提前创建，避免 TimedRotatingFileHandler 报错）
+    os.makedirs(log_dir, exist_ok=True)
+    
+    app.logger.info(f"日志目录: {log_dir}")  # 调试用，确认路径正确
+    # =====================================================
+
+    log_format = "%(asctime)s %(levelname)s %(request_id)s %(message)s"
     log_rotate_when = app.config.get("LOG_ROTATE_WHEN", "D")
     log_rotate_interval = app.config.get("LOG_ROTATE_INTERVAL", 1)
     log_rotate_backup_count = app.config.get("LOG_ROTATE_BACKUP_COUNT", 7)
     
-    # 2. 创建格式化器（支持request_id上下文）
+    # 格式化器
     class ContextFormatter(logging.Formatter):
         def format(self, record):
-            # 补充所有自定义字段，防止 KeyError
             record.request_id = getattr(record, 'request_id', 'N/A')
             record.user_id = getattr(record, 'user_id', 'N/A')
             record.elapsed_time = getattr(record, 'elapsed_time', 'N/A')
@@ -29,44 +45,35 @@ def init_structured_logger(app):
     
     formatter = ContextFormatter(log_format)
 
-    # 3. 控制台处理器（所有环境都启用）
+    # 控制台处理器
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(formatter)
     root_logger.addHandler(console_handler)
 
-    # 4. 文件处理器（仅非测试环境启用，避免创建目录报错）
+    # 文件处理器（非测试环境）
     if not app.config.get("TESTING", False):
-        # 处理info日志文件目录
-        info_log_dir = os.path.dirname(info_log_file)
-        if info_log_dir:  # 只有目录非空时才创建
-            os.makedirs(info_log_dir, exist_ok=True)
-        # 处理error日志文件目录
-        error_log_dir = os.path.dirname(error_log_file)
-        if error_log_dir:
-            os.makedirs(error_log_dir, exist_ok=True)
-        
-        # 添加info文件处理器
-        info_file_handler = TimedRotatingFileHandler(
+        # info 日志
+        info_handler = TimedRotatingFileHandler(
             info_log_file,
             when=log_rotate_when,
             interval=log_rotate_interval,
             backupCount=log_rotate_backup_count,
             encoding='utf-8'
         )
-        info_file_handler.setLevel(logging.INFO)
-        info_file_handler.setFormatter(formatter)
-        root_logger.addHandler(info_file_handler)
+        info_handler.setLevel(logging.INFO)
+        info_handler.setFormatter(formatter)
+        root_logger.addHandler(info_handler)
 
-        # 添加error文件处理器
-        error_file_handler = TimedRotatingFileHandler(
+        # error 日志
+        error_handler = TimedRotatingFileHandler(
             error_log_file,
             when=log_rotate_when,
             interval=log_rotate_interval,
             backupCount=log_rotate_backup_count,
             encoding='utf-8'
         )
-        error_file_handler.setLevel(logging.ERROR)
-        error_file_handler.setFormatter(formatter)
-        root_logger.addHandler(error_file_handler)
+        error_handler.setLevel(logging.ERROR)
+        error_handler.setFormatter(formatter)
+        root_logger.addHandler(error_handler)
 
-    app.logger.info(f"日志初始化完成，测试环境：{app.config.get('TESTING', False)}")
+    app.logger.info(f"日志初始化完成，目录: {log_dir}")

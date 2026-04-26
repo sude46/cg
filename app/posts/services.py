@@ -8,10 +8,14 @@ from app.common.exceptions import (
     ResourceNotFoundError,
     AuthenticationError,
     DatabaseError,
+    ConflictError
 )
+from app.common import event_bus
 from typing import Dict, Any, List, Optional
 from app.posts.repositories import post_repository
+from  services.search import PostSearchService
 import logging
+from sqlalchemy.orm.exc import StaleDataError
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +42,23 @@ class PostService:
             image_url=image_url
         )
         db.session.commit()
-        logger.info('用户%d创建了帖子%d', user_id, post.id)
+        
+        try:
+            event_bus.publish('post.created',{
+                
+                    'id':post.id,
+                    'content':post.content,
+                    'user_id':post.user_id,
+                    'user_name':user.username,
+                    'image_url':post.image_url,
+                    'like_count':post.like_count,
+                    'comment_count':post.comment_count,
+                    'created_at':post.created_at.isoformat(),
+                    'is_published':post.is_published,
+                    'is_deleted':post.is_deleted
+            })
+        except Exception as e:
+            logger.warning(f'ES 索引失败（不影响主流程）: {e}')
         return post
 
     # ========== 查询 ==========
@@ -98,34 +118,45 @@ class PostService:
 
     # ========== 更新 ==========
     @staticmethod
-    def update_post(
-        post_id: int, 
-        user_id: int, 
-        content: str = None, 
-        image_url: str = None
+    def update_post(post_id: int, user_id: int, content: str = None, image_url: str = None
     ) -> Post:
         """更新帖子，返回更新后的 Post ORM 对象"""
-        post = post_repository.get_by_id(post_id)
-        if not post:
-            raise ResourceNotFoundError('帖子')
-        if post.user_id != user_id:
-            raise AuthenticationError('无权修改此帖子')
-        if content is None and image_url is None:
-            raise ValidationError('至少提供一个更新内容')
+        try:
 
-        if content is not None:
-            if len(content.strip()) == 0:
-                raise ValidationError('帖子内容不能为空')
-            if len(content.strip()) > 1000:
-                raise ValidationError('帖子内容不能超过1000个字符')
-            post.content = content.strip()
-        
-        if image_url is not None:
-            post.image_url = image_url
+            post = post_repository.get_by_id(post_id)
+            if not post:
+                raise ResourceNotFoundError('帖子')
+            if post.user_id != user_id:
+                raise AuthenticationError('无权修改此帖子')
+            if content is None and image_url is None:
+                raise ValidationError('至少提供一个更新内容')
 
-        db.session.commit()
-        logger.info('用户%d更新了帖子%d', user_id, post_id)
-        return post
+            if content is not None:
+                if len(content.strip()) == 0:
+                    raise ValidationError('帖子内容不能为空')
+                if len(content.strip()) > 1000:
+                    raise ValidationError('帖子内容不能超过1000个字符')
+                post.content = content.strip()
+            
+            if image_url is not None:
+                post.image_url = image_url
+
+            db.session.commit()
+            try:
+                event_bus.publish('post.update',{
+                    'post_id':post_id,
+                    'content':post.content,
+                    'image_url':post.image_url
+                })
+            except Exception as e:
+                logging.warning('发布帖子更新事件失败，不影响主进程：{e}')
+            logger.info('用户%d更新了帖子%d', user_id, post_id)
+            return post
+        except StaleDataError:
+            db.session.rollback()
+            logger.warning(f'贴子{post_id}更新冲突')
+            raise ConflictError('该帖子已被其他用户修改，请刷新后重试')
+
 
     # ========== 删除 ==========
     @staticmethod
@@ -139,38 +170,14 @@ class PostService:
 
         post_repository.soft_delete_post(post)
         db.session.commit()
-        logger.info('用户%d软删除了帖子%d', user_id, post_id)
-
-    # ========== 点赞相关 ==========
-    @staticmethod
-    def like_post(post_id: int, user_id: int) -> None:
-        """点赞帖子"""
-        post = post_repository.get_by_id(post_id)
-        if not post or not post.is_published:
-            raise ResourceNotFoundError('帖子')
         
-        # 检查是否已点赞
-        if like_repository.exists(user_id=user_id, post_id=post_id):
-            raise ValidationError('已点赞该帖子')
-
-        like_repository.create_post_like(user_id=user_id, post_id=post_id)
-        post.like_count = (post.like_count or 0) + 1
-        db.session.commit()
-        logger.info('用户%d点赞了帖子%d', user_id, post_id)
-
-    @staticmethod
-    def unlike_post(post_id: int, user_id: int) -> None:
-        """取消点赞"""
-        like = like_repository.get_post_like(user_id=user_id, post_id=post_id)
-        if not like:
-            raise ResourceNotFoundError('点赞记录')
-
-        like_repository.delete_like(like)
-        post = post_repository.get_by_id(post_id)
-        if post:
-            post.like_count = max(0, (post.like_count or 0) - 1)
-        db.session.commit()
-        logger.info('用户%d取消点赞记录%d', user_id, post_id)
+        # 同步删除 ES 索引
+        try:
+            event_bus.publish('post.deleted',{'post_id':post_id})
+        except Exception as e:
+            logger.warning(f'发布帖子删除事件失败（不影响主流程）: {e}')
+        
+        logger.info('用户%d软删除了帖子%d', user_id, post_id)
 
     # ========== 搜索 ==========
     @staticmethod
@@ -178,29 +185,52 @@ class PostService:
         query: str, 
         page: int = 1, 
         per_page: int = 20, 
-        current_user_id: int = None
+        current_user_id: int = None,
+        sort_by: str = 'relevance'
     ) -> Dict[str, Any]:
-        """搜索帖子"""
+        """
+        搜索帖子（使用 Elasticsearch）
+        
+        Args:
+            query: 搜索关键词
+            page: 页码
+            per_page: 每页数量
+            current_user_id: 当前用户ID（用于获取点赞状态）
+            sort_by: 排序方式：relevance(相关度)、time(时间)、hot(热度)
+        """
         per_page = min(100, max(1, per_page))
         page = max(1, page)
 
-        result = post_repository.search_posts(
-            query, 
-            page=page, 
-            per_page=per_page
+        # 使用 ES 搜索
+        result = PostSearchService.search(
+            query=query,
+            page=page,
+            per_page=per_page,
+            sort_by=sort_by,
+            current_user_id=current_user_id
         )
+        
         posts = result.get('items', [])
         
-        # 获取点赞状态
+        # 获取点赞状态（如果 ES 返回的是 ID 列表）
         liked_ids = set()
-        if current_user_id and posts:
+        if current_user_id and posts and not result.get('fallback'):
+            # ES 搜索结果需要从数据库查点赞状态
+            post_ids = [p['id'] for p in posts]
             liked_ids = like_repository.get_liked_post_ids(
                 user_id=current_user_id,
-                post_ids=[p.id for p in posts]
+                post_ids=post_ids
+            )
+        elif current_user_id and posts:
+            # 降级到数据库搜索时
+            liked_ids = like_repository.get_liked_post_ids(
+                user_id=current_user_id,
+                post_ids=[p['id'] for p in posts]
             )
 
         return {
             'items': posts,
             'pagination': result.get('pagination', {}),
-            'liked_post_ids': liked_ids
+            'liked_post_ids': liked_ids,
+            'is_es_search': not result.get('fallback', False)
         }

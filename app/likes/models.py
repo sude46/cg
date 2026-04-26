@@ -22,8 +22,10 @@ class Like(db.Model):
             "(post_id IS NOT NULL OR comment_id IS NOT NULL) AND NOT (post_id IS NOT NULL AND comment_id IS NOT NULL)",
             name="like_post_or_comment_check",
         ),
-        db.UniqueConstraint('user_id', 'post_id', name='user_post_unique'),
-        db.UniqueConstraint('user_id', 'comment_id', name='user_comment_unique'),
+        db.UniqueConstraint('user_id', 'post_id','is_deleted', name='user_post_unique'),
+        db.UniqueConstraint('user_id', 'comment_id','is_deleted', name='user_comment_unique'),
+        #覆盖'用户点赞列表按时间倒序'
+        db.Index('idx_like_user_created','user_id','created_at'),
     )
     def __repr__(self):
         return f'<Like user={self.user_id} post={self.post_id} comment={self.comment_id}>'

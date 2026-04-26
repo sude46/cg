@@ -12,6 +12,8 @@ from core.logging_config import init_structured_logger
 from core.blueprint_registry import register_all_blueprints
 from app.common.error_handlers import register_error_handlers
 
+from app.common.events import event_bus
+from services.search.event_handlers import register_search_event_handlers
 
 # 导入所有模型，确保 db.create_all() 创建完整表结构
 from app.users.models import User
@@ -65,6 +67,25 @@ def create_app(config_name: str = None) -> Flask:
     except (ImportError, AttributeError) as e:
         app.logger.warning(f'RedisClient初始化失败:{str(e)}')
 
+    # 初始化 Elasticsearch
+    if app.config.get('ELASTICSEARCH_ENABLED', True):
+        from core.es_client import es_client           # ✅ 从 core 导入
+        from services.search.document import PostDocument
+        from services.search.config import SearchConfig # ✅ 业务配置
+        
+        # 初始化业务配置
+        SearchConfig.init_app(app.config)
+        
+        # 连接 ES（传入配置）
+        if es_client.connect(app.config):
+            PostDocument.create_index()
+            app.logger.info("Elasticsearch 初始化完成")
+        else:
+            app.logger.warning("Elasticsearch 连接失败，搜索功能将降级到数据库")
+    else:
+        app.logger.info("Elasticsearch 已禁用")
+
+
     # 初始化中间件
     from middlewares.logging_middleware import init_logging_middleware
     from middlewares.auth_middleware import init_auth_middleware
@@ -98,6 +119,9 @@ def create_app(config_name: str = None) -> Flask:
 
     # 注册蓝图
     register_all_blueprints(app)
+
+    # 注册搜索事件监听器
+    register_search_event_handlers()
 
     return app
 
