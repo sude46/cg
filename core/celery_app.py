@@ -5,19 +5,24 @@ from celery import Celery
 from config import get_config
 
 def make_celery(app_name='weibo'):
+
+    config_calss=get_config()
+    config=config_calss()
     celery=Celery(
         app_name,
-        broker=get_config.REDIS_URL,             #redis作为消息队列
-        backend=get_config.REDIS_URL,           #redis存储结果
+        broker=config.CELERY_BROKER_URL,             #redis作为消息队列
+        backend=config.CELERY_RESULT_BACKEND,           #redis存储结果
         include=[
-            'app.tasks.feed_tasks',
-            'app.tasks.notification_tasks',
-            'app.tasks.email_tasks',
-            'app.tasks.search_tasks',
-            'app.tasks.media_tasks',
-            'app.tasks.data_tasks',
-            'app.tasks.cleanup_tasks',
-            'app.tasks.export_tasks',
+            'tasks.like_tasks',
+            'tasks.like_reconcile',
+            'tasks.feed_tasks',
+            'tasks.post_tasks',
+            'tasks.post_reconcile',
+            'tasks.user_tasks',
+            'tasks.user_reconcile',
+            'tasks.notification_tasks',
+            'tasks.comment_reconcile',
+            'tasks.data_tasks',
         ]
     )
     celery.conf.update(
@@ -30,22 +35,33 @@ def make_celery(app_name='weibo'):
         worker_prefetch_multiplier=4,
         task_default_queue='default',
         task_routes={
-            'app.tasks.emails_tasks.*':{'queue':'email'},
-            'app.tasks.media_tasks.*':{'queue':'media'},
-            'app.tasks.search_tasks.*':{'queue':'search'},
-            'app.tasks.data_tasks.*':{'queue':'data'},
+            'tasks.like_tasks.*':{'queue':'like'},
         },
         beat_schedule={
-            #定时任务：每天凌晨清理过去缓存
-            'clean-expired-cache':{
-                'task':'app.task.cleanup_task.clean_expired_cache',
-                'schedule':86400.0,
-                'args':(),
+            'reconcile-likes': {
+                'task': 'tasks.like_reconcile.reconcile_like_counts',
+                'schedule': 300.0,
+                'args': ('post', 500),
             },
-             # 定时任务：每小时计算热榜
+            'reconcile-posts': {       # 新增
+            'task': 'tasks.post_reconcile.reconcile_post_cache',
+            'schedule': 300.0,
+            'args': (500,),
+            },
             'calculate-hot-posts': {
-                'task': 'app.tasks.data_tasks.calculate_hot_posts',
-                'schedule': 3600.0,
+            'task': 'tasks.data_tasks.calculate_hot_posts',
+            'schedule': 3600.0,  # 1 小时
+            'args': ('daily', 1000),
+            },
+            'reconcile-hot-comments': {
+            'task': 'tasks.comment_reconcile.reconcile_hot_comments',
+            'schedule': 600.0,  # 10 分钟
+            'args': (50,),
+            },
+            'reconcile-user-cache': {
+            'task': 'tasks.user_reconcile.reconcile_user_cache',
+            'schedule': 600.0,  # 10 分钟
+            'args': (500,),
             },
 
         }            

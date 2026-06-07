@@ -1,6 +1,7 @@
 import factory
 from factory.alchemy import SQLAlchemyModelFactory
-from datetime import datetime, timezone
+from datetime import datetime
+from app.common.database import utcnow
 from app.users.models import User
 from app.posts.models import Post
 from app.comments.models import Comment  # 先导入 Comment
@@ -26,7 +27,7 @@ class UserFactory(BaseFactory):
     username = factory.Sequence(lambda n: f"test_user_{n}")
     password_hash = "test_hash_123456"
     email = factory.Sequence(lambda n: f"test_user_{n}@example.com")
-    created_at = factory.LazyFunction(lambda: datetime.now(timezone.utc))
+    created_at = factory.LazyFunction(utcnow)
 
 # ---------------------- 帖子数据工厂 ----------------------
 class PostFactory(BaseFactory):
@@ -36,9 +37,9 @@ class PostFactory(BaseFactory):
     author = factory.SubFactory(UserFactory)
     content = factory.Sequence(lambda n: f"测试帖子内容{n}，包含各种测试场景")
     like_count = 0
-    is_deleted = False
-    created_at = factory.LazyFunction(lambda: datetime.now(timezone.utc))
-    updated_at = factory.LazyFunction(lambda: datetime.now(timezone.utc))
+    deleted_at = None
+    created_at = factory.LazyFunction(utcnow)
+    updated_at = factory.LazyFunction(utcnow)
 
 # ---------------------- 评论数据工厂 ----------------------
 class CommentFactory(BaseFactory):
@@ -48,10 +49,10 @@ class CommentFactory(BaseFactory):
     author = factory.SubFactory(UserFactory)  # 修正为author
     post = factory.SubFactory(PostFactory)
     content = factory.Sequence(lambda n: f"测试评论内容{n}")
-    is_deleted = False
+    deleted_at = None
     like_count = 0
-    created_at = factory.LazyFunction(lambda: datetime.now(timezone.utc))
-    updated_at = factory.LazyFunction(lambda: datetime.now(timezone.utc))
+    created_at = factory.LazyFunction(utcnow)
+    updated_at = factory.LazyFunction(utcnow)
 
 # ---------------------- 点赞数据工厂 ----------------------
 class LikeFactory(BaseFactory):
@@ -61,7 +62,7 @@ class LikeFactory(BaseFactory):
     user = factory.SubFactory(UserFactory)
     post = factory.SubFactory(PostFactory)
     comment = factory.SubFactory(CommentFactory)
-    created_at = factory.LazyFunction(lambda: datetime.now(timezone.utc))
+    created_at = factory.LazyFunction(utcnow)
 
 # ---------------------- 关注数据工厂 ----------------------
 class FollowFactory(BaseFactory):
@@ -70,7 +71,7 @@ class FollowFactory(BaseFactory):
     id = factory.LazyAttribute(lambda _: snowflake.get_id())
     follower = factory.SubFactory(UserFactory)
     followed = factory.SubFactory(UserFactory)
-    created_at = factory.LazyFunction(lambda: datetime.now(timezone.utc))
+    created_at = factory.LazyFunction(utcnow)
 
 # ---------------------- 通知数据工厂 ----------------------
 class NotificationFactory(BaseFactory):
@@ -85,4 +86,4 @@ class NotificationFactory(BaseFactory):
     resource_type = None
     content = factory.Sequence(lambda n: f"通知内容 {n}")
     is_read = False
-    created_at = factory.LazyFunction(lambda: datetime.now(timezone.utc))
+    created_at = factory.LazyFunction(utcnow)

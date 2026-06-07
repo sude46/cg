@@ -18,7 +18,7 @@ class LikeCreateSchema(Schema):
 
 class LikeSchema(Schema):
     """点赞记录响应模型"""
-    id = fields.Integer(dump_only=True)
+    id = fields.Integer(dump_only=True,allow_none=True)
     post_id = fields.Integer(dump_only=True, allow_none=True)
     comment_id = fields.Integer(dump_only=True, allow_none=True) 
     user_id = fields.Integer(dump_only=True)

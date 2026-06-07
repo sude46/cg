@@ -2,29 +2,75 @@ from typing import Optional, Dict, Any
 from sqlalchemy.orm import selectinload,joinedload
 from core import db
 from app.likes.models import Like
-from app.common.database import pagination_utils
+from app.common.database import pagination_utils, get_read_session
+from app.common.exceptions import ConflictError
+from datetime import datetime,timezone
+from app.common.database import utcnow
 
 
 class LikeRepository:
     """点赞仓储：封装帖子/评论点赞的数据库访问。"""
-    @staticmethod
-    def get_by_id(like_id:int):
-        return Like.query.filter_by(id=like_id, is_deleted=False).first() 
-    @staticmethod
-    def get_post_like(user_id: int, post_id: int) -> Optional[Like]:
-        return Like.query.options(joinedload(Like.user)).filter_by(user_id=user_id, post_id=post_id, is_deleted=False).first()
 
     @staticmethod
-    def get_comment_like(user_id: int, comment_id: int) -> Optional[Like]:
-        return Like.query.options(joinedload(Like.user)).filter_by(user_id=user_id, comment_id=comment_id, is_deleted=False).first()
+    def _read_session():
+        return get_read_session()
+
+    @staticmethod
+    def _get_session(force_master: bool = False):
+        return db.session if force_master else LikeRepository._read_session()
+
+    @staticmethod
+    def get_by_id(like_id: int, force_master: bool = False) -> Optional[Like]:
+        session = LikeRepository._get_session(force_master)
+        return session.query(Like).filter(
+            Like.id == like_id,
+            Like.deleted_at.is_(None)
+        ).first()
+
+    @staticmethod
+    def get_post_like(user_id: int, post_id: int, force_master: bool = False) -> Optional[Like]:
+        session = LikeRepository._get_session(force_master)
+        return session.query(Like).options(
+            joinedload(Like.user)
+        ).filter(
+            Like.user_id == user_id,
+            Like.post_id == post_id,
+            Like.deleted_at.is_(None)
+        ).first()
+
+    @staticmethod
+    def get_comment_like(user_id: int, comment_id: int, force_master: bool = False) -> Optional[Like]:
+        session = LikeRepository._get_session(force_master)
+        return session.query(Like).options(
+            joinedload(Like.user)
+        ).filter(
+            Like.user_id == user_id,
+            Like.comment_id == comment_id,
+            Like.deleted_at.is_(None)
+        ).first()
+
     @staticmethod
     def create_post_like(user_id: int, post_id: int) -> Like:
+        existing = db.session.query(Like).filter(
+            Like.user_id == user_id,
+            Like.post_id == post_id,
+            Like.deleted_at.is_(None)
+        ).first()
+        if existing:
+            raise ConflictError('点赞记录已存在')
         like = Like(user_id=user_id, post_id=post_id)
         db.session.add(like)
         return like
 
     @staticmethod
     def create_comment_like(user_id: int, comment_id: int) -> Like:
+        existing = db.session.query(Like).filter(
+            Like.user_id == user_id,
+            Like.comment_id == comment_id,
+            Like.deleted_at.is_(None)
+        ).first()
+        if existing:
+            raise ConflictError('点赞记录已存在')
         like = Like(user_id=user_id, comment_id=comment_id)
         db.session.add(like)
         return like
@@ -32,75 +78,99 @@ class LikeRepository:
     @staticmethod
     def delete_like(like: Like) -> None:
         """软删除点赞"""
-        like.is_deleted = True
+        like.deleted_at = utcnow()
         db.session.add(like)
 
     @staticmethod
     def list_post_likes(post_id: int, page: int = 1, per_page: int = 20) -> Dict[str, Any]:
         """分页获取某帖子下的点赞列表（排除已删除）。"""
-        query = (
-            Like.query.options(selectinload(Like.user))
-            .filter_by(post_id=post_id, is_deleted=False)
-            .order_by(Like.id.desc())
-        )
-        result=pagination_utils.paginate(query, page=page, per_page=per_page)
-        return{
-            'items':result['items'],
-            'pagination':result['pagination']
+        session = LikeRepository._read_session()
+        query = session.query(Like).options(
+            selectinload(Like.user)
+        ).filter(
+            Like.post_id == post_id,
+            Like.deleted_at.is_(None)
+        ).order_by(Like.id.desc())
+        result = pagination_utils.paginate(query, page=page, per_page=per_page)
+        return {
+            'items': result['items'],
+            'pagination': result['pagination']
         }
-
-    
 
     @staticmethod
     def list_comment_likes(comment_id: int, page: int = 1, per_page: int = 20) -> Dict[str, Any]:
         """分页获取某评论下的点赞列表（排除已删除）。"""
-        query = (
-            Like.query.options(selectinload(Like.user))
-            .filter_by(comment_id=comment_id, is_deleted=False)
-            .order_by(Like.id.desc())
-        )
-        result= pagination_utils.paginate(query, page=page, per_page=per_page)
-        return{
-            'items':result['items'],
-            'pagination':result['pagination']
+        session = LikeRepository._read_session()
+        query = session.query(Like).options(
+            selectinload(Like.user)
+        ).filter(
+            Like.comment_id == comment_id,
+            Like.deleted_at.is_(None)
+        ).order_by(Like.id.desc())
+        result = pagination_utils.paginate(query, page=page, per_page=per_page)
+        return {
+            'items': result['items'],
+            'pagination': result['pagination']
         }
 
     @staticmethod
-    def list_by_user(user_id:int,page:int=1,per_page:int=20):
+    def list_by_user(user_id: int, page: int = 1, per_page: int = 20):
         """获取用户的点赞列表（排除已删除）。"""
-        query=Like.query.filter_by(user_id=user_id, is_deleted=False).order_by(Like.created_at.desc())
-        result= pagination_utils.paginate(query, page=page, per_page=per_page)
-        return{
-            'items':result['items'],
-            'pagination':result['pagination']
+        session = LikeRepository._read_session()
+        query = session.query(Like).filter(
+            Like.user_id == user_id,
+            Like.deleted_at.is_(None)
+        ).order_by(Like.created_at.desc())
+        result = pagination_utils.paginate(query, page=page, per_page=per_page)
+        return {
+            'items': result['items'],
+            'pagination': result['pagination']
         }
-    
+
     @staticmethod
-    def exists( user_id: int, post_id: int) -> bool:
+    def exists(user_id: int, post_id: int) -> bool:
         """检查是否已点赞（未删除的）"""
-        return db.session.query(
-            Like.query.filter_by(
-                user_id=user_id, 
-                post_id=post_id,
-                is_deleted=False
+        session = LikeRepository._read_session()
+        return session.query(
+            session.query(Like).filter(
+                Like.user_id == user_id,
+                Like.post_id == post_id,
+                Like.deleted_at.is_(None)
             ).exists()
         ).scalar()
 
     @staticmethod
-    def get_liked_post_ids( user_id: int, post_ids) -> set:
+    def get_liked_post_ids(user_id: int, post_ids) -> set:
         """
         批量获取用户点赞的帖子ID集合（排除已删除）
         用于优化 has_liked 查询（避免 N+1）
         """
         if not post_ids:
             return set()
-        
-        liked = Like.query.filter(
+        session = LikeRepository._read_session()
+        liked = session.query(Like).filter(
             Like.user_id == user_id,
             Like.post_id.in_(post_ids),
-            Like.is_deleted == False
+            Like.deleted_at.is_(None)
         ).all()
-        
         return {l.post_id for l in liked}
+
+    @staticmethod
+    def count_likes_for_post(post_id):
+        """帖子有效点赞数（DB层，对账用）"""
+        session = LikeRepository._read_session()
+        return session.query(Like).filter(
+            Like.post_id == post_id,
+            Like.deleted_at.is_(None)
+        ).count()
+
+    @staticmethod
+    def count_likes_for_comment(comment_id):
+        """评论有效点赞数（DB层，对账用）"""
+        session = LikeRepository._read_session()
+        return session.query(Like).filter(
+            Like.comment_id == comment_id,
+            Like.deleted_at.is_(None)
+        ).count()
 
 like_repository = LikeRepository()

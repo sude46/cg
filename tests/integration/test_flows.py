@@ -65,7 +65,7 @@ class TestCoreBusinessFlow:
 
             # 验证帖子已软删除
             post = Post.query.filter_by(id=post_id).first()
-            assert post.is_deleted is True
+            assert post.deleted_at is not None
             # 验证评论/点赞是否级联删除（根据业务逻辑调整）
             comment = Comment.query.filter_by(id=comment_id).first()
-            assert comment.is_deleted is True
+            assert comment.deleted_at is not None

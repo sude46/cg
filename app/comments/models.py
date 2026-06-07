@@ -1,4 +1,5 @@
 from datetime import datetime,timezone
+from app.common.database import utcnow
 from core import db
 from sqlalchemy.sql import func
 
@@ -19,9 +20,9 @@ class Comment(db.Model):
             index=True
             )
     like_count=db.Column(db.Integer,default=0)
-    created_at=db.Column(db.DateTime,default=lambda:datetime.now(timezone.utc),nullable=False,index=True)
-    updated_at=db.Column(db.DateTime,default=lambda:datetime.now(timezone.utc),onupdate=lambda:datetime.now(timezone.utc),nullable=False)
-    is_deleted=db.Column(db.Boolean,default=False,index=True)
+    created_at=db.Column(db.DateTime,default=utcnow,nullable=False,index=True)
+    updated_at=db.Column(db.DateTime,default=utcnow,onupdate=utcnow,nullable=False)
+    deleted_at=db.Column(db.DateTime,nullable=True,default=None,index=True)
 
     version_id=db.Column(db.Integer,default=0,nullable=False)
     __mapper_args__={'version_id_col':version_id}
@@ -31,9 +32,9 @@ class Comment(db.Model):
 
     __table_args__=(
         #查询帖子评论列表（最常用）
-        db.Index('idx_comment_post_created','post_id','is_deleted','created_at'),
+        db.Index('idx_comment_post_created','post_id','deleted_at','created_at'),
         #查询用户评论历史
-        db.Index('idx_comment_user_created','user_id','is_deleted','created_at'),
+        db.Index('idx_comment_user_created','user_id','deleted_at','created_at'),
     )
 
 

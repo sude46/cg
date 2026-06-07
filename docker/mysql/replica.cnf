@@ -1,0 +1,11 @@
+[mysqld]
+server-id=2
+relay_log=mysql-relay-bin
+log_bin=mysql-bin
+read_only=1
+bind-address=0.0.0.0
+
+# GTID 必须开启
+gtid_mode=ON
+enforce_gtid_consistency=ON
+

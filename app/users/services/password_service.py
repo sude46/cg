@@ -39,3 +39,6 @@ class PasswordService:
         #更新用户密码
         user.password_hash=self.hash_password(new_password)
 
+
+password_service = PasswordService()
+

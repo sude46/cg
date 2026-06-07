@@ -1,4 +1,5 @@
 import sys
+import time
 from pathlib import Path 
 import pytest
 import logging
@@ -79,12 +80,146 @@ def db_session(app):
         # 对于内存数据库，drop_all 其实不必要，但保持习惯
         db.drop_all()
 
+class FakeRedisClient:
+    """内存 dict 模拟 Redis，用于缓存层测试"""
+
+    def __init__(self):
+        self.store = {}
+        self.expiry = {}
+
+    def get(self, key):
+        self._evict(key)
+        return self.store.get(key)
+
+    def setex(self, key, expire, value):
+        self.store[key] = value
+        if expire:
+            self.expiry[key] = time.time() + expire
+        return True
+
+    def delete(self, *keys):
+        count = 0
+        for key in keys:
+            if key in self.store:
+                del self.store[key]
+                self.expiry.pop(key, None)
+                count += 1
+        return count
+
+    def exists(self, key):
+        self._evict(key)
+        return 1 if key in self.store else 0
+
+    def expire(self, key, ttl):
+        if key in self.store:
+            self.expiry[key] = time.time() + ttl
+            return True
+        return False
+
+    def incrby(self, key, amount=1):
+        val = int(self.store.get(key, 0)) + amount
+        self.store[key] = str(val)
+        return val
+
+    incr = incrby
+
+    def smembers(self, key):
+        return self.store.get(key, set())
+
+    def sadd(self, key, *members):
+        if key not in self.store:
+            self.store[key] = set()
+        self.store[key].update(members)
+        return len(members)
+
+    def srem(self, key, *members):
+        s = self.store.get(key, set())
+        count = 0
+        for m in members:
+            if m in s:
+                s.remove(m)
+                count += 1
+        return count
+
+    def sismember(self, key, member):
+        s = self.store.get(key, set())
+        return member in s
+
+    def scard(self, key):
+        return len(self.store.get(key, set()))
+
+    def zrevrange(self, key, start, end, withscores=False):
+        items = self.store.get(key, {})
+        sorted_items = sorted(items.items(), key=lambda x: x[1], reverse=True)
+        slice_items = sorted_items[start:end + 1] if end != -1 else sorted_items[start:]
+        if withscores:
+            return slice_items
+        return [item[0] for item in slice_items]
+
+    def zadd(self, key, mapping, **kwargs):
+        if key not in self.store:
+            self.store[key] = {}
+        self.store[key].update(mapping)
+        return len(mapping)
+
+    def zrem(self, key, *members):
+        items = self.store.get(key, {})
+        count = 0
+        for m in members:
+            if m in items:
+                del items[m]
+                count += 1
+        return count
+
+    def hget(self, key, field):
+        d = self.store.get(key, {})
+        return d.get(field)
+
+    def hset(self, key, field, value):
+        if key not in self.store:
+            self.store[key] = {}
+        self.store[key][field] = value
+        return 1
+
+    def hincrby(self, key, field, amount=1):
+        if key not in self.store:
+            self.store[key] = {}
+        val = int(self.store[key].get(field, 0)) + amount
+        self.store[key][field] = str(val)
+        return val
+
+    def scan_iter(self, match=None, count=None):
+        if match is None:
+            return iter(list(self.store.keys()))
+        import fnmatch
+        return iter(fnmatch.filter(self.store.keys(), match))
+
+    def brpop(self, key, timeout=0):
+        """EventBus 用 brpop 轮询消息队列"""
+        return None
+
+    def lpush(self, key, *values):
+        """EventBus 用 lpush 发布事件"""
+        return len(values)
+
+    def pipeline(self):
+        return self
+
+    def setnx(self, key, value):
+        if key not in self.store:
+            self.store[key] = value
+            return True
+        return False
+
+    def _evict(self, key):
+        if key in self.expiry and time.time() > self.expiry[key]:
+            del self.store[key]
+            del self.expiry[key]
+
+
 @pytest.fixture
-def mock_redis():
-    """模拟Redis客户端的fixture（替换真实Redis）"""
-    mock_redis_client = MagicMock()
-    mock_redis_client.get.return_value = None
-    mock_redis_client.set.return_value = True
-    mock_redis_client.delete.return_value = 1
-    mock_redis_client.expire.return_value = True
-    yield mock_redis_client
+def mock_redis(monkeypatch):
+    """模拟 Redis 客户端（FakeRedisClient，内存存储）"""
+    fake = FakeRedisClient()
+    monkeypatch.setattr('utils.redis_util.RedisClient.get_conn', lambda for_write=False: fake)
+    yield fake

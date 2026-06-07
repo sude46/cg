@@ -1,5 +1,6 @@
 from core import db 
 from datetime import datetime, timezone
+from app.common.database import utcnow
 from typing import List,Optional
 
 class Post(db.Model):
@@ -9,12 +10,12 @@ class Post(db.Model):
 	content=db.Column(db.Text,nullable=False)
 	image_url=db.Column(db.String(500))
 	user_id=db.Column(db.Integer,db.ForeignKey('users.id'),nullable=False,index=True)
-	created_at=db.Column(db.DateTime,default=lambda: datetime.now(timezone.utc),index=True)
-	updated_at=db.Column(db.DateTime,default=lambda: datetime.now(timezone.utc),onupdate=lambda: datetime.now(timezone.utc))
+	created_at=db.Column(db.DateTime,default=utcnow,index=True)
+	updated_at=db.Column(db.DateTime,default=utcnow,onupdate=utcnow)
 	is_published=db.Column(db.Boolean,default=True,index=True)
 	like_count=db.Column(db.Integer,default=0)
 	comment_count=db.Column(db.Integer,default=0)
-	is_deleted=db.Column(db.Boolean,default=False,index=True)
+	deleted_at=db.Column(db.DateTime,nullable=True,default=None,index=True)
 
 	
 	version_id=db.Column(db.Integer,default=0,nullable=False)
@@ -24,15 +25,15 @@ class Post(db.Model):
 	}
 
 	#复合索引
-	__table__args__=(
+	__table_args__=(
 		#查询某个用户帖子列表(按时间倒序)
 		db.Index('index_post_created','user_id','created_at'),
 		#查询公开的帖子列表（按时间倒序）
-		db.Index('idx_post_published_created','is_published','is_deleted','created_at'),
+		db.Index('idx_post_published_created','is_published','deleted_at','created_at'),
 		#查询热门帖子（按点赞数倒序）
-		db.Index('idx_post_hot','is_published','is_deleted','like_count'),
+		db.Index('idx_post_hot','is_published','deleted_at','like_count'),
 		#覆盖公共feed中按用户筛选的场景
-		db.Index('idx_post_user_created','is_published','is_deleted','user_id'),
+		db.Index('idx_post_user_created','is_published','deleted_at','user_id'),
 
 
 	)

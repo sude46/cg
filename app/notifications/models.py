@@ -1,4 +1,5 @@
 from datetime import datetime,timezone
+from app.common.database import utcnow
 from core import db
 from sqlalchemy.sql import func
 
@@ -25,12 +26,12 @@ class Notification(db.Model):
     resource_type=db.Column(db.String,nullable=True)
     content=db.Column(db.Text,nullable=False)
     is_read=db.Column(db.Boolean,default=False)
-    is_deleted=db.Column(db.Boolean,default=False,nullable=False,index=True)
-    created_at=db.Column(db.DateTime,default=lambda:datetime.now(timezone.utc),nullable=False,index=True)
+    deleted_at=db.Column(db.DateTime,nullable=True,default=None,index=True)
+    created_at=db.Column(db.DateTime,default=utcnow,nullable=False,index=True)
 
     # 复合索引：覆盖"查某用户未读通知按时间倒序"的核心查询
     __table_args__ = (
-        db.Index('idx_notification_user_read_created', 'user_id', 'is_deleted', 'is_read', 'created_at'),
+        db.Index('idx_notification_user_read_created', 'user_id', 'deleted_at', 'is_read', 'created_at'),
     )
 
     #关系

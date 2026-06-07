@@ -1,98 +1,157 @@
 from typing import Optional, Dict, Any
+from datetime import datetime, timezone
+from app.common.database import utcnow
 from sqlalchemy.orm import joinedload
-from sqlalchemy.orm import selectinload
-
 from core import db
 from app.posts.models import Post
-from app.common.database import pagination_utils
-from sqlalchemy import case
+from app.common.database import pagination_utils, get_read_session
+from sqlalchemy import case, update
 
 
 class PostRepository:
+
     @staticmethod
-    def get_by_id(post_id: int,lock:bool=False) -> Optional[Post]:
-        '''
+    def _read_session():
+        return get_read_session()
+
+    @staticmethod
+    def get_by_id(
+        post_id: int, 
+        lock: bool = False, 
+        force_master: bool = False
+    ) -> Optional[Post]:
+        """
         根据ID获取帖子
-        lock=True:,使用Select for update,必须在是事务内调用
-        '''
-        query=Post.query.options(joinedload(Post.author)).filter_by(id=post_id,is_deleted=False)
+        - lock=True / force_master=True → 走主库
+        - 否则 → 走从库
+        """
+        if lock or force_master:
+            session = db.session
+        else:
+            session = PostRepository._read_session()
+
+        query = session.query(Post).options(
+            joinedload(Post.author)
+        ).filter(
+            Post.id == post_id,
+            Post.deleted_at.is_(None)
+        )
+        
         if lock:
-            query=query.with_for_update()
+            query = query.with_for_update()
         return query.first()
 
     @staticmethod
     def create_post(user_id: int, content: str, image_url: str = None) -> Post:
-        post = Post(content=content, image_url=image_url, user_id=user_id, is_published=True)
+        post = Post(
+            content=content, 
+            image_url=image_url, 
+            user_id=user_id, 
+            is_published=True
+        )
         db.session.add(post)
         return post
 
     @staticmethod
-    def list_posts(page: int = 1, per_page: int = 20, user_id: Optional[int] = None):
-        query=Post.query.options(
+    def list_posts(
+        page: int = 1, 
+        per_page: int = 20, 
+        user_id: Optional[int] = None
+    ):
+        session = PostRepository._read_session()
+        query = session.query(Post).options(
             joinedload(Post.author)
-        ).filter_by(is_deleted=False,is_published=True)
+        ).filter(
+            Post.is_published.is_(True),
+            Post.deleted_at.is_(None)
+        )
+        
         if user_id:
-            query=query.filter_by(user_id=user_id)
-        query=query.order_by(Post.created_at.desc())
-        result=pagination_utils.paginate(query,page=page,per_page=per_page)
+            query = query.filter_by(user_id=user_id)
+        query = query.order_by(Post.created_at.desc())
+        result = pagination_utils.paginate(query, page=page, per_page=per_page)
         return {
-            'items':result['items'],
-            'pagination':result['pagination']
+            'items': result['items'],
+            'pagination': result['pagination']
         }
 
     @staticmethod
     def search_posts(query_str: str, page: int = 1, per_page: int = 20):
-        query=Post.query.options(
+        session = PostRepository._read_session()
+        query = session.query(Post).options(
             joinedload(Post.author)
-            ).filter(
-            Post.is_deleted==False,
-            Post.is_published==True,
+        ).filter(
+            Post.deleted_at.is_(None),
+            Post.is_published.is_(True),
             Post.content.ilike(f'%{query_str}%')
         ).order_by(Post.created_at.desc())
-        result=pagination_utils.paginate(query,page=page,per_page=per_page)
-        return{
-            'items':result['items'],
-            'pagination':result['pagination']
+        result = pagination_utils.paginate(query, page=page, per_page=per_page)
+        return {
+            'items': result['items'],
+            'pagination': result['pagination']
         }
 
     @staticmethod
     def soft_delete_post(post: Post) -> None:
-        """软删除帖子及相关评论（Like 是硬删除关系，不设置 is_deleted）"""
-        post.is_deleted = True
+        """软删除帖子及相关评论"""
+        now = utcnow()
+        post.deleted_at = now
+        
+        # TODO: 确保 Comment 模型也有 deleted_at 字段，否则此处会报错
         for comment in post.comments.all():
-            comment.is_deleted = True
-        # Like 模型没有 is_deleted 字段，需要硬删除
+            comment.deleted_at = now
+        
+        # Like 硬删除（无 deleted_at）
         for like in post.likes.all():
             db.session.delete(like)
+        
         db.session.add(post)
 
     @staticmethod
     def increment_like_count(post_id: int) -> None:
-        """原子操作：增加帖子点赞计数"""
-        Post.query.filter_by(id=post_id).update({
-            'like_count': Post.like_count + 1
-        })
+        """原子递增：SET like_count = like_count + 1，无客户端求值"""
+        db.session.execute(
+            update(Post)
+            .where(Post.id == post_id)
+            .values(like_count=Post.like_count + 1)
+        )
 
     @staticmethod
     def decrement_like_count(post_id: int) -> None:
-        """原子操作：减少帖子点赞计数（不小于0）"""
-
-        Post.query.filter_by(id=post_id).update({
-            'like_count': case((Post.like_count > 0, Post.like_count - 1), else_=0)
-        })
-
-    @staticmethod
-    def increment_comment_count(post_id:int):
-        '''原子操作:增加帖子评论计数'''
-        Post.query.filter_by(id=post_id).update({
-            'comment_count':Post.comment_count+1
-        })
+        """原子递减（不低于0）"""
+        db.session.execute(
+            update(Post)
+            .where(Post.id == post_id)
+            .values(like_count=case((Post.like_count > 0, Post.like_count - 1), else_=0))
+        )
 
     @staticmethod
-    def decrement_comment_count(post_id:int):
-        '''原子操作：减少帖子评论计数（不小于0）'''
-        Post.query.filter_by(id=post_id).update({
-            'comment_count':case((Post.comment_count>0,Post.comment_count-1),else_=0)
-        })
+    def increment_comment_count(post_id: int) -> None:
+        """原子递增：SET comment_count = comment_count + 1"""
+        db.session.execute(
+            update(Post)
+            .where(Post.id == post_id)
+            .values(comment_count=Post.comment_count + 1)
+        )
+
+    @staticmethod
+    def decrement_comment_count(post_id: int) -> None:
+        """原子递减（不低于0）"""
+        db.session.execute(
+            update(Post)
+            .where(Post.id == post_id)
+            .values(comment_count=case((Post.comment_count > 0, Post.comment_count - 1), else_=0))
+        )
+
+    @staticmethod
+    def update_like_count(post_id: int, count: int) -> None:
+        db.session.execute(
+            update(Post)
+            .where(Post.id == post_id)
+            .values(like_count=max(0, count))
+        )
+        # 注意：不 commit — 事务由调用方（Service / Task）统一管理
+
 
 post_repository = PostRepository()
+

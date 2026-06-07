@@ -2,6 +2,7 @@ from core.database import db
 from .models import Post
 from .schemas import post_schema
 from app.users.repositories import user_repository
+from app.users.cache import UserCache
 from app.likes.repositories import like_repository
 from app.common.exceptions import (
     ValidationError,
@@ -14,8 +15,13 @@ from app.common import event_bus
 from typing import Dict, Any, List, Optional
 from app.posts.repositories import post_repository
 from  services.search import PostSearchService
+from .cache import PostCache
 import logging
 from sqlalchemy.orm.exc import StaleDataError
+from datetime import datetime,timezone
+from app.common.database import utcnow
+from app.likes.cache import LikeCache
+from app.comments.cache import CommentCache
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +29,7 @@ logger = logging.getLogger(__name__)
 class PostService:
     '''帖子服务类'''
 
-    # ========== 创建 ==========
+    # ========== 创建 (强一致：预热缓存+标记窗口)==========
     @staticmethod
     def create_post(user_id: int, content: str, image_url: str = None) -> Post:
         """创建帖子，返回 Post ORM 对象（不序列化）"""
@@ -42,6 +48,14 @@ class PostService:
             image_url=image_url
         )
         db.session.commit()
+
+        #预热缓存
+        post_dict=post_schema.dump(post)
+        PostCache.set(post.id,post_dict)
+
+        #强一致标记：5秒内必须走主库
+        PostCache.mark_recently_modified(post.id,ttl=5)
+
         
         try:
             event_bus.publish('post.created',{
@@ -53,15 +67,15 @@ class PostService:
                     'image_url':post.image_url,
                     'like_count':post.like_count,
                     'comment_count':post.comment_count,
-                    'created_at':post.created_at.isoformat(),
+                    'created_at':post.created_at.isoformat() if post.created_at else None,
                     'is_published':post.is_published,
-                    'is_deleted':post.is_deleted
+                    'deleted_at':post.deleted_at.isoformat() if post.deleted_at else None,
             })
         except Exception as e:
             logger.warning(f'ES 索引失败（不影响主流程）: {e}')
         return post
 
-    # ========== 查询 ==========
+    # ========== 查询 (强一致分支+弱一致Cache-Aside)==========
     @staticmethod
     def get_posts(
         page: int = 1, 
@@ -70,8 +84,8 @@ class PostService:
         current_user_id: int = None
     ) -> Dict[str, Any]:
         """
-        获取帖子列表
-        返回: {'items': [Post, ...], 'pagination': {...}, 'liked_post_ids': set}
+        获取帖子列表（不走缓存，查从库）
+        批量补充实时点赞数
         """
         per_page = min(100, max(1, per_page))
         page = max(1, page)
@@ -82,15 +96,34 @@ class PostService:
             user_id=user_id
         )
         posts = result.get('items', [])
-        
-        # 通过 Repository 获取点赞状态，而不是直接查 Model
+
+        if posts:
+            # 批量预热帖子作者的用户资料缓存
+            author_ids = list(set(p.user_id for p in posts if hasattr(p, 'user_id')))
+            if author_ids:
+                UserCache.preload_profiles(author_ids)
+
+            # 批量补充点赞数（从 likes 缓存读）
+            for post in posts:
+                redis_likes_count = LikeCache.get_like_count(post.id, 'post')
+                if redis_likes_count is not None:
+                    post.like_count = redis_likes_count
+                redis_comments_count=CommentCache.get_count(post.id)
+                if redis_comments_count is not None:
+                    post.comment_count=redis_comments_count
+
+        # 批量查点赞状态
         liked_ids = set()
         if current_user_id and posts:
             liked_ids = like_repository.get_liked_post_ids(
                 user_id=current_user_id,
                 post_ids=[p.id for p in posts]
             )
-
+            # 预热用户点赞状态到 Redis，后续 is_liked 直接命中缓存
+            if liked_ids:
+                LikeCache.preload_user_likes(current_user_id, list(liked_ids))
+        
+       
         return {
             'items': posts,  # ORM 对象列表，不序列化
             'pagination': result.get('pagination', {}),
@@ -100,31 +133,60 @@ class PostService:
     @staticmethod
     def get_post(post_id: int, current_user_id: int = None) -> Dict[str, Any]:
         """
-        获取单个帖子
-        返回: {'post': Post, 'has_liked': bool}
+         获取单个帖子
+        - 强一致：帖子最近被修改过 → 跳过缓存，直接查主库
+        - 弱一致：Cache-Aside（缓存 → miss 查从库 → 回填主库）
+        - 点赞数实时覆盖（调 likes 模块）
         """
-        post = post_repository.get_by_id(post_id)
-        if not post or not post.is_published:
-            raise ResourceNotFoundError('帖子')
-
+        post_dict=None
+        #判断是否需要强一致(RecentActivity标记)
+        if PostCache.is_recently_modified(post_id):
+            #强一致路径：跳过缓存，直接查主库
+            post_obj=post_repository.get_by_id(post_id,force_master=True)
+            if not post_obj or post_obj.deleted_at:
+                raise ResourceNotFoundError('帖子')
+            post_dict=post_schema.dump(post_obj)
+            #回填缓存
+            PostCache.set(post_id,post_dict)
+        else:
+            #弱一致路径:Cache-Aside
+            cached=PostCache.get(post_id)
+            if cached:
+                post_dict=cached
+            else:
+                post_obj=post_repository.get_by_id(post_id,force_master=False)
+                if not post_obj or post_obj.deleted_at:
+                    raise ResourceNotFoundError('帖子')
+                post_dict=post_schema.dump(post_obj)
+                PostCache.set(post_id,post_dict)
+        # 2. 实时覆盖点赞数（likes 模块 O(1)）
+        like_count = LikeCache.get_like_count(post_id, 'post')
+        if like_count is not None:
+            post_dict['like_count'] = like_count
+        # 3. 实时覆盖评论数（TODO: 接入 comments/cache.py）
+        comment_count = CommentCache.get_count(post_id)
+        if comment_count is not None:
+            post_dict['comment_count'] = comment_count
+        
+        # 4. 查询当前用户是否点赞
         has_liked = False
         if current_user_id:
-            has_liked = like_repository.exists(
-                user_id=current_user_id, 
-                post_id=post.id
-            )
+            has_liked = LikeCache.is_liked(current_user_id, post_id, 'post') or False
+        
+        return {'post': post_dict, 'has_liked': has_liked}
 
-        return {'post': post, 'has_liked': has_liked}
 
-    # ========== 更新 ==========
+        
+
+    # ========== 更新(延迟双删+强一致标记) ==========
     @staticmethod
     def update_post(post_id: int, user_id: int, content: str = None, image_url: str = None
     ) -> Post:
         """更新帖子，返回更新后的 Post ORM 对象"""
         try:
-
-            post = post_repository.get_by_id(post_id)
-            if not post:
+            # 权限校验必须走主库（确保读到最新）
+            post = post_repository.get_by_id(post_id,force_master=True)
+            if not post or post.deleted_at:
                 raise ResourceNotFoundError('帖子')
             if post.user_id != user_id:
                 raise AuthenticationError('无权修改此帖子')
@@ -142,11 +204,29 @@ class PostService:
                 post.image_url = image_url
 
             db.session.commit()
+
+            #延迟双删---第一次删除+强一致标记
+            PostCache.invalidate(post_id)
+            PostCache.mark_recently_modified(post_id,ttl=5)
+            
+            #延迟双删---第二次删除（celery延迟任务，失败降级线程）
             try:
-                event_bus.publish('post.update',{
+                from core.celery_app import celery_app
+                celery_app.send_task(
+                    'tasks.post_tasks.delayed_invalidate',
+                    args=(post_id,),
+                    countdown=2
+                )
+            except Exception as e:
+                logger.warning(f'调度延迟删除失败，降级为线程:{e}')
+                PostCache.double_invalidate(post_id)
+            
+            try:
+                event_bus.publish('post.updated',{
                     'post_id':post_id,
                     'content':post.content,
-                    'image_url':post.image_url
+                    'image_url':post.image_url,
+                    'deleted_at': post.deleted_at.isoformat() if post.deleted_at else None,
                 })
             except Exception as e:
                 logging.warning('发布帖子更新事件失败，不影响主进程：{e}')
@@ -158,22 +238,36 @@ class PostService:
             raise ConflictError('该帖子已被其他用户修改，请刷新后重试')
 
 
-    # ========== 删除 ==========
+    # ========== 删除(延迟双删+强一致标记) ==========
     @staticmethod
     def delete_post(post_id: int, user_id: int) -> None:
         """删除帖子，无返回值"""
-        post = post_repository.get_by_id(post_id)
-        if not post:
+        post = post_repository.get_by_id(post_id,force_master=True)
+        if not post or post.deleted_at:
             raise ResourceNotFoundError('帖子')
         if post.user_id != user_id:
             raise AuthenticationError('无权删除该帖子')
 
         post_repository.soft_delete_post(post)
         db.session.commit()
+
+        # 延迟双删
+        PostCache.invalidate(post_id)
+        PostCache.mark_recently_modified(post_id,ttl=5)
+        try:
+            from core.celery_app import  celery_app
+            celery_app.send_task(
+                'tasks.post_tasks.delayed_invalidate',
+                args=(post_id,),
+                countdown=2
+            )
+        except Exception as e:
+            logger.warning(f'调度延迟删除失败，降级为线程: {e}')
+            PostCache.double_invalidate(post_id)
         
         # 同步删除 ES 索引
         try:
-            event_bus.publish('post.deleted',{'post_id':post_id})
+            event_bus.publish('post.deleted',{'post_id':post_id,'deleted_at': utcnow().isoformat(),})
         except Exception as e:
             logger.warning(f'发布帖子删除事件失败（不影响主流程）: {e}')
         
@@ -234,3 +328,26 @@ class PostService:
             'liked_post_ids': liked_ids,
             'is_es_search': not result.get('fallback', False)
         }
+    
+    @staticmethod
+    def get_hot_posts(page:int=1,per_page=20,period:str='daily'):
+        post_ids,total=PostCache.get_hot_posts(page,per_page,period)
+
+        #批量查帖子详情缓存
+        posts=[]
+        for pid in post_ids:
+            post_dict=PostCache.get(pid)
+            if post_dict:
+                #实时覆盖计数器
+                like_count=LikeCache.get_like_count(pid,'post')
+                if like_count is not None:
+                    post_dict['like_count']=like_count
+                comment_count=CommentCache.get_count(pid)
+                if comment_count is not None:
+                    post_dict['comment_count']=comment_count
+                posts.append(post_dict)
+        return {
+            'items':posts,
+            'pagination':{'page':page,'per_page':per_page,'total':total}
+        }
+    

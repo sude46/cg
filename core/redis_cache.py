@@ -1,15 +1,20 @@
 import json
-import pickle
+import random
+import logging
+import time
 from typing import Any,Optional,Union,List,Dict
 from functools import wraps
-from datetime import timedelta
 from flask import current_app
-from config import get_config
+from utils.redis_util import RedisClient
+
+logger=logging.getLogger(__name__)
 
 class RedisCache:
     '''
     Redis缓存工具类
-    为Post/Likes/Feed等业务层提供统一封装
+    - 防穿透：空值缓存(__NULL__)
+    - 放雪崩:随机TTL偏移
+    - 放击穿:分布式锁缓存加载（cache_through)
     '''
     _instance=None
     def __new__(cls):
@@ -17,126 +22,207 @@ class RedisCache:
             cls._instance=super().__new__(cls)
             cls._instance._client=None
         return cls._instance
-    @property
-    def client(self):
-        '''获取Redis客户端(从Flask app.config或新建)'''
-        if self._client is None:
-            #优先从当前Flask应用获取（已初始化））
-            try:
-                self._client=current_app.config.get('REDIS_CLIENT')
-            except RuntimeError:
-                pass
-            #如果没有，直接按从配置创建
-            if self._client is None:
-                config_class=get_config()
-                self._client=config_class.get_redis_client()
-        return self._client
-    def get(self,key:str):
-        '''获取缓存（走动反序列化JSON）'''
-        if not self.client:
+    
+    #================缓存防护常量===============
+    NULL_VALUE='__NULL__'    #空值缓存标记
+    NULL_TTL=60              #空值缓存短TTL(秒)
+    JITTER_RANGE=(0,60)      #随机偏移范围(放雪崩)
+    
+    def _get_client(self, for_write=False):
+        '''获取 Redis 连接（支持主从切换）'''
+        # 直接透传给 RedisClient，不缓存，确保读写分离生效
+        conn = RedisClient.get_conn(for_write=for_write)
+        if conn is None:
+            logger.error(f"Redis 未连接 (for_write={for_write})")
+        return conn
+    
+    def get(self,key:str,for_write=False):
+        '''获取缓存，命中空值标记是返回None(防穿透)'''
+
+        client = self._get_client(for_write)
+        if not client:
             return None
-        data=self.client.get(key)
-        if data:
-            try:
-                return json.loads(data)
-            except json.JSONDecodeError:
-                return data
-        return None
-    def set(self,key:str,value:Any,expire:int=300):
-        '''设置缓存（自动JSON序列化）'''
-        if not self.client:
+        try:
+            data=client.get(key)
+            if data==self.NULL_VALUE:
+                return None   #放穿透：明确缓存空值
+            if data:
+                try:
+                    return json.loads(data)
+                except json.JSONDecodeError:
+                    return data
+        except Exception as e:
+            logger.error(f'Redis get error:{e}')
+            return None
+        
+    def set(self,key:str,value:Any,expire:int=300,for_write:bool=False):
+        '''
+        设置缓存（自动JSON序列化）
+        - value=None时缓存空值标记（防穿透）
+        - expire增加随机偏移（放雪崩）
+        '''
+        client = self._get_client(for_write=True)
+        if not client:
             return False
         try:
+            #放雪崩：随机TTL偏移
+            jitter=random.randint(*self.JITTER_RANGE)
+            real_expire=expire+jitter
+
+            #防穿透：None缓存为控制标记，使用短TTL
+            if value is None:
+                value=self.NULL_VALUE
+                real_expire=self.NULL_TTL
             if isinstance(value,(dict,list)):
                 value=json.dumps(value,ensure_ascii=False)
-            return self.client.setex(key,expire,value)
+            return client.setex(key,real_expire,value)
         except Exception as e:
             current_app.logger.error(f'Redis set error:{e}')
             return False
+    
+    #=========cache_through(防击穿)
+    def cache_through(self,key:str,loader,expire:int=300,for_write:bool=False,lock_timeout:int=10):
+        '''
+        带分布式锁的缓存加载（防击穿模式）
+        流程：
+        1.先查缓存，命中直接返回
+        2.未命中则尝试获取分布式锁
+        3.获得锁的线程回源加载(loader),回填缓存
+        4.未获得锁的线程等待后重试
+        5.异常时降级为直接回源
+        '''
+        #先查缓存
+        cached=self.get(key,for_write=for_write)
+        if cached is not None:
+            return cached
+        #分布式锁
+        lock_key=f'lock:cache:{key}'
+        lock_value=str(time.time())
+
+        try:
+            #尝试获取锁
+            acquired=self.setnx(lock_key,lock_value,expire=lock_timeout,for_write=for_write)
+            if not acquired:
+                #为获得锁，等待后递归重试
+                time.sleep(0.1)
+                return self.cache_through(key,loader,expire,for_write,lock_timeout)
+            #获得锁后二次检查（防止等待期间已回填)
+            cached=self.get(key,for_write=for_write)
+            if cached is not None:
+                return cached
+            
+            #回源加载
+            value=loader()
+            self.set(key,value,expire=expire,for_write=for_write)
+            return value
+        except Exception as e:
+            logger.error(f'Cache through error for key {key}:{e}')
+            #降级：直接回源。不缓存
+            return loader()
+        finally:
+            #释放锁
+            self.release_lock(lock_key,lock_value,for_write=for_write)
+            
+
     def delete(self,key:str):
         '''删除缓存'''
-        if not self.client:
+        client = self._get_client(for_write=True)
+        if not client:
             return False
-        return bool(self.client.delete(key))
+        return bool(client.delete(key))
     def increment(self,key:str,amount:int=1):
         '''源自自增（计数器用）'''
-        if not self.client:
+        client = self._get_client(for_write=True)
+        if not client:
             return 0
-        return self.client.incrby(key,amount)
+        return client.incrby(key,amount)
     def hget(self,key:str,field:str):
         '''Hash获取'''
-        if not self.client:
+        client = self._get_client(for_write=False)
+        if not client:
             return None
-        return self.client.hget(key,field)
+        return client.hget(key,field)
     def hset(self,key:str,field:str,value:str,expire:int=3600):
         '''Hash设置'''
-        if not self.client:
+        client = self._get_client(for_write=True)
+        if not client:
             return False
-        pipe=self.client.pipeline()
+        pipe=client.pipeline()
         pipe.hset(key,field,value)
         pipe.expire(key,expire)
         pipe.execute()
         return True
     def hincrby(self,key:str,field:str,amount:int=1):
         '''Hash自增'''
-        if not self.client:
+        client = self._get_client(for_write=True)
+        if not client:
             return 0
-        return self.client.hincrby(key,field,amount)
+        return client.hincrby(key,field,amount)
     def zadd(self,key:str,mapping:Dict[str,float],expire:int=None):
         '''Sorted set添加'''
-        if not self.client:
+        client = self._get_client(for_write=True)
+        if not client:
             return False
-        self.client.zadd(key,mapping)
+        client.zadd(key,mapping)
         if expire:
-            self.client.expire(key,expire)
+            client.expire(key,expire)
         return True
     def zrevrange(self,key:str,start:int,end:int,withscores=False):
         '''Sorted set倒序获取(feed用)'''
-        if not self.client:
+        client = self._get_client(for_write=False)
+        if not client:
             return []
-        return self.client.zrevrange(key,start,end,withscores=withscores)
+        return client.zrevrange(key,start,end,withscores=withscores)
     def zrem(self,key:str,*members):
         '''Sorted set删除成员'''
-        if not self.client:
+        client = self._get_client(for_write=True)
+        if not client:
             return 0
-        return self.client.zrem(key,*members)
+        return client.zrem(key,*members)
     def sadd(self,key:str,*members,expire:int=None):
         '''Set添加(关注关系用)'''
-        if not self.client:
+        client = self._get_client(for_write=True)
+        if not client:
             return False
-        self.client.sadd(key,*members)
+        client.sadd(key,*members)
         if expire:
-            self.client.expire(key,expire)
+            client.expire(key,expire)
         return True
     def sismember(self,key:str,member:str):
         '''Set成员检查（是否已关注/已点赞）'''
-        if not self.client:
+        client = self._get_client(for_write=False)
+        if not client:
             return False
-        return self.client.sismember(key,member)
+        return client.sismember(key,member)
     def smembers(self,key:str):
         '''Set成员列表（获取粉丝/关注列表）'''
-        if not self.client:
+        client = self._get_client(for_write=False)
+        if not client:
             return set()
-        return self.client.smembers(key)
+        return client.smembers(key)
     def srem(self,key:str,*members):
         '''Set删除成员'''
-        if not self.client:
+        client = self._get_client(for_write=True)
+        if not client:
             return 0
-        return self.client.srem(key,*members)
+        return client.srem(key,*members)
     def scard(self,key:str):
         '''Set获取成员数量'''
-        if not self.client:
+        client = self._get_client(for_write=False)
+        if not client:
             return 0
-        return self.client.scard(key)
-    
+        return client.scard(key)
+
     def setnx(self,key:str,value:str,expire:int=10):
         '''分布式锁: set if not exists'''
-        if not self.client:
+        client = self._get_client(for_write=True)
+        if not client:
             return False
-        return self.client.set(key,value,nx=True,ex=expire)
+        return client.set(key,value,nx=True,ex=expire)
     def release_lock(self,key:str,value:str):
         '''释放分布式锁(Lua脚本保证原子性)'''
-        if not self.client:
+        client = self._get_client(for_write=True)
+        if not client:
             return False
         lua_script="""
         if redis.call("get", KEYS[1]) == ARGV[1] then
@@ -145,55 +231,81 @@ class RedisCache:
             return 0
         end
         """
-        return self.client.eval(lua_script,1,key,value)
+        return client.eval(lua_script,1,key,value)
     def lpush(self, key: str, *values):
         '''List左侧插入'''
-        if not self.client:
+        client = self._get_client(for_write=True)
+        if not client:
             return 0
-        return self.client.lpush(key, *values)
+        return client.lpush(key, *values)
 
     def brpop(self, key: str, timeout: int = 5):
         '''List阻塞右侧弹出'''
-        if not self.client:
+        client = self._get_client(for_write=False)
+        if not client:
             return None
-        return self.client.brpop(key, timeout=timeout)
+        return client.brpop(key, timeout=timeout)
 
     def expire(self, key: str, seconds: int):
         '''设置过期时间'''
-        if not self.client:
+        client = self._get_client(for_write=True)
+        if not client:
             return False
-        return self.client.expire(key, seconds)
-    
+        return client.expire(key, seconds)
+
     def exists(self, *keys: str) -> int:
         """检查 key 是否存在"""
-        if not self.client:
+        client = self._get_client(for_write=False)
+        if not client:
             return 0
-        return self.client.exists(*keys)
+        return client.exists(*keys)
 
     def zcard(self, key: str) -> int:
         """ZSet 基数"""
-        if not self.client:
+        client = self._get_client(for_write=False)
+        if not client:
             return 0
-        return self.client.zcard(key)
-
+        return client.zcard(key)
     def zremrangebyrank(self, key: str, start: int, end: int) -> int:
         """按排名裁剪 ZSet"""
-        if not self.client:
+        client = self._get_client(for_write=True)
+        if not client:
             return 0
-        return self.client.zremrangebyrank(key, start, end)
+        return client.zremrangebyrank(key, start, end)
 
-    def pipeline(self, transaction: bool = False):
+    def pipeline(self, transaction: bool = False,for_write=True):
         """暴露 Pipeline（上层 Cache 类需要批量操作）"""
-        if not self.client:
+        client = self._get_client(for_write=for_write)
+        if not client:
             raise RuntimeError("Redis client not initialized")
-        return self.client.pipeline(transaction=transaction)
+        return client.pipeline(transaction=transaction)
 
     def eval(self, script: str, numkeys: int, *keys_and_args):
         """暴露 Lua 执行（原子操作需要）"""
-        if not self.client:
+        client = self._get_client(for_write=True)
+        if not client:
             raise RuntimeError("Redis client not initialized")
-        return self.client.eval(script, numkeys, *keys_and_args)
-
+        return client.eval(script, numkeys, *keys_and_args)
+    def scan_iter(self,match=None,count=None,for_write=False):
+        '''迭代器扫描keys（用于清理过期缓存）'''
+        client = self._get_client(for_write)
+        if not client:
+            raise RuntimeError("Redis client not initialized")
+        return client.scan_iter(match=match,count=count)
+    
+    def script_load(self,script:str):
+        '''加载Lua脚本，返回sha1摘要（供evalsha使用）'''
+        client=self._get_client(for_write=True)
+        if not client:
+            raise RuntimeError("Redis client not initialized")
+        return client.script_load(script)
+    def evalsha(self,sha:str,numkeys:int,*keys_and_args):
+        """通过sha执行已加载的Lua脚本（原子操作，比eval省带宽）"""
+        client=self._get_client(for_write=True)
+        if not client:
+            raise RuntimeError("Redis client not initialized")
+        return client.evalsha(sha,numkeys,*keys_and_args)
+    
     
 redis_cache=RedisCache()
 

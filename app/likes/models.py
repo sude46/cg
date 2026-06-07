@@ -1,5 +1,6 @@
 from core import db
 from datetime import datetime, timezone
+from app.common.database import utcnow
 
 
 class Like(db.Model):
@@ -9,9 +10,9 @@ class Like(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
     post_id = db.Column(db.Integer, db.ForeignKey('posts.id', ondelete='CASCADE'), nullable=True, index=True)
     comment_id = db.Column(db.Integer, db.ForeignKey('comments.id', ondelete='CASCADE'), nullable=True, index=True)
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
-    is_deleted = db.Column(db.Boolean, default=False, nullable=False, index=True)
-
+    created_at = db.Column(db.DateTime, default=utcnow, nullable=False)
+    
+    deleted_at=db.Column(db.DateTime,nullable=True,index=True)
     # 关系定义
     user = db.relationship('User', backref=db.backref('user_likes', lazy='dynamic', overlaps='likes'))
     post = db.relationship('Post', backref=db.backref('post_likes', lazy='dynamic', overlaps='likes'))
@@ -22,8 +23,8 @@ class Like(db.Model):
             "(post_id IS NOT NULL OR comment_id IS NOT NULL) AND NOT (post_id IS NOT NULL AND comment_id IS NOT NULL)",
             name="like_post_or_comment_check",
         ),
-        db.UniqueConstraint('user_id', 'post_id','is_deleted', name='user_post_unique'),
-        db.UniqueConstraint('user_id', 'comment_id','is_deleted', name='user_comment_unique'),
+        db.UniqueConstraint('user_id', 'post_id','deleted_at', name='user_post_unique'),
+        db.UniqueConstraint('user_id', 'comment_id','deleted_at', name='user_comment_unique'),
         #覆盖'用户点赞列表按时间倒序'
         db.Index('idx_like_user_created','user_id','created_at'),
     )

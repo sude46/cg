@@ -8,3 +8,5 @@ marshmallow==3.20.1
 pymysql==1.1.0  # 如果使用 MySQL
 redis==5.0.1
 elasticsearch==8.11.0  # Elasticsearch 客户端
+cryptography==41.0.7  # MFA secret 加密
+pyotp==2.9.0  # TOTP 双因子认证

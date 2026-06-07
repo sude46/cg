@@ -1,11 +1,10 @@
 from .cache import FeedCache
-from app.posts.models import Post
-from app.follows.models import Follow
-from app.users.models import User
-from sqlalchemy import desc
+from app.follows.cache import FollowCache
+from app.follows.repositories import follow_repository
 import logging
 from typing import List,Optional 
 from tasks.feed_tasks import async_remove_post_from_followers
+from .repository import FeedRepository
 
 logger=logging.getLogger(__name__)
 
@@ -19,7 +18,7 @@ class FeedService:
         '''
 
     #每页默认条数
-    DEFAULT_PRE_OAGE=20
+    DEFAULT_PER_PAGE=20
     #最大每页条数
     MAX_PRE_PAGE=100
 
@@ -75,18 +74,14 @@ class FeedService:
 
 
     @classmethod
-    def _get_posts_byids(cls,post_ids:List[str]):
+    def _get_posts_by_ids(cls,post_ids:List[str]):
         '''
          根据Id列表批量查询帖子，并保持传入的顺序
         '''
         if not post_ids:
             return []
-         #批量查询（注意：SQL的IN查询不保证顺序）
-        posts=Post.query.filter(
-              Post.id.in_(post_ids),
-              Post.is_deleted==False,   #过滤已删除
-              Post.is_published==True   #过滤未发布
-         )
+        posts=FeedRepository.get_posts_by_ids([int(pid)for pid in post_ids])
+
 
         #建立到D帖子的映射
         post_map={str(p.id):p for p in posts}
@@ -97,6 +92,7 @@ class FeedService:
             post=post=post_map.get(pid)
             if post:
                 ordered_posts.append(post)
+        
          #如果顺序重组后发现数量不一致，说明有帖子被删除但缓存未清理
         if len(ordered_posts)!=len(post_ids):
             missing=set(post_ids)-set(post_map.keys()) 
@@ -107,37 +103,26 @@ class FeedService:
         return ordered_posts
     
     @classmethod
-    def _pull_from_database(cls,user_id:int,page:int,per_page=int):
+    def _pull_from_database(cls,user_id:int,page:int,per_page:int=20):
         '''
          从数据库实时拉去关注用户的帖子（拉模式核心）
-         优化点：
-         -使用JSON替代子查询，提升性能
-         -只查询需要的字段（如果Post模型支持）
-         -添加索引提示
         '''
         offset=(page-1)*per_page
-        posts=Post.query.join(
-             Follow,
-             Post.user_id==Follow.followed_id
-        ).filter(
-             Follow.follower_id==user_id,
-             Follow.is_deleted==False,
-             Post.is_deleted==False,
-             Post.is_published==True
+        posts, total = FeedRepository.get_following_posts(
+            user_id=user_id,
+            offset=offset,
+            limit=per_page
         )
-
-        #查询是否有更多的数据
-        #优化：如果本页满，大概率有下一页，精准判断需要count查询（性能差）
         has_more=len(posts)>=per_page
         return {
             'items': posts,
             'source': 'db',
-            'total': len(posts),
+            'total': total,
             'page': page,
             'has_more': has_more
         }
     @classmethod
-    def _backfill_cache(cls,user_id:int,posts:List[Post]):
+    def _backfill_cache(cls,user_id:int,posts):
         '''
          数据库查询后回填redis缓存
         '''
@@ -166,13 +151,17 @@ class FeedService:
         #作者加入自己的时间线
         FeedCache.add_post_to_feed(author_id,post_id,created_at)
 
-        #获取作者粉丝列表
-        followers=Follow.query.filter_by(
-             followed_id=author_id,
-             is_deleted=False
-        ).all()
-        follower_ids=[f.follower_id for f in followers]
-        follower_count=len(follower_ids)
+        # 先查缓存
+        follower_ids = FollowCache.get_follower_ids(author_id)
+        
+        if follower_ids is None:
+            # Cache miss：查 DB 从库 → 回填
+            follower_ids = follow_repository.get_follower_ids(author_id)
+            if follower_ids:
+                FollowCache.preload_followers(author_id, follower_ids)
+            logger.info(f'作者{author_id}粉丝缓存miss，从DB加载{len(follower_ids)}人')
+
+        follower_count = len(follower_ids)
 
         #判断是否是大V，决定推/拉模式
         is_big_v=FeedCache.is_big_v(follower_count)
@@ -211,13 +200,10 @@ class FeedService:
         **注意**：粉丝缓存清理是异步操作，可能有几秒延迟         
         '''
         #从做着自己的时间线移除
-        FeedCache.remove_post_from_user(author_id,post_id)
+        FeedCache.remove_posts(author_id,post_id)
 
         #获取粉丝列表（用于清理他们的缓存）
-        followers=Follow.query.filter_by(
-             followed_id=author_id,
-             is_deleted=False
-        ).all()
+        followers=FeedRepository.get_followers(author_id)
 
         follower_ids=[f.follower_id for f in followers]
 

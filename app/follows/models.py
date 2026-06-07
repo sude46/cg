@@ -1,5 +1,6 @@
 from core import db
 from datetime import datetime, timezone
+from app.common.database import utcnow
 
 class Follow(db.Model):
 	__tablename__ = 'follows'
@@ -7,11 +8,15 @@ class Follow(db.Model):
 	id = db.Column(db.Integer, primary_key=True)
 	follower_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
 	followed_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
-	created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
-	is_deleted = db.Column(db.Boolean, default=False, nullable=False, index=True)
+	created_at = db.Column(db.DateTime, default=utcnow, nullable=False)
+	deleted_at=db.Column(db.DateTime,nullable=True,default=None,index=True)
 
+
+	#防重复用FollowService分布式锁+get_relation(lock=True)
 	__table_args__ = (
-			db.UniqueConstraint('follower_id', 'followed_id', name='unique_follow_relationship'),
+			db.Index('idx_follow_relation','follower_id','followed_id'),
+			db.Index('idx_follower_created','follower_id','deleted_at','created_at'),
+			db.Index('idx_followed_created','followed_id','deleted_at','created_at'),
 	)
 
 				# 关系定义

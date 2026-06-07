@@ -10,6 +10,7 @@ from app.common.exceptions import (
 )
 from app.notifications.schemas import notification_schema, notifications_schema
 from app.notifications.repositories import notification_repository
+from app.notifications.cache import NotificationCache
 from app.common.events import event_bus
 import logging
 
@@ -79,6 +80,11 @@ class NotificationService:
         try:
             notif = notification_repository.create_notification(notif_data)
             db.session.commit()
+
+            # 缓存：清除空标记 + 递增未读数 + 强一致标记
+            NotificationCache.invalidate_empty(user_id)
+            NotificationCache.increment_unread(user_id)
+            NotificationCache.mark_recently_modified(user_id)
             return notification_schema.dump(notif)
         except IntegrityError:
             db.session.rollback()
@@ -122,7 +128,17 @@ class NotificationService:
         items = notifications_schema.dump(raw_items) if raw_items else []
         if not isinstance(items, list):
             items = []
-        return {'items': items, 'pagination': pagination_info}
+
+        # 缓存：查未读数（Cache-Aside）
+        unread_count = NotificationCache.get_unread_count(user_id)
+        if unread_count is None:
+            total_unread = pagination_info.get('total', 0) if unread_only else notification_repository.count_unread(user_id)
+            if total_unread == 0:
+                NotificationCache.set_empty(user_id)
+            else:
+                NotificationCache.set_unread_count(user_id, total_unread)
+            unread_count = total_unread
+        return {'items': items, 'pagination': pagination_info, 'unread_count': unread_count}
 
     @staticmethod
     def mark_as_read(notification_id: int, user_id: int):
@@ -132,7 +148,12 @@ class NotificationService:
                 raise ResourceNotFoundError('通知不存在或无权访问')
             notification_repository.mark_as_read(notif)
             db.session.commit()
-            return  notification_schema.dump(notif)
+
+            # 缓存：递减未读数 + 延迟双删 + 强一致标记
+            NotificationCache.decrement_unread(user_id)
+            NotificationCache.double_invalidate_unread(user_id)
+            NotificationCache.mark_recently_modified(user_id)
+            return notification_schema.dump(notif)
         except Exception as e:
             db.session.rollback()
             logger.error('标记通知为已读失败: %s', e)
@@ -145,6 +166,11 @@ class NotificationService:
         try:
             notification_repository.mark_all_as_read(user_id)
             db.session.commit()
+
+            # 缓存：未读计数归零 + 延迟双删 + 强一致标记
+            NotificationCache.clear_unread(user_id)
+            NotificationCache.double_invalidate_unread(user_id)
+            NotificationCache.mark_recently_modified(user_id)
         except Exception as e:
             db.session.rollback()
             logger.error('标记所有通知为已读失败: %s', e)
@@ -158,6 +184,11 @@ class NotificationService:
                 raise ResourceNotFoundError('通知不存在或无权访问')
             notification_repository.delete(notif)
             db.session.commit()
+
+            # 缓存：清未读 + 延迟双删 + 强一致标记
+            NotificationCache.clear_unread(user_id)
+            NotificationCache.double_invalidate_unread(user_id)
+            NotificationCache.mark_recently_modified(user_id)
         except Exception as e:
             db.session.rollback()
             logger.error('删除通知失败: %s', e)
@@ -166,6 +197,7 @@ class NotificationService:
             raise DatabaseError(f'删除通知失败: {e}')
 
 
-# 注册事件订阅（放在文件末尾，确保 NotificationService 已定义）
-event_bus.subscribe('comment.created', _handle_comment_created)
+def register_notification_event_handlers():
+    """注册通知模块的事件订阅（由 factory.py 在 app 初始化时调用）"""
+    event_bus.subscribe('comment.created', _handle_comment_created)
 

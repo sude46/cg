@@ -3,17 +3,16 @@ import os
 import redis
 from flask import current_app
 
+import os
+import redis
+from redis.sentinel import Sentinel
+
 
 class RedisClient:
-    """Redis工具类（单例、延迟初始化）。
-
-    注意：不要在模块导入阶段访问 `current_app`（会在测试导入阶段抛出
-    "Working outside of application context"）。连接会在首次使用时或显式
-    调用 `init_app(app)` 时建立。
-    """
     _instance = None
-    _conn = None
-    _url = None
+    _master_conn = None
+    _slave_conn = None
+    _config = {}
 
     def __new__(cls):
         if cls._instance is None:
@@ -22,40 +21,103 @@ class RedisClient:
 
     @classmethod
     def init_app(cls, app):
-        """显式用 app 初始化连接（推荐在 create_app 中调用）。"""
-        cls._url = app.config.get("REDIS_URL") or os.environ.get("REDIS_URL")
-        cls._ensure_conn()
+        cls._config = {
+            'url': app.config.get("REDIS_URL") or os.environ.get("REDIS_URL"),
+            'host': app.config.get("REDIS_HOST", "localhost"),
+            'port': app.config.get("REDIS_PORT", 6379),
+            'db': app.config.get("REDIS_DB", 0),
+            'password': app.config.get("REDIS_PASSWORD") or None,
+            'sentinel_hosts': app.config.get("REDIS_SENTINEL_HOST", ""),
+            'master_name': app.config.get("REDIS_SENTINEL_MASTER_NAME", "mymaster"),
+            'socket_timeout': app.config.get("REDIS_SOCKET_TIMEOUT", 2),
+            'decode_responses': app.config.get("REDIS_DECODE_RESPONSES", True),
+        }
+        cls._ensure_conns()
+        app.config['REDIS_CLIENT'] = cls._slave_conn or cls._master_conn
 
     @classmethod
-    def _ensure_conn(cls):
-        if cls._conn is None:
-            url = cls._url
-            # 如果在请求上下文中且未显式设置 URL，尝试从 current_app 读取
-            if not url:
-                try:
-                    url = current_app.config.get("REDIS_URL")
-                except RuntimeError:
-                    # 未在 app context 中且未配置 URL，降级为 None
-                    url = None
+    def _init_sentinel(cls):
+        hosts_str = cls._config.get('sentinel_hosts', '')
+        if not hosts_str:
+            return None
+        hosts = []
+        for h in hosts_str.split(","):
+            h = h.strip()
+            if not h:
+                continue
+            if ":" in h:
+                host, port = h.rsplit(":", 1)
+                hosts.append((host, int(port)))
+            else:
+                hosts.append((h, 26379))
+        if not hosts:
+            return None
+        return Sentinel(
+            hosts,
+            socket_timeout=cls._config['socket_timeout'],
+            socket_connect_timeout=cls._config['socket_timeout'],
+            password=cls._config['password'],
+            decode_responses=cls._config['decode_responses'],
+        )
 
-            if not url:
-                # 不阻塞导入阶段；后续方法会检查 _conn 并报错或降级
-                return
+    @classmethod
+    def _ensure_conns(cls):
+        if cls._master_conn is not None:
+            return
+        try:
+            sentinel = cls._init_sentinel()
+            if sentinel:
+                cls._master_conn = sentinel.master_for(
+                    cls._config['master_name'],
+                    socket_timeout=cls._config['socket_timeout'],
+                )
+                cls._slave_conn = sentinel.slave_for(
+                    cls._config['master_name'],
+                    socket_timeout=cls._config['socket_timeout'],
+                )
+            else:
+                url = cls._config.get('url')
+                if url:
+                    conn = redis.Redis.from_url(
+                        url,
+                        decode_responses=cls._config['decode_responses'],
+                        socket_timeout=cls._config['socket_timeout'],
+                    )
+                else:
+                    conn = redis.Redis(
+                        host=cls._config['host'],
+                        port=cls._config['port'],
+                        db=cls._config['db'],
+                        password=cls._config['password'],
+                        decode_responses=cls._config['decode_responses'],
+                        socket_timeout=cls._config['socket_timeout'],
+                    )
+                cls._master_conn = conn
+                cls._slave_conn = conn
+            cls._master_conn.ping()
+        except Exception as e:
+            import warnings
+            warnings.warn(f"Redis 连接失败: {e}", UserWarning)
+            cls._master_conn = None
+            cls._slave_conn = None
 
-            cls._conn = redis.Redis.from_url(url, decode_responses=True)
+    @classmethod
+    def get_conn(cls, for_write=False):
+        if for_write:
+            return cls._master_conn
+        return cls._slave_conn or cls._master_conn
 
     def add_blacklist(self, token, expire_seconds):
-        self._ensure_conn()
-        if not self._conn:
-            raise RuntimeError("Redis 未配置，请在应用工厂中调用 RedisClient.init_app(app) 或设置 REDIS_URL")
-        self._conn.setex(name=f"jwt_blacklist:{token}", time=expire_seconds, value="invalid")
+        conn = self.__class__.get_conn(for_write=True)
+        if not conn:
+            raise RuntimeError("Redis 未配置")
+        conn.setex(name=f"jwt_blacklist:{token}", time=expire_seconds, value="invalid")
 
     def is_blacklisted(self, token):
-        self._ensure_conn()
-        if not self._conn:
+        conn = self.__class__.get_conn(for_write=False)
+        if not conn:
             return False
-        return self._conn.exists(f"jwt_blacklist:{token}") == 1
+        return conn.exists(f"jwt_blacklist:{token}") == 1
 
 
-# 导出单例（不会在导入时创建连接）
 redis_client = RedisClient()

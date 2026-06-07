@@ -1,8 +1,17 @@
 from core import db  # 直接复用core中初始化的SQLAlchemy实例
 from datetime import datetime, timezone
-from typing import Optional,  Dict, Any
-from  sqlalchemy import inspect
+from typing import Optional, Dict, Any
+from sqlalchemy import inspect
 from sqlalchemy.orm import Query
+import logging
+
+
+def utcnow():
+    """返回 naive UTC datetime（兼容 SQLite + MySQL，替代废弃的 datetime.utcnow）"""
+    return datetime.now(timezone.utc).replace(tzinfo=None)
+
+
+logger = logging.getLogger(__name__)
 PAGINATION_DEFAULTS = {
     'PER_PAGE': 20,
     'MAX_PER_PAGE': 100
@@ -12,14 +21,14 @@ class TimestampMixin:
     """时间戳混入类（自动维护创建/更新时间）"""
     created_at = db.Column(
         db.DateTime,
-        default=lambda: datetime.now(timezone.utc),
+        default=utcnow,
         nullable=False,
         index=True
     )
     updated_at = db.Column(
         db.DateTime,
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
+        default=utcnow,
+        onupdate=utcnow,
         nullable=False
     )
 
@@ -31,7 +40,7 @@ class SoftDeleteMixin(TimestampMixin):
     def soft_delete(self) -> None:
         """软删除当前记录"""
         self.is_deleted = True
-        self.deleted_at = datetime.now(timezone.utc)
+        self.deleted_at = utcnow()
         db.session.add(self)
 
     def restore(self) -> None:
@@ -149,3 +158,17 @@ class PaginationUtils:
 
 # 实例化分页工具（方便其他模块直接调用）
 pagination_utils = PaginationUtils()
+
+
+def get_read_session():
+    """
+    获取读操作会话。
+    - 生产环境（MySQL + binds）：走 replica 从库
+    - 测试 / 单库环境：降级为默认 session
+    """
+    try:
+        from flask_sqlalchemy.session import Session
+        engine = db.get_engine(bind='replica')
+        return Session(db, bind=engine)
+    except Exception:
+        return db.session

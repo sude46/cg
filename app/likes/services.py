@@ -1,4 +1,6 @@
 from core import db
+import time
+from datetime import datetime,timezone
 from typing import Optional, Dict, Any
 from sqlalchemy.exc import IntegrityError
 from app.common.exceptions import ValidationError, ResourceNotFoundError, DatabaseError, ConflictError, PermissionError
@@ -22,133 +24,149 @@ class LikeService:
             raise ValidationError('只能传入 post_id 或 comment_id')
         target_type='post' if post_id else 'comment'
         target_id=post_id or comment_id
-        #Redis预检查
-        if LikeCache.is_liked(user_id,target_id,target_type):
-            raise ConflictError('你已经点过赞了(Redis校验)')
+        #分布式锁防并发重复点赞(10秒TTL)
+        if not LikeCache.acquire_lock(user_id,target_id,target_type):
+            raise ConflictError('操作过于频繁，请稍后重试')
         
-        user = user_repository.get_by_id(user_id)
-        if not user:
-            raise ResourceNotFoundError('用户不存在')
-
-        if post_id:
-            post = post_repository.get_by_id(post_id)
-            if not post:
-                raise ResourceNotFoundError('帖子不存在')
-        else:
-            comment = comment_repository.get_by_id(comment_id)
-            if not comment:
-                raise ResourceNotFoundError('评论不存在')
-
         try:
+            #先查redis
+            cached_liked=LikeCache.is_liked(user_id,target_id,target_type)
+            if cached_liked is True:
+                raise ConflictError('您已点赞过了')
+            
+            #Redis故障或miss,降级查DB从库确认(Repository读操作走从库)
+            if cached_liked is None:
+                if post_id:
+                    existing_like=like_repository.get_post_like(user_id,post_id)
+                else:
+                    existing_like=like_repository.get_comment_like(user_id,comment_id)
+                if existing_like:
+                    #DB有单Redis丢了，回填Redis
+                    LikeCache.add_like(user_id,target_id,target_type)
+                    raise ConflictError('您已点赞过了')
+                
+            #核心：先写redis
+            if not LikeCache.add_like(user_id,target_id,target_type):
+                raise DatabaseError('点赞操作失败，请稍后重试')
+            
+            #异步刷DB(Celery任务，pending_id幂等去重)
+            pending_id=f'like:{user_id}:{target_type}:{target_id}:{int(time.time()*1000)}'
+            try:
+                from tasks.like_tasks import async_like_to_do
+                async_like_to_do.delay(user_id=user_id,target_id=target_id,target_type=target_type,action='create',pending_id=pending_id)
+            except Exception as e:
+                #Celery投递失败不阻塞用户，靠服务端对账兜底
+                logger.error(f'[LikeService] Celery投递失败pending_id: {pending_id}, error: {e}')
+            
+            #热评实时更新
+            if target_type=='comment':
+                from comments.cache import CommentCache
+                comment=comment_repository.get_by_id(target_id,force_master=False)
+                if comment:
+                    new_count=LikeCache.get_like_count(target_id,'comment') or 0
+                    CommentCache.update_hot_comment(comment.post_id,target_id,new_count)
+
+            #异步更新ES（用redis实时计数，不阻塞主流程)
             if post_id:
-                like = like_repository.create_post_like(user_id=user_id, post_id=post_id)
-                # 更新计数（通过 Repository 原子操作，避免并发问题）
-                post_repository.increment_like_count(post_id)
-            else:
-                like = like_repository.create_comment_like(user_id=user_id, comment_id=comment_id)
-                # 更新计数（通过 Repository 原子操作，避免并发问题）
-                comment_repository.increment_like_count(comment_id)
-
-            db.session.commit()
-
-            LikeCache.add_like(user_id,target_id,target_type)
-
-            # 同步更新 ES 点赞数
-            if post_id:
-                post = post_repository.get_by_id(post_id)
+                like_count=LikeCache.get_like_count(post_id,'post') or 0
                 event_bus.publish('post.like_count_changed',{
-                        'post_id':post_id,
-                        'like_count':post.like_count if post else 0
-                    })
-            logger.info('用户%d点赞成功', user_id)
-            return like_schema.dump(like)
-        except IntegrityError as e:
-            db.session.rollback()
-            raise  ConflictError('您已点赞过了')  
-        except Exception as e:
-            db.session.rollback()
-            logger.error('点赞失败: %s', e)
-            raise DatabaseError('点赞操作失败，请稍后重试')
+                    'post_id':post_id,
+                    'like_count':like_count
+                })
+                logger.info(f'[LikeService]用户{user_id}点赞成功(redis秒返回),pending_id: {pending_id}')
+            return like_schema.dump({
+                'user_id': user_id, 
+                'post_id': post_id,
+                'comment_id': comment_id,
+                'created_at': datetime.now(timezone.utc)
+            })
+        except ConflictError as e:
+            raise e
+        finally:
+            # 确保锁释放（无论成功失败）
+            LikeCache.release_lock(user_id, target_id, target_type)
 
+         
     @staticmethod
     def delete_like(user_id: int, post_id: int = None, comment_id: int = None):
         """取消点赞，返回 True/False"""
         if not (post_id or comment_id) or (post_id and comment_id):
             raise ValidationError('必须且只能传入 post_id 或 comment_id')
+        target_type='post' if post_id else 'comment'
+        target_id=post_id or comment_id
 
-        if post_id:
-            like = like_repository.get_post_like(user_id=user_id, post_id=post_id)
-        else:
-            like = like_repository.get_comment_like(user_id=user_id, comment_id=comment_id)
-
-        if not like:
-            target = '帖子' if post_id else '评论'
-            raise ResourceNotFoundError(f'未找到该{target}的点赞记录')
+        #分布式锁
+        if not LikeCache.acquire_lock(user_id,target_id,target_type):
+            raise ConflictError('操作过于频繁，请稍后重试')
 
         try:
-            if like.post_id:
-                # 更新计数（通过 Repository 原子操作，避免并发问题）
-                post_repository.decrement_like_count(like.post_id)
-            if like.comment_id:
-                comment_repository.decrement_like_count(like.comment_id)
-
-            like_repository.delete_like(like)
-            db.session.commit()
-
-            #删除Redis缓存
-            target_type='post' if like.post_id else 'comment'
-            target_id=like.post_id or like.comment_id
-            LikeCache.remove_like(user_id,target_id,target_type)
-
-            # 同步更新 ES 点赞数
-            if like.post_id:
-                post=post_repository.get_by_id(like.post_id)
+            #先查Redis
+            cached_liked=LikeCache.is_liked(user_id,target_id,target_type)
+            if cached_liked is False:
+                raise ResourceNotFoundError('点赞记录不存在')
+            #Redis故障降级查DB
+            elif cached_liked is None:
+                if post_id:
+                    like=like_repository.get_post_like(user_id,post_id)
+                else:
+                    like=like_repository.get_comment_like(user_id,comment_id)
+                if not like:
+                    raise ResourceNotFoundError('点赞记录不存在')
+                #DB有但Redis丢了，回填Redis
+                LikeCache.add_like(user_id,target_id,target_type)
+            #cache_liked is True 或者None但已回填，都继续执行删除
+            #先删redis(秒返回)
+            if not LikeCache.remove_like(user_id,target_id,target_type):
+                raise DatabaseError('取消点赞操作失败，请稍后重试')
+            #异步删DB(Celery任务，pending_id幂等去重)
+            pending_id=f'unlike:{user_id}:{target_type}:{target_id}:{int(time.time()*1000)}'
+            try:
+                from tasks.like_tasks import async_like_to_do
+                async_like_to_do.delay(user_id=user_id,target_id=target_id,target_type=target_type,action='delete',pending_id=pending_id)
+            except Exception as e:
+                logger.error(f'[LikeService] Celery投递失败pending_id: {pending_id}, error: {e}')
+            
+            #热评移除
+            if target_type == 'comment':
+                from app.comments.cache import CommentCache
+                comment = comment_repository.get_by_id(target_id, force_master=False)
+                if comment:
+                    new_count = LikeCache.get_like_count(target_id, 'comment') or 0
+                    # like_count 为 0 时从热评榜移除
+                    CommentCache.update_hot_comment(comment.post_id, target_id, new_count)
+            
+            #异步更新ES（用redis实时计数，不阻塞主流程)
+            if post_id:
+                like_count=LikeCache.get_like_count(post_id,'post') or 0
                 event_bus.publish('post.like_count_changed',{
-                    'post_id':like.post_id,
-                    'like_count':post.like_count if post else 0
+                    'post_id':post_id,
+                    'like_count':like_count
                 })
-            logger.info('用户%d取消点赞成功', user_id)
+                logger.info(f'[LikeService]用户{user_id}取消点赞成功(redis秒返回),pending_id: {pending_id}')
+            elif comment_id:
+                like_count=LikeCache.get_like_count(comment_id,'comment') or 0
+                event_bus.publish('comment.like_count_changed',{
+                    'comment_id':comment_id,
+                    'like_count':like_count
+                })
+                logger.info(f'[LikeService]用户{user_id}取消点赞成功(redis秒返回),pending_id: {pending_id}')
             return True
-        except Exception as e:
-            db.session.rollback()
-            logger.error('取消点赞失败: %s', e)
-            raise DatabaseError('取消点赞操作失败，请稍后重试')
+        
+        finally:
+            LikeCache.release_lock(user_id,target_id,target_type)
 
     @staticmethod
     def delete_like_by_id(user_id: int, like_id: int, post_id: int = None):
         """通过 like_id 删除点赞，需验证用户权限"""
-        like = like_repository.get_by_id(like_id)  # 假设仓储有 get_by_id 方法
+        like = like_repository.get_by_id(like_id, force_master=True)
         if not like:
             raise ResourceNotFoundError('点赞记录不存在')
         if like.user_id != user_id:
             raise PermissionError('无权限取消该点赞')
-        # 可选：验证 post_id 是否匹配（如果提供）
-        if post_id and like.post_id != post_id:
-            raise ResourceNotFoundError('点赞记录与帖子不匹配')
-
-        # 复用 delete_like 的核心逻辑，但需要传入 like 对象
-        try:
-            if like.post_id:
-                # 更新计数（通过 Repository 原子操作，避免并发问题）
-                post_repository.decrement_like_count(like.post_id)
-            if like.comment_id:
-                comment_repository.decrement_like_count(like.comment_id)
-
-            like_repository.delete_like(like)
-            db.session.commit()
-            # 同步更新 ES 点赞数
-            if like.post_id:
-                post=post_repository.get_by_id(like.post_id)
-                event_bus.publish('post.like_count_changed',{
-                    'post_id':like.post_id,
-                    'like_count':post.like_count if post else 0
-                })
-            logger.info('用户%d取消点赞成功', user_id)
-            return True
-        except Exception as e:
-            db.session.rollback()
-            logger.error('取消点赞失败: %s', e)
-            raise DatabaseError('取消点赞操作失败，请稍后重试')
+        if post_id and like.post_id!=post_id:
+            raise ResourceNotFoundError('点赞记录和帖子不匹配')
+        #复用delete_like的逻辑
+        return LikeService.delete_like(user_id,post_id=like.post_id,comment_id=like.comment_id)
     @staticmethod
     def get_user_likes(user_id: int, page: int = 1, per_page: int = 20):
         user = user_repository.get_by_id(user_id)

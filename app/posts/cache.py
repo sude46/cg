@@ -1,138 +1,162 @@
 import logging
-from typing import Optional,Dict,Any
+import time
+import threading
+import math
+from datetime import datetime,timezone
+from typing import Optional, Dict, Any,List,Tuple
 
-from core .redis_cache import redis_cache
+from core.redis_cache import redis_cache
 
-logger=logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
+
 
 class PostCache:
-    '''
-    帖子缓存管理
-    -String缓存帖子详情(key:post:{id})
-    -String缓存计数器(key:counter:post:{id}:like_count)
-    '''
-    DETAIL_TTL=300   #帖子详情缓存5分钟
-    COUNTER_TTL=3600  #计数缓存1小时
-
-
-    #Lua脚本：原子化递减，保底不小于0
-    DECR_LUA='''
-    local  current=redis.call('GET',keys[1])
-    if current==false or tonumber(current)<=0 then
-        redis.call('SET',KEYS[1],0)
-        return 0
-    end 
-    return redis.call('INCRBY',KEYS[1],-1)
-
-    '''
+    """
+    帖子缓存管理（只缓存帖子自身数据）
+    -只缓存帖子自身详情: post:detail:{id}
+    - 支持延迟双删+强一致标记（recent_modify)
+    """
+    DETAIL_TTL = 300  # 5 分钟
+    RECENT_MODIFY_TTL=60   #强一致窗口5秒
 
     @classmethod
-    def _detail_key(cls,post_id:int):
-        return f'post:{post_id}'
+    def _detail_key(cls, post_id: int) -> str:
+        return f'post:detail:{post_id}'
     
     @classmethod
-    def _counter_key(cls,post_id,field:str):
-        return f'counter:post:{post_id}:{field}'
-    
-    #============帖子详情缓存（String）==============
+    def _recent_key(cls,post_id:int):
+        return f'post:recent_modify:{post_id}'
+
+
     @classmethod
-    def get(cls,post_id:int):
-        '''
-        获取帖子详情缓存
-        注意：redis_cache.get内部已经做了json.loads,
-        如果存的是dict,直接返回dict
-        '''
+    def get(cls, post_id: int) -> Optional[Dict[str, Any]]:
+        """读帖子详情（从库）"""
         try:
-            return redis_cache.get(cls._detail_key(post_id))
+            return redis_cache.get(cls._detail_key(post_id), for_write=False)
         except Exception as e:
-            logger.error(f'获取帖子{post_id}缓存失败:{e}')
+            logger.error(f'获取帖子{post_id}缓存失败: {e}')
             return None
-        
-    
+
     @classmethod
-    def set(cls,post_id:int,post_data:Dict[str,Any]):
-        '''缓存帖子详情(自动Json序列化)'''
+    def set(cls, post_id: int, post_data: Dict[str, Any]) -> bool:
+        """写帖子详情（主库）"""
         try:
-            return redis_cache.set(cls._detail_key(post_id),post_data,expire=cls.DETAIL_TTL)
+            return redis_cache.set(
+                cls._detail_key(post_id), post_data,
+                expire=cls.DETAIL_TTL, for_write=True
+            )
         except Exception as e:
-            logger.error(f'设置帖子{post_id}缓存失败:{e}')
+            logger.error(f'设置帖子{post_id}缓存失败: {e}')
             return False
+
     @classmethod
-    def invalidate(cls,post_id:int):
-        '''删除帖子详情缓存'''
+    def invalidate(cls, post_id: int) -> bool:
+        """删帖子详情（主库），同时清理强一致标记"""
         try:
-            return redis_cache.delete(cls._detail_key(post_id))
+            key = cls._detail_key(post_id)
+            redis_cache.delete(cls._recent_key(post_id))
+            return redis_cache.delete(key)
         except Exception as e:
-            logger.error(f'删除帖子{post_id}缓存失败:{e}')
+            logger.error(f'删除帖子{post_id}缓存失败: {e}')
             return False
-        
-    
-    #================计数器缓存=======================
+
     @classmethod
-    def get_like_count(cls,post_id:int):
-        '''获取Redis中的点赞数'''
-        try:
-            val=redis_cache.get(cls._counter_key(post_id,'like_count'))
-            if val is None:
-                return None
-            return int(val) if not isinstance(val,int) else val
-        except Exception as e:
-            logger.error(f'获取帖子{post_id}点赞数失败:{e}')
-            return None
-        
-    
+    def double_invalidate(cls, post_id: int) -> None:
+        """延迟双删（update/delete 后调）"""
+        cls.invalidate(post_id)
+        def _delayed():
+            time.sleep(1.5)
+            cls.invalidate(post_id)
+        threading.Thread(target=_delayed, daemon=True).start()
+
+    #=============强一致标记(创建/更新/删除后使用)===============
     @classmethod
-    def set_like_count(cls,post_id:int,count:int):
-        '''设置点赞数缓存（回源数据库后调用)'''
-        try:
-            return redis_cache.set(cls._counter_key(post_id,'like_count'),count,expire=cls.COUNTER_TTL)
-        except Exception as e:
-            logger.error(f'设置帖子{post_id}点赞数失败:{e}')
-            return False
-        
-    
-    @classmethod
-    def increment_like_count(cls,post_id:int):
-        '''点赞数+1（原子自增）'''
-        try:
-            return redis_cache.increment(cls._counter_key(post_id,'like_count'),1)
-        except Exception as e:
-            logger.error(f'递增帖子{post_id}点赞数失败:{e}')
-            return 0
-        
-    @classmethod
-    def decrement_like_count(cls,post_id:int):
+    def mark_recently_modified(cls,post_id:int,ttl:int=None):
         '''
-        点赞数-1（原子操作，保底不小于）
-        说明：redis_cache.increment支持负数，这里先做边界兜底
+        标记帖子最近被修改，后续读强制走主库（防主从延迟）
+        TTL默认5秒
         '''
+        ttl=ttl or cls.RECENT_MODIFY_TTL
+        key=cls._recent_key(post_id)
         try:
-            key=cls._counter_key(post_id,'like_count')
-            result=redis_cache.client.eval(cls.DECR_LUA,1,key)
-            return int(result)
+            return redis_cache.set(key,"1",expire=ttl,for_write=True) 
         except Exception as e:
-            logger.error(f'递减帖子{post_id}点赞数失败:{e}')
-            return 0
-    
+            logger.error(f'标记帖子{post_id}最近修改失败:{e}')
+            return False
+        
     @classmethod
-    def delete_like_count(cls,post_id:int):
-        '''删除点赞计数缓存'''
+    def is_recently_modified(cls,post_id:int):
+        """检查帖子是否在强一致窗口内"""
+        key=cls._recent_key(post_id)
         try:
-            return redis_cache.delete(cls._counter_key(post_id,'like_count'))
+            return redis_cache.exists(key)>0
         except Exception as e:
-            logger.error(f'删除帖子{post_id}点赞计数失败:{e}')
+            logger.error(f'检查帖子{post_id}最近修改失败:{e}')
             return False
     
+    #================热帖===================
+    HOT_DAILY_KEY='hot:posts:daily'
+    HOT_TTL=86400*2
+    HOT_SCORE_MULTIPLIER=1_000_000      #浮点转整数 ，把保留6位小数精度
+
     @classmethod
-    def invalidate_all(cls,post_id):
-        '''帖子变更时:清详情缓存+清计数缓存'''
+    def calc_hot_score(cls,like_count:int,comment_count:int,created_at:datetime):
+        '''
+        热度分计算(整数版，避免Redis Zset double 精度问题)
+        公式:(likes*2+comments*3)/(hours+2)^1.5*1_000_000
+        '''
+        hours=max(0,(datetime.now(timezone.utc)-created_at).total_seconds()/3600)
+        interaction=like_count*2+comment_count*3
+        score_float=interaction/math.pow(hours+2,1.5)
+        return int(score_float*cls.HOT_SCORE_MULTIPLIER)
+    
+
+    @classmethod
+    def update_hot_posts(cls,posts_data:List[dict],period:str='daily'):
+        '''
+        批量更新热帖榜（定时任务调用）
+        posts_data:[{'post_id':1,'score':12345556},......]
+        '''
+
         try:
-            pipe=redis_cache.pipeline(transaction=False)
-            pipe.delete(cls._detail_key(post_id))
-            pipe.delete(cls._counter_key(post_id,'like_count'))
+            if not posts_data:
+                return True
+            key=f'hot:posts:{period}'
+            pipe=redis_cache.pipeline(transaction=False,for_write=True)
+
+            #使用证书score
+            mapping={str(p['post_id']):p['score'] for p in posts_data}
+
+            pipe.zadd(key,mapping)
+            pipe.zremrangebyrank(key,0,-1001)      #只预留top1000
+            pipe.expire(key,cls.HOT_TTL)
             pipe.execute()
+
+            logger.info(f'[HotPosts]更新{period}榜，共{len(posts_data)}条')
+            return True
         except Exception as e:
-            logger.error(f'清楚帖子{post_id}全部缓存失败:{e}')
+            logger.error(f'[HotPost]更新失败')
+            return False
+        
+    @classmethod
+    def get_hot_posts(cls,page:int=1,per_page:int=20,period:str='daily'):
+        try:
+            key=f'hot:posts:{period}'
+            start=(page-1)*per_page
+            end=start+per_page-1
+
+            results=redis_cache.zrevrange(key,start,end,withscores=False,for_write=False)
+            total=redis_cache.zcard(key,for_write=False) or 0
+
+            if not results:
+                return [],0
+            post_ids=[int(r.decode() if isinstance(r,bytes)else r) for r in results]
+            return post_ids,total
+        except Exception as e:
+            logger.error(f'[HotPosts]获取失败：{e}')
+            return [],0
+        
+
 
 
     

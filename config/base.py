@@ -33,7 +33,12 @@ class BaseConfig:
     TESTING = False
     
     # ==================== 数据库配置 ====================
-    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL') or 'sqlite:///app.db'
+    #主库（写操作）：读取DEV_DATABASE_URL
+    SQLALCHEMY_DATABASE_URI = os.getenv('DEV_DATABASE_URL') or 'sqlite:///app.db'
+    #从库
+    SQLALCHEMY_BINDS={
+        'replica': os.getenv('REPLICA_DATABASE_URL') or SQLALCHEMY_DATABASE_URI
+    }
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ECHO = False
     SQLALCHEMY_ENGINE_OPTIONS = {
@@ -41,9 +46,14 @@ class BaseConfig:
         'pool_recycle': 3600,
         'isolation_level':'READ COMMITTED',
     }
+    # 从库连接池单独配置
+    SQLALCHEMY_ENGINE_OPTIONS_REPLICA = {
+        'pool_pre_ping': True,
+        'pool_recycle': 3600,
+        'isolation_level':'READ COMMITTED',
+    }
     
     # ==================== JWT 配置（基础设施）====================
-    # 注意：这是 Flask-JWT-Extended 的配置，不是业务规则
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=1)
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)
     JWT_BLACKLIST_ENABLED = True
@@ -55,42 +65,25 @@ class BaseConfig:
     REDIS_DB = int(os.getenv("REDIS_DB", 0))
     REDIS_PASSWORD = os.getenv("REDIS_PASSWORD", "")
     REDIS_URL = os.getenv('REDIS_URL') or f'redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}'
+    
+    # 哨兵配置
+    REDIS_SENTINEL_HOST = os.getenv("REDIS_SENTINEL_HOST", "")
+    REDIS_SENTINEL_MASTER_NAME = os.getenv("REDIS_SENTINEL_MASTER_NAME", "mymaster")
+
+    MFA_ENCRYPTION_KEY = os.getenv('MFA_ENCRYPTION_KEY', '')
+
     REDIS_SOCKET_TIMEOUT=2
     REDIS_SOCKET_CONNECT_TIMEOUT=2
     REDIS_DECODE_RESPONSES=True
     REDIS_POOL_SIZE=10
-
-    _redis_client=None
-    @classmethod
-    def get_redis_client(cls):
-        '''获取Redis客户端'''
-        if cls._redis_client is None:
-            try:
-                if hasattr(cls,'REDIS_URL')and cls.REDIS_URL:
-                    cls._redis_client=redis.from_url(
-                       cls.REDIS_URL,
-                       decode_responses=cls.REDIS_DECODE_RESPONSES,
-                        socket_timeout=cls.REDIS_SOCKET_TIMEOUT,
-                    )
-                else:
-                    cls._redis_client=redis.Redis(
-                        host=cls.REDIS_HOST,
-                        port=cls.REDIS_PORT,
-                        db=cls.REDIS_DB,
-                        password=cls.REDIS_PASSWORD or None,
-                        decode_responses=cls.REDIS_DECODE_RESPONSES,
-                        socket_timeout=cls.REDIS_SOCKET_TIMEOUT,
-                    )
-                cls._redis_client.ping()
-            except Exception as e:
-                warnings.warn(f"Redis连接失败:{e}", UserWarning)
-                cls._redis_client=None
-        return cls._redis_client
-
     
-    # Celery 使用相同的 Redis
-    CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL') or REDIS_URL
-    CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND') or f'{REDIS_URL}/1'
+    # Celery 配置（与业务缓存分库，避免 key 冲突）
+    #   DB 0: 业务缓存（RedisCache）
+    #   DB 1: Celery result backend
+    #   DB 2: Celery broker（消息队列）
+    CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL') or f'redis://{REDIS_HOST}:{REDIS_PORT}/2'
+    CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND') or f'redis://{REDIS_HOST}:{REDIS_PORT}/1'
+
 
     #=====================Elasticsearch配置=====================
     ELASTICSEARCH_ENABLED=os.getenv('ELASTICSEARCH_ENABLED','true').lower()=='true'
@@ -140,11 +133,5 @@ class BaseConfig:
         # 创建上传目录
         os.makedirs(cls().UPLOAD_FOLDER, exist_ok=True)
         os.makedirs(cls.LOG_DIR, exist_ok=True)
-        redis_client=cls.get_redis_client()
-        app.config['REDIS_CLIENT']=redis_client
-        if redis_client:
-            app.logger.info('Redis连接成功，已注入app.config')
-        else:
-            app.logger.warning('Redis连接失败，app.config中未注入Redis客户端')
 
 

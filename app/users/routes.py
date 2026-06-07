@@ -65,7 +65,7 @@ class Register(Resource):
 	def post(self):
 		data=request.get_json()
 		
-		result=AuthService().register_user(
+		result=AuthService.register_user(
 				username=data['username'],
 				email=data['email'],
 				password=data['password']
@@ -96,7 +96,7 @@ class Login(Resource):
 				)
 
 				# 3. 调用服务层逻辑
-		auth_result = AuthService().authenticate_user(
+		auth_result = AuthService.authenticate_user(
 					username, password
 				)
 
@@ -126,7 +126,7 @@ class RefreshToken(Resource):
 		'''刷新访问令牌'''
 		current_user_id=get_jwt_identity()
 		
-		result=AuthService().refresh_token(current_user_id)
+		result=AuthService.refresh_token(current_user_id)
 		return success_response(data=result,message='令牌刷新成功'),200
 		
 
@@ -138,7 +138,7 @@ class CurrentUser(Resource):
 	def get(self):
 		current_user_id=get_jwt_identity()
 		
-		result=AuthService().get_current_user(current_user_id)
+		result=AuthService.get_current_user(current_user_id)
 		return success_response(data=result),200
 		
 @api.route('/logout')

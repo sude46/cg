@@ -137,7 +137,7 @@ class TestPostService:
 
         with app.app_context():
             deleted = db_session.get(Post, post_id)
-            assert deleted.is_deleted is True
+            assert deleted.deleted_at is not None
 
     def test_delete_post_not_owner(self, app, db_session, mock_redis):
         """测试非作者删除帖子（抛出异常）"""
@@ -205,3 +205,65 @@ class TestPostService:
         with pytest.raises(ValidationError) as excinfo:
             PostService.update_post(post_id, user_id)  # 不提供 content 和 image_url
         assert "至少提供一个更新内容" in str(excinfo.value)
+
+
+class TestPostCache:
+    """帖子缓存层单元测试"""
+
+    def test_set_and_get_roundtrip(self, app, mock_redis):
+        """测试缓存写入后能正确读出"""
+        from app.posts.cache import PostCache as cache
+
+        data = {'id': 999, 'content': 'hello'}
+        cache.set(999, data)
+        cached = cache.get(999)
+        assert cached == data
+
+    def test_get_miss_returns_none(self, app, mock_redis):
+        """测试未缓存的 key 返回 None"""
+        from app.posts.cache import PostCache as cache
+
+        result = cache.get('nonexistent')
+        assert result is None
+
+    def test_invalidate_removes_cache(self, app, mock_redis):
+        """测试删除缓存后 get 返回 None"""
+        from app.posts.cache import PostCache as cache
+
+        cache.set(1, {'id': 1})
+        cache.invalidate(1)
+        assert cache.get(1) is None
+
+    def test_recently_modified_mark_and_check(self, app, mock_redis):
+        """测试强一致标记设置与检查"""
+        from app.posts.cache import PostCache as cache
+
+        cache.mark_recently_modified(1, ttl=5)
+        assert cache.is_recently_modified(1) is True
+
+    def test_recently_modified_after_invalidation(self, app, mock_redis):
+        """测试失效后不再标记强一致"""
+        from app.posts.cache import PostCache as cache
+
+        cache.mark_recently_modified(1, ttl=5)
+        assert cache.is_recently_modified(1) is True
+        cache.invalidate(1)
+        assert cache.is_recently_modified(1) is False
+
+    def test_null_penetration_protection(self, app, mock_redis):
+        """测试 None 值缓存空标记，重复 get 仍返回 None"""
+        from app.posts.cache import PostCache as cache
+
+        cache.set(1, None)
+        result = cache.get(1)
+        assert result is None
+
+    def test_preload_profiles_warms_cache(self, app, mock_redis):
+        """测试批量预热"""
+        from app.posts.cache import PostCache as cache
+
+        posts = [{'id': i, 'content': f'post{i}'} for i in range(3)]
+        for p in posts:
+            cache.set(p['id'], p)
+        for p in posts:
+            assert cache.get(p['id']) == p

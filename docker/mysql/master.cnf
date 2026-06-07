@@ -1,0 +1,11 @@
+[mysqld]
+server-id=1
+log_bin=mysql-bin
+binlog-format=ROW
+bind-address=0.0.0.0
+
+# GTID 必须开启，配合 init-replica.sql 的 SOURCE_AUTO_POSITION=1
+gtid_mode=ON
+enforce_gtid_consistency=ON
+
+

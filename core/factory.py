@@ -24,8 +24,8 @@ from app.follows.models import Follow
 from app.notifications.models import Notification
 # 如果有其他模型，继续导入
 
-# 导入服务以注册事件订阅（EventBus 模式）
-from app.notifications.services import NotificationService  # noqa: F401
+# 导入通知模块的事件订阅注册函数
+from app.notifications.services import register_notification_event_handlers
 
 def create_app(config_name: str = None) -> Flask:
     app = Flask(__name__)
@@ -120,8 +120,10 @@ def create_app(config_name: str = None) -> Flask:
     # 注册蓝图
     register_all_blueprints(app)
 
-    # 注册搜索事件监听器
+    # 注册事件订阅器
+    register_notification_event_handlers()
     register_search_event_handlers()
+    event_bus.start()
 
     return app
 

@@ -77,9 +77,10 @@ class PostSchema(Schema):
 	is_published = fields.Bool()
 	like_count = fields.Int()
 	comment_count = fields.Int()
+	deleted_at = fields.DateTime(allow_none=True, attribute="deleted_at")
 	has_liked = fields.Bool(load_default=False)
 	def dump_with_options(self,include_author=True,include_stats=True):
-		base_fields=["id","content","image_url","user_id","created_at","updated_at","is_published"]
+		base_fields=["id","content","image_url","user_id","created_at","updated_at","is_published","deleted_at"]
 		if include_author:
 			base_fields.append("author")
 		if include_stats:

@@ -73,7 +73,7 @@ class FeedCache:
             # 必须分批 Pipeline！10 万粉丝一次发过去会阻塞 Redis 数秒
             for i in range(0, len(follower_ids), cls.PUSH_BATCH_SIZE):
                 batch = follower_ids[i:i + cls.PUSH_BATCH_SIZE]
-                pipe = redis_cache.pipeline(transaction=False)
+                pipe = redis_cache.pipeline(transaction=False,for_write=True)
 
                 for fid in batch:
                     key = cls._feed_key(fid)
@@ -120,7 +120,7 @@ class FeedCache:
             if redis_cache.exists(empty_key):
                 return []
 
-            if not redis_cache.client.exists(key):
+            if not redis_cache.exists(key):
                 return None
 
             start = (page - 1) * per_page
@@ -142,7 +142,7 @@ class FeedCache:
 
         try:
             key = cls._feed_key(user_id)
-            pipe = redis_cache.pipeline(transaction=False)
+            pipe = redis_cache.pipeline(transaction=False,for_write=True)
             pipe.zadd(key, {str(post_id): created_at})
             pipe.zremrangebyrank(key, 0, -(cls.MAX_FEED_SIZE + 1))
             pipe.expire(key, cls.FEED_EXPIRE_DAYS * 86400)
@@ -180,7 +180,7 @@ class FeedCache:
         try:
             for i in range(0, len(follower_ids), cls.PUSH_BATCH_SIZE):
                 batch = follower_ids[i:i + cls.PUSH_BATCH_SIZE]
-                pipe = redis_cache.pipeline(transaction=False)
+                pipe = redis_cache.pipeline(transaction=False,for_write=True)
 
                 for fid in batch:
                     pipe.zrem(cls._feed_key(fid), str(post_id))
@@ -222,7 +222,7 @@ class FeedCache:
         同时清除空缓存标记
         '''
         try:
-            pipe = redis_cache.pipeline(transaction=False)
+            pipe = redis_cache.pipeline(transaction=False,for_write=True)
             pipe.delete(cls._feed_key(user_id))
             pipe.delete(cls._empty_key(user_id))
             pipe.execute()
@@ -257,7 +257,7 @@ class FeedCache:
                 mapping[pid] = ts
 
             # 用 Pipeline 保证原子性
-            pipe = redis_cache.pipeline(transaction=False)
+            pipe = redis_cache.pipeline(transaction=False,for_write=True)
             pipe.zadd(key, mapping)
             pipe.zremrangebyrank(key, 0, -(cls.MAX_FEED_SIZE + 1))
             pipe.expire(key, cls.FEED_EXPIRE_DAYS * 86400)
