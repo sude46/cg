@@ -70,7 +70,7 @@ def is_public_route(path:str,method:str=None):
     判断是否为公开路由
     '''
     #处理CORS预检
-    if method=='OPTIONs':
+    if method=='OPTIONS':
         return True
     
     #规范化路径：统一小写并去除多余斜杠
@@ -87,7 +87,7 @@ def is_public_route(path:str,method:str=None):
     #精确匹配
     public_exact={
         '/','/favicon.ico','/ping','/register',
-        'users/register','users/login'
+        '/users/register','/users/login'
     }
     if path in public_exact:
         return True
