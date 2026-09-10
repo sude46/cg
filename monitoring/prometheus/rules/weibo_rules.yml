@@ -35,7 +35,7 @@ groups:
           description: "队列 {{ $labels.queue }} 堆积 {{ $value }} 个任务"
 
       - alert: WeiboRedisMemoryHigh
-        expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.8
+        expr: (redis_memory_used_bytes / redis_memory_max_bytes > 0.8) and (redis_memory_max_bytes > 0)
         for: 5m
         labels:
           severity: warning

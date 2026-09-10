@@ -11,7 +11,7 @@ route:
 receivers:
   - name: 'dingtalk-webhook'
     webhook_configs:
-      - url: 'http://host.docker.internal:5001/webhook/dingtalk'
+      - url: 'http://alert-webhook:5001/webhook/dingtalk'
         send_resolved: true
         max_alerts: 10
 
