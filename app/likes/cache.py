@@ -100,8 +100,7 @@ class LikeCache:
         try:
             result = redis_cache.sismember(
                 cls._user_liked_key(user_id, target_type),
-                str(target_id),
-                for_write=False
+                str(target_id)
             )
             return bool(result)
         except Exception as e:

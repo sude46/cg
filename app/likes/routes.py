@@ -27,7 +27,7 @@ api_restx=Api(
     security='Bearer',
     doc='/docs'  
 )
-api=Namespace('likes', description='点赞相关操作')
+api=Namespace('likes', description='点赞相关操作', path='/')
 
 # Swagger请求模型
 like_create_model = api.model('LikeCreate', {

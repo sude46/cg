@@ -6,13 +6,14 @@ from app.likes.cache import LikeCache
 from core.redis_cache import redis_cache
 from app.comments.repositories import comment_repository
 import logging
+from tasks.base_task import MonitoredTask
 
 
 logger=logging.getLogger(__name__)
 DIRTY_LIKES_KEY = "dirty:likes"
 
 
-@shared_task(bind=True, max_retries=3,default_retry_delay=5)
+@shared_task(base=MonitoredTask,bind=True, max_retries=3,default_retry_delay=5)
 def async_like_to_do(self,user_id:int,target_type:str,target_id:int,action:str,pending_id:str):
     """
     异步将Redis点赞状态同步到DB

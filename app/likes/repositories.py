@@ -6,7 +6,7 @@ from app.common.database import pagination_utils, get_read_session
 from app.common.exceptions import ConflictError
 from datetime import datetime,timezone
 from app.common.database import utcnow
-
+from core.metrics import monitor_db
 
 class LikeRepository:
     """点赞仓储：封装帖子/评论点赞的数据库访问。"""
@@ -20,6 +20,7 @@ class LikeRepository:
         return db.session if force_master else LikeRepository._read_session()
 
     @staticmethod
+    @monitor_db("select","likes")
     def get_by_id(like_id: int, force_master: bool = False) -> Optional[Like]:
         session = LikeRepository._get_session(force_master)
         return session.query(Like).filter(
@@ -28,6 +29,7 @@ class LikeRepository:
         ).first()
 
     @staticmethod
+    @monitor_db("select","likes")
     def get_post_like(user_id: int, post_id: int, force_master: bool = False) -> Optional[Like]:
         session = LikeRepository._get_session(force_master)
         return session.query(Like).options(
@@ -39,6 +41,7 @@ class LikeRepository:
         ).first()
 
     @staticmethod
+    @monitor_db("select","likes")
     def get_comment_like(user_id: int, comment_id: int, force_master: bool = False) -> Optional[Like]:
         session = LikeRepository._get_session(force_master)
         return session.query(Like).options(
@@ -50,6 +53,7 @@ class LikeRepository:
         ).first()
 
     @staticmethod
+    @monitor_db("insert","likes")
     def create_post_like(user_id: int, post_id: int) -> Like:
         existing = db.session.query(Like).filter(
             Like.user_id == user_id,
@@ -63,6 +67,7 @@ class LikeRepository:
         return like
 
     @staticmethod
+    @monitor_db("insert","likes")
     def create_comment_like(user_id: int, comment_id: int) -> Like:
         existing = db.session.query(Like).filter(
             Like.user_id == user_id,
@@ -76,12 +81,14 @@ class LikeRepository:
         return like
 
     @staticmethod
+    @monitor_db("update","likes")
     def delete_like(like: Like) -> None:
         """软删除点赞"""
         like.deleted_at = utcnow()
         db.session.add(like)
 
     @staticmethod
+    @monitor_db("select","likes")
     def list_post_likes(post_id: int, page: int = 1, per_page: int = 20) -> Dict[str, Any]:
         """分页获取某帖子下的点赞列表（排除已删除）。"""
         session = LikeRepository._read_session()
@@ -98,6 +105,7 @@ class LikeRepository:
         }
 
     @staticmethod
+    @monitor_db("select","likes")
     def list_comment_likes(comment_id: int, page: int = 1, per_page: int = 20) -> Dict[str, Any]:
         """分页获取某评论下的点赞列表（排除已删除）。"""
         session = LikeRepository._read_session()
@@ -114,6 +122,7 @@ class LikeRepository:
         }
 
     @staticmethod
+    @monitor_db("select","likes")
     def list_by_user(user_id: int, page: int = 1, per_page: int = 20):
         """获取用户的点赞列表（排除已删除）。"""
         session = LikeRepository._read_session()
@@ -128,6 +137,7 @@ class LikeRepository:
         }
 
     @staticmethod
+    @monitor_db("select","likes")
     def exists(user_id: int, post_id: int) -> bool:
         """检查是否已点赞（未删除的）"""
         session = LikeRepository._read_session()
@@ -140,6 +150,7 @@ class LikeRepository:
         ).scalar()
 
     @staticmethod
+    @monitor_db("select","likes")
     def get_liked_post_ids(user_id: int, post_ids) -> set:
         """
         批量获取用户点赞的帖子ID集合（排除已删除）
@@ -156,6 +167,7 @@ class LikeRepository:
         return {l.post_id for l in liked}
 
     @staticmethod
+    @monitor_db("count","likes")
     def count_likes_for_post(post_id):
         """帖子有效点赞数（DB层，对账用）"""
         session = LikeRepository._read_session()
@@ -165,6 +177,7 @@ class LikeRepository:
         ).count()
 
     @staticmethod
+    @monitor_db("count","likes")
     def count_likes_for_comment(comment_id):
         """评论有效点赞数（DB层，对账用）"""
         session = LikeRepository._read_session()

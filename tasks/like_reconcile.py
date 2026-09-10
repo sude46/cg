@@ -5,8 +5,9 @@ from app.posts.repositories import post_repository
 from app.comments.repositories import comment_repository
 from core.redis_cache import redis_cache
 from core import db
-
+from core.metrics import RECONCILE_DIFF_COUNT
 import logging
+from core.metrics import RECONCILE_DIFF_COUNT
 
 logger=logging.getLogger(__name__)
 
@@ -20,6 +21,7 @@ def reconcile_like_counts(target_type_filter='post', batch_size=500):
     不在全量扫描Redis,动态调度，防止空跑
     '''
     try:
+        total_diff = 0
         #从dirty:likes取一批待对账的target
         dirty_members=redis_cache.smembers(DIRTY_LIKES_KEY)
         if not dirty_members:
@@ -52,6 +54,7 @@ def reconcile_like_counts(target_type_filter='post', batch_size=500):
 
             # 差异比对：以 Redis 为准修正 DB
             if redis_count != db_count:
+                total_diff += 1
                 logger.warning(
                     f'[Reconcile] 差异发现 {t_type}:{t_id} '
                     f'Redis={redis_count} DB={db_count}，以 Redis 为准修正 DB'
@@ -68,8 +71,11 @@ def reconcile_like_counts(target_type_filter='post', batch_size=500):
         # 统一提交事务（Repository 不再自行 commit）
         try:
             db.session.commit()
+            RECONCILE_DIFF_COUNT.labels(resource_type='like').set(total_diff)
+            logger.info(f'[Reconcile] 完成: 修正 {total_diff} 条差异')
         except Exception as e:
             db.session.rollback()
+            RECONCILE_DIFF_COUNT.labels(resource_type='like').set(total_diff)
             logger.error(f'[Reconcile] DB 提交失败: {e}')
 
     except Exception as e:
