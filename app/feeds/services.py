@@ -1,10 +1,12 @@
 from .cache import FeedCache
 from app.follows.cache import FollowCache
 from app.follows.repositories import follow_repository
+from app.posts.schemas import posts_schema
 import logging
 from typing import List,Optional 
 from tasks.feed_tasks import async_remove_post_from_followers
 from .repository import FeedRepository
+from core.metrics import REDIS_HIT_RATE,FEED_OPERATIONS
 
 logger=logging.getLogger(__name__)
 
@@ -33,42 +35,54 @@ class FeedService:
         3.缓存未命中->数据库拉取->回填缓存->返回
 
         '''
-        #参数校验
-        page=max(1,page)
-        per_page=min(max(1,per_page),cls.MAX_PRE_PAGE)
+        try:
 
-        #===========第一步：尝试从Redist拉取============
-        cached_ids=FeedCache.pull_feed(user_id,page,per_page)
+            #参数校验
+            page=max(1,page)
+            per_page=min(max(1,per_page),cls.MAX_PRE_PAGE)
 
-        #情况1：缓存命中且有数据
-        if cached_ids is not None and len(cached_ids)>0:
-            posts=cls._get_posts_by_ids(cached_ids)
-            return {
-                    'items':posts,
-                    'source':'cache',
-                    'total':len(posts),
-                    'page':page,
-                    'has_more':len(cached_ids)>=per_page
-                }
-        #情况2 ：缓存命中但为空列表（用户未关注任何人，或关注的人都没发帖）
-        if cached_ids is not None and len(cached_ids)==0:
-            return {
-                    'items':[],
-                    'source':'empty',
-                    'total':0,
-                    'page':page,
-                    'has_more':False
-                }
-        #情况3：缓存未命中，走数据库拉取
-        result=cls._pull_from_database(user_id,page,per_page)
+            #===========第一步：尝试从Redist拉取============
+            cached_ids=FeedCache.pull_feed(user_id,page,per_page)
 
-        #回填缓存
-        if result['items']:
-                cls._backfill_cache(user_id,result['items'])
-        else:
-                #数据库也没有，设置空缓存标记防穿透
-                FeedCache.set_empty_cache(user_id)
-        return result
+            #情况1：缓存命中且有数据
+            if cached_ids is not None and len(cached_ids)>0:
+                REDIS_HIT_RATE.labels(cache_type='feed').set(1)
+                posts=cls._get_posts_by_ids(cached_ids)
+                return {
+                        'items':posts_schema.dump(posts),
+                        'source':'cache',
+                        'total':len(posts),
+                        'page':page,
+                        'has_more':len(cached_ids)>=per_page
+                    }
+            #情况2 ：缓存命中但为空列表（用户未关注任何人，或关注的人都没发帖）
+            if cached_ids is not None and len(cached_ids)==0:
+                REDIS_HIT_RATE.labels(cache_type='feed').set(1)
+                return {
+                        'items':[],
+                        'source':'empty',
+                        'total':0,
+                        'page':page,
+                        'has_more':False
+                    }
+            #情况3：缓存未命中，走数据库拉取
+            result=cls._pull_from_database(user_id,page,per_page)
+            REDIS_HIT_RATE.labels(cache_type='feed').set(0)
+
+            #回填缓存（使用ORM对象）
+            if result['items']:
+                    cls._backfill_cache(user_id,result['items'])
+            else:
+                    #数据库也没有，设置空缓存标记防穿透）
+                    FeedCache.set_empty_cache(user_id)
+            result['items']=posts_schema.dump(result['items'])
+
+            FEED_OPERATIONS.labels(action='timeline', result='success').inc()
+            return result
+        except Exception as e:
+            FEED_OPERATIONS.labels(action='timeline', result='failed').inc()
+            raise
+
         
 
 
@@ -78,29 +92,35 @@ class FeedService:
         '''
          根据Id列表批量查询帖子，并保持传入的顺序
         '''
-        if not post_ids:
-            return []
-        posts=FeedRepository.get_posts_by_ids([int(pid)for pid in post_ids])
+        try:
+            if not post_ids:
+                return []
+            posts=FeedRepository.get_posts_by_ids([int(pid)for pid in post_ids])
 
 
-        #建立到D帖子的映射
-        post_map={str(p.id):p for p in posts}
+            #建立到D帖子的映射
+            post_map={str(p.id):p for p in posts}
 
-        #按原始顺序重组（并过滤掉数据库已删除/已下架的帖子）
-        ordered_posts=[]
-        for pid in post_ids:
-            post=post=post_map.get(pid)
-            if post:
-                ordered_posts.append(post)
-        
-         #如果顺序重组后发现数量不一致，说明有帖子被删除但缓存未清理
-        if len(ordered_posts)!=len(post_ids):
-            missing=set(post_ids)-set(post_map.keys()) 
-            logger.warning(
-                  f'缓存中有{len(missing)}个帖子载数据库中不存在或已删除,'
-                  f'IDs:{missing},建议清理缓存' 
-              )
-        return ordered_posts
+            #按原始顺序重组（并过滤掉数据库已删除/已下架的帖子）
+            ordered_posts=[]
+            for pid in post_ids:
+                post=post_map.get(pid)
+                if post:
+                    ordered_posts.append(post)
+            
+             #如果顺序重组后发现数量不一致，说明有帖子被删除但缓存未清理
+            if len(ordered_posts)!=len(post_ids):
+                missing=set(post_ids)-set(post_map.keys()) 
+                logger.warning(
+                      f'缓存中有{len(missing)}个帖子载数据库中不存在或已删除,'
+                      f'IDs:{missing},建议清理缓存' 
+                  )
+            FEED_OPERATIONS.labels(action='get', result='success').inc()
+            return ordered_posts
+        except Exception as e:
+            FEED_OPERATIONS.labels(action='get', result='failed').inc()
+            raise
+
     
     @classmethod
     def _pull_from_database(cls,user_id:int,page:int,per_page:int=20):

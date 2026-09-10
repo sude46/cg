@@ -27,7 +27,7 @@ api_restx=Api(
     doc='/docs'
 )
 
-api=Namespace('feeds',description='时间线相关操作')
+api=Namespace('feeds',description='时间线相关操作',path='/')
 
 #Swagger请求模型
 publish_model=api.model('FeedPublish',{
@@ -44,7 +44,7 @@ feed_parser.add_argument('per_page',type=int,default=20,help='每页数量(默�
 @api.route('/timeline')
 class TimelineResource(Resource):
     @api.doc('get_timeline')
-    @api.excpect(feed_parser)
+    @api.expect(feed_parser)
     @api.response(200,'获取时间线成功')
     @jwt_required()
     def get(self):

@@ -4,6 +4,7 @@ from core import db
 from app.posts.models import Post
 from app.follows.models import Follow
 from app.common.database import get_read_session
+from core.metrics import monitor_db
 
 class FeedRepository:
     '''
@@ -15,6 +16,7 @@ class FeedRepository:
     
     #===========关注关系查询================
     @staticmethod
+    @monitor_db("select","feeds")
     def get_followers(followed_id:int):
         '''获取某用户的全部粉丝'''
         session=FeedRepository._read_session()
@@ -24,6 +26,7 @@ class FeedRepository:
         ).all()
     
     @staticmethod
+    @monitor_db("select","feeds")
     def get_following_ids(follower_id:int):
         '''获取某用户关注的人ID列表'''
         session=FeedRepository._read_session()
@@ -35,6 +38,7 @@ class FeedRepository:
     
     #帖子查询
     @staticmethod
+    @monitor_db("select","feeds")
     def get_following_posts(
         user_id:int,
         offset:int,
@@ -45,6 +49,8 @@ class FeedRepository:
         session=FeedRepository._read_session()
         query=session.query(Post).join(
             Follow,Post.user_id==Follow.followed_id
+            ).options(
+                joinedload(Post.author)
             ).filter(
                 Follow.follower_id==user_id,
                 Follow.deleted_at.is_(None),
@@ -56,13 +62,16 @@ class FeedRepository:
         return (posts,total)
 
 
-    @staticmethod 
+    @staticmethod
+    @monitor_db("select","feeds")
     def get_posts_by_ids(post_ids:List[int]):
         '''批量查询帖子(用于缓存命中后补全)'''
         if not post_ids:
             return []
         session=FeedRepository._read_session()
-        return session.query(Post).filter(
+        return session.query(Post).options(
+            joinedload(Post.author)
+        ).filter(
             Post.id.in_(post_ids),
             Post.deleted_at.is_(None),
             Post.is_published.is_(True)
