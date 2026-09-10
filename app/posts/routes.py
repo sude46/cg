@@ -43,7 +43,7 @@ api_restx=Api(
 	doc='/docs'
 )
 
-api=Namespace('posts',description='帖子相关操作')
+api=Namespace('posts',description='帖子相关操作',path='/')
 
 # Swagger请求模型
 post_create_model = api.model('PostCreate', {
@@ -131,8 +131,8 @@ class PostDetail(Resource):
 				post_id=post_id,
 				current_user_id=current_user_id,
 			)
-		# 序列化帖子数据
-		post_data = post_schema.dump(result['post'])
+		# get_post 已返回序列化后的 dict，直接使用，避免二次序列化
+		post_data = result['post']
 		return success_response(
 				data={
 					'post': post_data,

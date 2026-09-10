@@ -1,11 +1,11 @@
 from celery import shared_task
 from app.posts.cache import PostCache
 import logging 
-
+from tasks.base_task import MonitoredTask 
 
 logger=logging.getLogger(__name__)
 
-@shared_task(bind=True,max_retries=3,default_retry_delay=5)
+@shared_task(base=MonitoredTask,bind=True,max_retries=3,default_retry_delay=5)
 def delayed_invalidate(self,post_id:int):
     """
     延迟双删的第二次删除
@@ -19,7 +19,7 @@ def delayed_invalidate(self,post_id:int):
         logger.error(f'[celery]延迟删除帖子缓存失败post_id={post_id}:{exc}')
         raise self.retry(exc=exc)
 
-@shared_task(bind=True,max_retries=3,default_retry_delay=5)
+@shared_task(base=MonitoredTask,bind=True,max_retries=3,default_retry_delay=5)
 def delayed_invalidate_comment(self,comment_id:int):
     '''评论更新/删除后的延迟双删'''
     try:

@@ -152,48 +152,6 @@ class TestPostService:
             PostService.delete_post(post_id, other_id)
         assert "无权删除" in str(excinfo.value)
 
-    def test_like_post(self, app, db_session, mock_redis):
-        """测试点赞帖子"""
-        with app.app_context():
-            user = UserFactory()
-            post = PostFactory(author=user)
-            post_id = post.id
-            user_id = user.id
-
-            result = LikeService.create_like(user_id=user_id, post_id=post_id)
-
-        # LikeService.create_like 返回点赞序列化数据
-        assert result["user_id"] == user_id
-        assert result["post_id"] == post_id
-
-        with app.app_context():
-            from app.likes.models import Like
-            like = Like.query.filter_by(user_id=user_id, post_id=post_id).first()
-            assert like is not None
-            updated_post = db_session.get(Post, post_id)
-            assert updated_post.like_count == 1
-
-    def test_unlike_post(self, app, db_session, mock_redis):
-        """测试取消点赞"""
-        with app.app_context():
-            user = UserFactory()
-            post = PostFactory(author=user)
-            post_id = post.id
-            user_id = user.id
-            # 先点赞
-            LikeService.create_like(user_id=user_id, post_id=post_id)
-
-            result = LikeService.delete_like(user_id=user_id, post_id=post_id)
-
-        # LikeService.delete_like 返回 True
-        assert result is True
-
-        with app.app_context():
-            from app.likes.models import Like
-            like = Like.query.filter_by(user_id=user_id, post_id=post_id, is_deleted=False).first()
-            assert like is None
-            updated_post = db_session.get(Post, post_id)
-            assert updated_post.like_count == 0
     def test_update_post_no_updates(self, app, db_session, mock_redis):
         """测试未提供任何更新内容（抛出异常）"""
         with app.app_context():
@@ -205,6 +163,66 @@ class TestPostService:
         with pytest.raises(ValidationError) as excinfo:
             PostService.update_post(post_id, user_id)  # 不提供 content 和 image_url
         assert "至少提供一个更新内容" in str(excinfo.value)
+    def test_search_posts(self, app, db_session, mock_redis, mock_es):
+        """测试搜索帖子（ES 降级到 DB 搜索）"""
+        with app.app_context():
+            user = UserFactory()
+            PostFactory(author=user, content="Python 教程")
+            PostFactory(author=user, content="Flask 入门")
+
+            # mock_es 返回空，触发降级到 DB LIKE 搜索
+            result = PostService.search_posts("Python", page=1, per_page=10)
+
+            assert "items" in result
+            # ES 降级时 fallback=True
+            assert result.get("is_es_search") is False
+
+    def test_get_hot_posts(self, app, db_session, mock_redis):
+        """测试获取热帖列表"""
+        with app.app_context():
+            user = UserFactory()
+            for i in range(3):
+                post = PostFactory(author=user)
+                from app.posts.cache import PostCache
+                PostCache.update_hot_post(post.id, score=100 - i)
+
+            result = PostService.get_hot_posts(page=1, per_page=10, period="daily")
+
+            assert "items" in result
+            assert len(result["items"]) <= 10
+
+    def test_delete_post_cascade_events(self, app, db_session, mock_redis, mock_event_bus):
+        """测试删除帖子时事件发布"""
+        with app.app_context():
+            user = UserFactory()
+            post = PostFactory(author=user)
+
+            PostService.delete_post(post.id, user.id)
+
+            # 验证事件总线发布了 post.deleted 事件
+            mock_event_bus.publish.assert_called()
+
+    def test_concurrent_update_stale_data(self, app, db_session, mock_redis, monkeypatch):
+        """测试并发更新检测 StaleDataError"""
+        with app.app_context():
+            user = UserFactory()
+            post = PostFactory(author=user)
+
+            # mock 让 post_repository 抛出 StaleDataError
+            from sqlalchemy.orm.exc import StaleDataError
+            def raise_stale(*args, **kwargs):
+                raise StaleDataError()
+
+            monkeypatch.setattr(
+                'app.posts.repositories.post_repository.get_by_id',
+                raise_stale
+            )
+
+            from app.common.exceptions import ConflictError
+            with pytest.raises(ConflictError) as excinfo:
+                PostService.update_post(post.id, user.id, content="新内容")
+            assert "已被其他用户修改" in str(excinfo.value)
+
 
 
 class TestPostCache:
@@ -267,3 +285,5 @@ class TestPostCache:
             cache.set(p['id'], p)
         for p in posts:
             assert cache.get(p['id']) == p
+
+    

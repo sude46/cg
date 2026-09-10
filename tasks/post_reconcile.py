@@ -4,6 +4,7 @@ from app.posts.repositories import post_repository
 from core .redis_cache import redis_cache
 import logging 
 import random
+from core.metrics import RECONCILE_DIFF_COUNT  # 新增
 
 logger=logging.getLogger(__name__)
 
@@ -24,6 +25,7 @@ def reconcile_post_cache(sample_size:int=500):
         if len(keys)>sample_size:
             keys=random.sample(keys,sample_size)
         fixed=0
+        total_diff = 0  # 用于监控
         checked=0
 
         for key in keys:
@@ -67,14 +69,18 @@ def reconcile_post_cache(sample_size:int=500):
                 if redis_deleted != db_deleted:
                     mismatched = True
                 if mismatched:
+                    total_diff += 1
                     PostCache.invalidate(post_id)
                     fixed += 1
             except Exception as e:
+                RECONCILE_DIFF_COUNT.labels(resource_type='post').set(total_diff)
                 logger.error(f'[Reconcile] 对账单条异常 key={key}: {e}')
                 continue
+            RECONCILE_DIFF_COUNT.labels(resource_type='post').set(total_diff)
             logger.info(f'[Reconcile] 对账完成: 检查{checked}条, 修正{fixed}条')
             return {'status': 'success', 'checked': checked, 'fixed': fixed}
     except Exception as e:
+        RECONCILE_DIFF_COUNT.labels(resource_type='post').set(total_diff)
         logger.error(f'[Reconcile] 对账任务异常: {e}')
         return {'status': 'failed', 'error': str(e)}
     

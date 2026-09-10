@@ -1,3 +1,4 @@
+from core.metrics import monitor_db 
 from typing import Optional, Dict, Any
 from datetime import datetime, timezone
 from app.common.database import utcnow
@@ -15,6 +16,7 @@ class PostRepository:
         return get_read_session()
 
     @staticmethod
+    @monitor_db("select", "posts")
     def get_by_id(
         post_id: int, 
         lock: bool = False, 
@@ -42,6 +44,7 @@ class PostRepository:
         return query.first()
 
     @staticmethod
+    @monitor_db("insert", "posts")
     def create_post(user_id: int, content: str, image_url: str = None) -> Post:
         post = Post(
             content=content, 
@@ -53,6 +56,7 @@ class PostRepository:
         return post
 
     @staticmethod
+    @monitor_db("select", "posts")
     def list_posts(
         page: int = 1, 
         per_page: int = 20, 
@@ -76,6 +80,7 @@ class PostRepository:
         }
 
     @staticmethod
+    @monitor_db("select", "posts")
     def search_posts(query_str: str, page: int = 1, per_page: int = 20):
         session = PostRepository._read_session()
         query = session.query(Post).options(
@@ -92,6 +97,7 @@ class PostRepository:
         }
 
     @staticmethod
+    @monitor_db("update", "posts")
     def soft_delete_post(post: Post) -> None:
         """软删除帖子及相关评论"""
         now = utcnow()
@@ -108,6 +114,7 @@ class PostRepository:
         db.session.add(post)
 
     @staticmethod
+    @monitor_db("update", "posts")
     def increment_like_count(post_id: int) -> None:
         """原子递增：SET like_count = like_count + 1，无客户端求值"""
         db.session.execute(
@@ -117,6 +124,7 @@ class PostRepository:
         )
 
     @staticmethod
+    @monitor_db("update", "posts")
     def decrement_like_count(post_id: int) -> None:
         """原子递减（不低于0）"""
         db.session.execute(
@@ -126,6 +134,7 @@ class PostRepository:
         )
 
     @staticmethod
+    @monitor_db("update", "posts")
     def increment_comment_count(post_id: int) -> None:
         """原子递增：SET comment_count = comment_count + 1"""
         db.session.execute(
@@ -135,6 +144,7 @@ class PostRepository:
         )
 
     @staticmethod
+    @monitor_db("update", "posts")
     def decrement_comment_count(post_id: int) -> None:
         """原子递减（不低于0）"""
         db.session.execute(
@@ -144,6 +154,7 @@ class PostRepository:
         )
 
     @staticmethod
+    @monitor_db("update", "posts")
     def update_like_count(post_id: int, count: int) -> None:
         db.session.execute(
             update(Post)
