@@ -46,6 +46,6 @@ scrape_configs:
   # 6. 钉钉告警服务健康检查
   - job_name: 'alert-webhook'
     static_configs:
-      - targets: ['host.docker.internal:5001']
+      - targets: ['alert-webhook:5001']
     metrics_path: /health
     scrape_interval: 30s

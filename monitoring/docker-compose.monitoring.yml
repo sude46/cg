@@ -46,10 +46,23 @@ services:
       - '--storage.path=/alertmanager'
     ports:
       - "9093:9093"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     networks:
       - monitoring
+
+  alert-webhook:
+    build:
+      context: .
+      dockerfile: Dockerfile.webhook
+    container_name: weibo-alert-webhook
+    environment:
+      - DINGTALK_WEBHOOK=${DINGTALK_WEBHOOK}
+      - DINGTALK_SECRET=${DINGTALK_SECRET:-}
+      - AT_CRITICAL_MOBILES=${AT_CRITICAL_MOBILES:-}
+    ports:
+      - "5001:5001"
+    networks:
+      - monitoring
+    restart: unless-stopped
 
   node-exporter:
     image: prom/node-exporter:v1.6.1

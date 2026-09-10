@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import sys
 from datetime import datetime
 from flask import Flask,request
 import requests
@@ -10,12 +11,12 @@ app=Flask(__name__)
 logging.basicConfig(level=logging.INFO)
 logger=logging.getLogger("alert-webhook")
 
-DINGTALK_WEBHOOK=os.getenv(
-        "DINGTALK_WEBHOOK",
-        "https://oapi.dingtalk.com/robot/send?access_token=00da4d225f1a25b653c2a213e93339fb941b20b973347da3220029939868bc25"
-        )
+DINGTALK_WEBHOOK=os.environ.get("DINGTALK_WEBHOOK","").strip()
+if not DINGTALK_WEBHOOK:
+    logger.error("环境变量 DINGTALK_WEBHOOK 未设置，无法发送钉钉告警，启动失败")
+    sys.exit(1)
 
-DINGTALK_SECRET=os.getenv("DINGTALK_SECRET","")
+DINGTALK_SECRET=os.environ.get("DINGTALK_SECRET","")
 
 SEVERITY_EMOJI={
         "critical":"🔴",
@@ -24,8 +25,9 @@ SEVERITY_EMOJI={
         }
 
 
+_AT_CRITICAL=os.environ.get("AT_CRITICAL_MOBILES","")
 SEVERITY_AT={
-        "critical":["13192833874"],
+        "critical":[m.strip() for m in _AT_CRITICAL.split(",") if m.strip()],
         "warning":[],
         "info":[]
         }

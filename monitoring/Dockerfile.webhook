@@ -1,0 +1,14 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+RUN pip install --no-cache-dir flask requests
+
+COPY alert_webhook.py /app/alert_webhook.py
+
+RUN useradd -m -u 1000 webhookuser && chown -R webhookuser:webhookuser /app
+USER webhookuser
+
+EXPOSE 5001
+
+CMD ["python", "alert_webhook.py"]
