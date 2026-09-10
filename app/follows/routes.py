@@ -30,7 +30,7 @@ api_restx=Api(
 )
 
 #创建命名空间
-api=Namespace('follows',description='关注相关操作')
+api=Namespace('follows',description='关注相关操作',path='/')
 
 # Swagger请求模型
 follow_create_model = api.model('FollowCreate', {

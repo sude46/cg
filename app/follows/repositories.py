@@ -7,6 +7,7 @@ from sqlalchemy.orm import aliased
 from app.users.models import User
 from datetime import datetime,timezone
 from app.common.database import utcnow
+from core.metrics import monitor_db
 
 
 class FollowRepository:
@@ -18,6 +19,7 @@ class FollowRepository:
     
 
     @staticmethod
+    @monitor_db("select", "follows")
     def get_relation(follower_id: int, followed_id: int,lock:bool=False) -> Optional[Follow]:
         """
         获取某个关注关系（唯一约束，未删除）。
@@ -35,6 +37,7 @@ class FollowRepository:
         ).first()
     
     @staticmethod
+    @monitor_db("select", "follows")
     def get_follower_ids(followed_id:int):
         '''
         获取粉丝ID列表（Feed推送用）
@@ -49,6 +52,7 @@ class FollowRepository:
     
 
     @staticmethod
+    @monitor_db("insert", "follows")
     def create_follow(follower_id: int, followed_id: int) -> Follow:
         """创建关注关系（不提交事务，上层控制 commit/rollback）。"""
         follow = Follow(follower_id=follower_id, followed_id=followed_id)
@@ -56,12 +60,14 @@ class FollowRepository:
         return follow
 
     @staticmethod
+    @monitor_db("update", "follows")
     def delete_follow(follow: Follow) -> None:
         """删除关注关系（软删除），不提交事务。"""
         follow.deleted_at=utcnow()
         db.session.add(follow)
 
     @staticmethod
+    @monitor_db("select", "follows")
     def list_following(user_id: int, page: int = 1, per_page: int = 20) -> Dict[str, Any]:
         """分页获取我关注的人。"""
         session=FollowRepository._read_session()
@@ -79,6 +85,7 @@ class FollowRepository:
         }
 
     @staticmethod
+    @monitor_db("select", "follows")
     def list_followers(user_id: int, page: int = 1, per_page: int = 20) -> Dict[str, Any]:
         """分页获取关注我的人"""
         session=FollowRepository._read_session()
@@ -93,6 +100,7 @@ class FollowRepository:
             'pagination':result['pagination']
         }
     @staticmethod
+    @monitor_db("select", "follows")
     def get_mutual_follows(user_id: int, page: int = 1, per_page: int = 20):
         """
         获取互相关注的用户列表（未删除的关注关系）

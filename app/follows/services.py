@@ -14,7 +14,7 @@ from app.common.exceptions import (
 )
 from app.feeds.cache import FeedCache
 import logging
-
+from core.metrics import FOLLOW_OPERATIONS
 logger = logging.getLogger(__name__)
 
 
@@ -51,11 +51,13 @@ class FollowService:
             # 6. 清 Feed 时间线缓存（关注后时间线内容变了）
             FeedCache.invalidate_feed(follower_id)
             logger.info(f'用户{follower_id}关注了用户{followed_id}')
+            FOLLOW_OPERATIONS.labels(action='follow', result='success').inc()
             return {'message': '关注成功', 'follow': follow_response_schema.dump(follow)}
             
         except IntegrityError:
             db.session.rollback()
             logger.warning(f'用户{follower_id}重复关注用户{followed_id}')
+            FOLLOW_OPERATIONS.labels(action='follow', result='duplicate').inc()
             raise ConflictError('已关注用户')
             
         except Exception as e:
@@ -63,6 +65,7 @@ class FollowService:
             logger.error('关注用户失败: %s', e)
             if isinstance(e, (ResourceNotFoundError, ValidationError)):
                 raise
+            FOLLOW_OPERATIONS.labels(action='follow', result='error').inc()
             raise DatabaseError('关注操作失败,请稍后重试')
         finally:
             # 释放锁调 FollowCache
@@ -92,6 +95,7 @@ class FollowService:
             # 清 Feed 缓存
             FeedCache.invalidate_feed(follower_id)
             logger.info(f'用户{follower_id}取消关注用户{followed_id}')
+            FOLLOW_OPERATIONS.labels(action='unfollow', result='success').inc()
             return {'message': '取消关注成功'}
 
 
@@ -100,6 +104,7 @@ class FollowService:
             logger.error('取消关注失败: %s', e)
             if isinstance(e, ResourceNotFoundError):
                 raise
+            FOLLOW_OPERATIONS.labels(action='unfollow', result='error').inc()
             raise DatabaseError('取消关注操作失败,请稍后重试')
         finally:
             FollowCache.release_lock(follower_id, followed_id)
@@ -113,6 +118,7 @@ class FollowService:
 
             result = follow_repository.list_following(user_id, page=page, per_page=per_page)
             items = follow_response_schema.dump(result.get('items', []), many=True)
+            FOLLOW_OPERATIONS.labels(action='list_following', result='success').inc()
             return {'follows': items, 'pagination': result.get('pagination', {})}
         except Exception as e:
             logger.error('获取关注列表失败: %s', e)
@@ -129,6 +135,7 @@ class FollowService:
 
             result = follow_repository.list_followers(user_id, page=page, per_page=per_page)
             items = follow_response_schema.dump(result.get('items', []), many=True) 
+            FOLLOW_OPERATIONS.labels(action='list_followers', result='success').inc()
             return {'follows': items, 'pagination': result.get('pagination', {})}
         except Exception as e:
             logger.error('获取粉丝列表失败: %s', e)
@@ -150,6 +157,7 @@ class FollowService:
         from app.users.schemas import UserListSchema
         # Service 只负责序列化
         users = UserListSchema().dump(result.get('items', []), many=True)
+        FOLLOW_OPERATIONS.labels(action='mutual', result='success').inc()
         return {'mutual_users': users, 'pagination': result.get('pagination', {})}
 
     @staticmethod
