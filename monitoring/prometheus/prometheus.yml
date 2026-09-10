@@ -1,0 +1,51 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']
+
+rule_files:
+  - /etc/prometheus/rules/*.yml
+
+scrape_configs:
+  # 1. Weibo API 应用指标
+  - job_name: 'weibo-api'
+    static_configs:
+      - targets: ['app:5000']
+    metrics_path: /metrics
+    scrape_interval: 5s
+    scrape_timeout: 3s
+
+  # 2. Node Exporter（宿主机）
+  - job_name: 'node'
+    static_configs:
+      - targets: ['host.docker.internal:9100']
+    scrape_interval: 15s
+
+  # 3. Redis Exporter（业务 Redis）
+  - job_name: 'redis-business'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+    scrape_interval: 15s
+
+  # 4. MySQL Exporter（业务 MySQL/MariaDB 主库）
+  - job_name: 'mysql-master'
+    static_configs:
+      - targets: ['mysqld-exporter:9104']
+    scrape_interval: 15s
+
+  # 5. Celery Exporter（监控 broker 队列/任务）
+  - job_name: 'celery'
+    static_configs:
+      - targets: ['celery-exporter:9540']
+    scrape_interval: 15s
+
+  # 6. 钉钉告警服务健康检查
+  - job_name: 'alert-webhook'
+    static_configs:
+      - targets: ['host.docker.internal:5001']
+    metrics_path: /health
+    scrape_interval: 30s

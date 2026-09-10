@@ -1,0 +1,77 @@
+groups:
+  - name: weibo-api-alerts
+    rules:
+      - alert: WeiboApiHighLatency
+        expr: histogram_quantile(0.99, rate(weibo_http_request_duration_seconds_bucket[5m])) > 0.5
+        for: 2m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "Weibo API 延迟过高"
+          description: "P99 延迟超过 500ms，当前值: {{ $value }}s"
+
+      - alert: WeiboApiHighErrorRate
+        expr: |
+          sum(rate(weibo_http_requests_total{status_code=~"5.."}[5m]))
+          /
+          sum(rate(weibo_http_requests_total[5m])) > 0.01
+        for: 2m
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: "Weibo API 错误率过高"
+          description: "5xx 错误率超过 1%"
+
+      - alert: WeiboCeleryQueueBacklog
+        expr: celery_queue_length > 1000
+        for: 1m
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: "Celery 队列堆积"
+          description: "队列 {{ $labels.queue }} 堆积 {{ $value }} 个任务"
+
+      - alert: WeiboRedisMemoryHigh
+        expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "Redis 内存使用率过高"
+          description: "Redis 内存使用超过 80%"
+
+      - alert: WeiboDbSlowQuery
+        expr: histogram_quantile(0.99, rate(weibo_db_query_duration_seconds_bucket[5m])) > 0.5
+        for: 3m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "DB 慢查询"
+          description: "DB P99 查询时间 {{ $value }}s"
+
+      - alert: WeiboMysqlDown
+        expr: up{job="mysql-master"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: "MySQL/MariaDB 主库不可用"
+          description: "mysqld-exporter 无法连接 MySQL 主库，实例 {{ $labels.instance }} 已下线"
+
+  - name: weibo-business-alerts
+    rules:
+      - alert: WeiboReconcileDiff
+        expr: weibo_reconcile_diff_count > 0
+        for: 1m
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: "数据对账发现差异"
+          description: "Redis 与 DB 数据不一致，请检查"

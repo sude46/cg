@@ -1,1 +1,25 @@
-/.cursor
+# 密钥与环境——永不入库
+.env
+*.pem
+*.key
+
+# Python 产物
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
+
+# 编辑器 / AI 工具
+.cursor
+.opencode/
+.vscode/
+.idea/
+
+# 运行时数据与二进制
+logs/
+elasticsearch/
+*.zip
+
+# 系统垃圾
+.DS_Store
