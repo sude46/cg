@@ -17,6 +17,7 @@ from app.common.database import utcnow
 import logging
 from .schemas import comment_schema,comments_schema
 from .cache import CommentCache
+from core.metrics import COMMENT_OPERATIONS
 
 
 
@@ -45,7 +46,7 @@ class CommentService:
             db.session.commit()
 
             #预热评论详情缓存（主库写Redistribution，失败不影响主流程）
-            comment_dict=comments_schema.dump(comment)
+            comment_dict=comment_schema.dump(comment)
             CommentCache.set(comment.id,comment_dict)
             CommentCache.increment_count(post_id)
 
@@ -68,15 +69,18 @@ class CommentService:
             })
 
             logger.info('用户%d为帖子%d创建评论%d', user_id, post_id, comment.id)
+            COMMENT_OPERATIONS.labels(action='create', result='success').inc()
             return {'message': '评论成功', 'comment': comment_dict}
         except IntegrityError:
             db.session.rollback()
+            COMMENT_OPERATIONS.labels(action='create', result='error').inc()
             raise DatabaseError('创建评论失败，数据库约束错误')
         except Exception as e:
             db.session.rollback()
             logger.error('创建评论失败: %s', e)
             if isinstance(e, (ResourceNotFoundError, ValidationError)):
                 raise
+            COMMENT_OPERATIONS.labels(action='create', result='error').inc()
             raise DatabaseError(f'创建评论失败: {e}')
         
 
@@ -96,6 +100,7 @@ class CommentService:
         #回填缓存（主库）
         comment_dict=comment_schema.dump(comment)
         CommentCache.set(comment_id,comment_dict)
+        COMMENT_OPERATIONS.labels(action='get', result='success').inc()
         return comment_dict
     
 
@@ -114,6 +119,7 @@ class CommentService:
             author_ids = list(set(c['user_id'] for c in items if c.get('user_id')))
             if author_ids:
                 UserCache.preload_profiles(author_ids)
+        COMMENT_OPERATIONS.labels(action='list', result='success').inc()
         return {'items': items, 'pagination': result.get('pagination', {})}
 
     #===============更新（延迟双删）===============
@@ -150,12 +156,14 @@ class CommentService:
                 logger.warning(f'调度延迟删除失败，降级为线程：{e}')
                 CommentCache.double_invalidate(comment_id)
             logger.info('用户%d更新评论%d', user_id, comment_id)
+            COMMENT_OPERATIONS.labels(action='update', result='success').inc()
             return {'message': '评论更新成功', 'comment': comment_schema.dump(comment)}
         except Exception as e:
             db.session.rollback()
             logger.error('更新评论失败: %s', e)
             if isinstance(e, (ResourceNotFoundError, PermissionError, ValidationError)):
                 raise
+            COMMENT_OPERATIONS.labels(action='update', result='error').inc()
             raise DatabaseError(f'更新评论失败: {e}')
         
 
@@ -206,12 +214,14 @@ class CommentService:
                     'comment_count':current_count
                 })
             logger.info('用户%d删除评论%d',user_id,comment_id)
+            COMMENT_OPERATIONS.labels(action='delete', result='success').inc()
             return {'message': '评论删除成功'}
         except Exception as e:
             db.session.rollback()
             logger.error('删除评论失败: %s', e)
             if isinstance(e, (ResourceNotFoundError, PermissionError)):
                 raise
+            COMMENT_OPERATIONS.labels(action='delete', result='error').inc()
             raise DatabaseError(f'删除评论失败: {e}')
         
     
@@ -233,6 +243,7 @@ class CommentService:
                     comment_dict=comment_schema.dump(comment)
                     CommentCache.set(cid,comment_dict)
                     comments.append(comment_dict)
+        COMMENT_OPERATIONS.labels(action='hot', result='success').inc()
         return {'items': comments, 'pagination': {'page': page, 'per_page': per_page, 'total': total}}
 
             

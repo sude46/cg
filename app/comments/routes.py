@@ -28,7 +28,7 @@ api_restx=Api(
         security='Bearer',
         doc='/docs' 
         )
-api=Namespace('comments',description='评论相关操作')
+api=Namespace('comments',description='评论相关操作',path='/')
 
 # Swagger请求模型
 comment_create_model = api.model('CommentCreate', {
