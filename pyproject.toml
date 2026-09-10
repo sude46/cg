@@ -1,0 +1,94 @@
+[build-system]
+requires=["setuptools>=68.0","wheel"]
+build-backend="setuptools.build_meta"
+
+[project]
+name="weibo"
+version="1.0.0"
+description="weibo-platform-backend"
+readme = "README.md"
+requires-python=">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "weibo-platform" }]
+keywords = ["flask", "weibo", "social", "api"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Framework :: Flask",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    # Flask 生态
+    "Flask>=3.0.0",
+    "Flask-RESTX>=1.3.0",
+    "Flask-SQLAlchemy>=3.1.0",
+    "Flask-Migrate>=4.0.0",
+    "Flask-JWT-Extended>=4.6.0",
+    "Flask-Bcrypt>=1.0.1",
+    "Flask-Mail>=0.10.0",
+    "Flask-WTF>=1.2.0",
+    "Flask-CORS>=4.0.0",            # CORS 跨域（middlewares/cors_middleware.py）
+    "Flask-Limiter>=3.5.0",         # 限流（middlewares/rate_limit_middleware.py）
+    # 数据库
+    "SQLAlchemy>=2.0.0",
+    "alembic>=1.13.0",
+    "PyMySQL>=1.1.0",               # MySQL 驱动，与 SQLAlchemy 配合
+    # 缓存 / 队列
+    "redis>=5.0.0",
+    "celery[redis]>=5.3.0",         # 异步任务（tasks/ 目录）
+    # 搜索
+    "elasticsearch>=8.11.0,<9",
+    # 安全 / 工具
+    "pyotp>=2.9.0",                 # TOTP 双因子认证
+    "cryptography>=41.0.0",         # Fernet 加密（utils/security_utils.py）
+    "python-dotenv>=1.0.0",
+    "marshmallow>=3.20.0",
+    "password-strength>=0.0.3",
+    # WSGI / 生产
+    "gunicorn>=21.0.0",
+    # 可观测性
+    "prometheus-flask-exporter>=0.23.0",
+    "sentry-sdk[flask]>=1.40.0",
+]
+
+[project.optional-dependencies]
+# 测试依赖：pip install -e ".[test]"
+test = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "pytest-mock>=3.11.0",
+    "factory-boy>=3.3.0",
+    "faker>=20.0.0",
+    "locust>=2.15.0",               # 性能测试（tests/performance/locustfile.py）
+]
+# 开发工具依赖：pip install -e ".[dev]"
+dev = [
+    "ruff>=0.5.0",
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "pytest-mock>=3.11.0",
+    "factory-boy>=3.3.0",
+    "faker>=20.0.0",
+]
+# 一键安装所有：pip install -e ".[all]"
+all = [
+    "weibo[test,dev]",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*", "core*", "config*", "services*", "middlewares*", "tasks*", "utils*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "UP"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
