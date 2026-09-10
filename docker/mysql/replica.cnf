@@ -4,8 +4,6 @@ relay_log=mysql-relay-bin
 log_bin=mysql-bin
 read_only=1
 bind-address=0.0.0.0
-
-# GTID 必须开启
-gtid_mode=ON
-enforce_gtid_consistency=ON
-
+gtid_strict_mode=1
+character-set-server=utf8mb4
+collation-server=utf8mb4_unicode_ci

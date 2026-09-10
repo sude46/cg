@@ -1,8 +1,6 @@
-version: '3.8'
-
 services:
   mysql-master:
-    image: mysql:8.0
+    image: mariadb:10.6
     container_name: weibo-mysql-master
     environment:
       - MYSQL_ROOT_PASSWORD=123456
@@ -14,7 +12,7 @@ services:
     volumes:
       - /data/mysql-master:/var/lib/mysql
       - ./docker/mysql/master.cnf:/etc/mysql/conf.d/master.cnf
-      - ./docker/mysql/init-master.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./docker/mysql/init_master.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - weibo-network
     deploy:
@@ -23,18 +21,14 @@ services:
           cpus: '0.5'
           memory: 512M
     healthcheck:
-      # 检查：mysqld 存活 + binlog 已生成（证明初始化完成）
-      test: >
-        CMD-SHELL
-        mysqladmin ping -h localhost -u root -p$$MYSQL_ROOT_PASSWORD --silent
-        && mysql -h localhost -u root -p$$MYSQL_ROOT_PASSWORD -e "SHOW MASTER STATUS\G" | grep -q "File:"
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p123456"]
       interval: 10s
       timeout: 5s
       retries: 10
       start_period: 30s
 
   mysql-replica-1:
-    image: mysql:8.0
+    image: mariadb:10.6
     container_name: weibo-mysql-replica-1
     environment:
       - MYSQL_ROOT_PASSWORD=123456
@@ -43,7 +37,7 @@ services:
     volumes:
       - /data/mysql-replica-1:/var/lib/mysql
       - ./docker/mysql/replica.cnf:/etc/mysql/conf.d/replica.cnf
-      - ./docker/mysql/init-replica.sh:/docker-entrypoint-initdb.d/init-replica.sh
+      - ./docker/mysql/init_replica.sh:/docker-entrypoint-initdb.d/init_replica.sh
     networks:
       - weibo-network
     depends_on:
@@ -55,7 +49,7 @@ services:
           cpus: '0.5'
           memory: 512M
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p123456"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -81,6 +75,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 20s
 
   redis-replica-1:
     image: redis:7-alpine
@@ -138,8 +133,9 @@ services:
     ports:
       - "26379:26379"
     volumes:
-      - ./docker/redis/sentinel.conf:/usr/local/etc/redis/sentinel.conf
-    command: ["redis-sentinel", "/usr/local/etc/redis/sentinel.conf"]
+      - ./docker/redis/sentinel.conf:/tmp/sentinel.conf:ro
+      - ./docker/redis/sentinel-entrypoint.sh:/entrypoint.sh:ro
+    command: ["/bin/sh", "/entrypoint.sh"]
     depends_on:
       redis-master:
         condition: service_healthy
@@ -161,8 +157,9 @@ services:
     ports:
       - "26380:26379"
     volumes:
-      - ./docker/redis/sentinel.conf:/usr/local/etc/redis/sentinel.conf
-    command: ["redis-sentinel", "/usr/local/etc/redis/sentinel.conf"]
+      - ./docker/redis/sentinel.conf:/tmp/sentinel.conf:ro
+      - ./docker/redis/sentinel-entrypoint.sh:/entrypoint.sh:ro
+    command: ["/bin/sh", "/entrypoint.sh"]
     depends_on:
       redis-master:
         condition: service_healthy
@@ -184,8 +181,9 @@ services:
     ports:
       - "26381:26379"
     volumes:
-      - ./docker/redis/sentinel.conf:/usr/local/etc/redis/sentinel.conf
-    command: ["redis-sentinel", "/usr/local/etc/redis/sentinel.conf"]
+      - ./docker/redis/sentinel.conf:/tmp/sentinel.conf:ro
+      - ./docker/redis/sentinel-entrypoint.sh:/entrypoint.sh:ro
+    command: ["/bin/sh", "/entrypoint.sh"]
     depends_on:
       redis-master:
         condition: service_healthy
@@ -200,12 +198,13 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
   redis-celery:
-    image: redis:7-apline
+    image: redis:7-alpine
     container_name: weibo-redis-celery
     ports:
       - "6382:6379"
-    volumes:
+    networks:
       - weibo-network
     deploy:
       resources:
@@ -213,7 +212,7 @@ services:
           cpus: '0.5'
           memory: 256M
     healthcheck:
-      test: ["CMD", "redis-cli",ping]
+      test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -239,7 +238,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 30s
+      start_period: 60s
 
   app:
     build: .
@@ -247,6 +246,9 @@ services:
     ports:
       - "5000:5000"
     env_file: .env
+    environment:
+      - FLASK_APP=wsgi.py
+      - FLASK_ENV=development
     depends_on:
       mysql-master:
         condition: service_healthy
@@ -269,20 +271,8 @@ services:
     networks:
       - weibo-network
     volumes:
-      - ./app:/app
+      - .:/app
     command: flask run --host=0.0.0.0 --reload
-
-  kibana:
-    image: docker.elastic.co/kibana/kibana:8.11.0
-    container_name: weibo-kibana
-    environment:
-      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
-    ports:
-      - "5601:5601"
-    depends_on:
-      - elasticsearch
-    networks:
-      - weibo-network
 
   elasticsearch-cn:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
@@ -307,4 +297,3 @@ volumes:
 networks:
   weibo-network:
     driver: bridge
-
