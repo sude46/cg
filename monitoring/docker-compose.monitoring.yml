@@ -81,8 +81,10 @@ services:
     image: prom/mysqld-exporter:v0.15.0
     container_name: weibo-mysqld-exporter
     environment:
-      - DATA_SOURCE_NAME=root:123456@(weibo-mysql-master:3306)/
+      - MYSQLD_EXPORTER_PASSWORD=exporter123
     command:
+      - '--mysqld.username=exporter'
+      - '--mysqld.address=weibo-mysql-master:3306'
       - '--collect.slave_status'
       - '--collect.global_status'
       - '--collect.global_variables'
@@ -94,9 +96,8 @@ services:
       - monitoring
       - weibo-network
     restart: unless-stopped
-
   celery-exporter:
-    image: danihodovic/celery-exporter:latest
+    image: docker.1ms.run/danihodovic/celery-exporter:latest
     container_name: weibo-celery-exporter
     environment:
       - CE_BROKER_URL=redis://weibo-redis-celery:6379/0
