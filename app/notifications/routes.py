@@ -39,7 +39,7 @@ api_restx=Api(
         security='Bearer',
         doc='/docs'
         )
-api=Namespace('notifications',description='通知相关操作')
+api=Namespace('notifications',description='通知相关操作',path='/')
 
 notification_response_model=api.model('NotificationResponse',{
     'id':fields.Integer(readOnly=True,description='通知ID'),

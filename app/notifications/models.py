@@ -23,7 +23,7 @@ class Notification(db.Model):
     #相关资源ID,例如帖子ID或评论ID根据type不同而不同
     resource_id=db.Column(db.Integer,nullable=True)
     #相关资源类型,例如'post','comment'
-    resource_type=db.Column(db.String,nullable=True)
+    resource_type=db.Column(db.String(20),nullable=True)
     content=db.Column(db.Text,nullable=False)
     is_read=db.Column(db.Boolean,default=False)
     deleted_at=db.Column(db.DateTime,nullable=True,default=None,index=True)

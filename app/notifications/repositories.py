@@ -4,6 +4,7 @@ from app.common.database import utcnow
 from core import db
 from app.notifications.models import Notification
 from app.common.database import pagination_utils, get_read_session
+from core.metrics import monitor_db
 
 
 class NotificationRepository:
@@ -13,12 +14,14 @@ class NotificationRepository:
         return get_read_session()
 
     @staticmethod
+    @monitor_db("insert", "notifications")
     def create_notification(data: Dict[str, Any]) -> Notification:
         notif = Notification(**data)
         db.session.add(notif)
         return notif
 
     @staticmethod
+    @monitor_db("select", "notifications")
     def get_by_id(notification_id: int, user_id: int, force_master: bool = False) -> Optional[Notification]:
         session = db.session if force_master else NotificationRepository._read_session()
         return session.query(Notification).filter(
@@ -28,6 +31,7 @@ class NotificationRepository:
         ).first()
 
     @staticmethod
+    @monitor_db("select", "notifications")
     def list_by_user(user_id: int, page: int = 1, per_page: int = 20, unread_only: bool = False):
         session = NotificationRepository._read_session()
         query = session.query(Notification).filter(
@@ -44,11 +48,13 @@ class NotificationRepository:
         }
 
     @staticmethod
+    @monitor_db("update", "notifications")
     def mark_as_read(notification: Notification) -> None:
         notification.is_read = True
         db.session.add(notification)
 
     @staticmethod
+    @monitor_db("update", "notifications")
     def mark_all_as_read(user_id: int) -> None:
         db.session.query(Notification).filter(
             Notification.user_id == user_id,
@@ -60,12 +66,14 @@ class NotificationRepository:
         )
 
     @staticmethod
+    @monitor_db("update", "notifications")
     def delete(notification: Notification) -> None:
         """软删除通知"""
         notification.deleted_at = utcnow()
         db.session.add(notification)
 
     @staticmethod
+    @monitor_db("count", "notifications")
     def count_unread(user_id: int, force_master: bool = False) -> int:
         """统计用户未读通知数"""
         session = db.session if force_master else NotificationRepository._read_session()

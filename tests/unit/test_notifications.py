@@ -200,3 +200,96 @@ class TestNotificationService:
             with pytest.raises(ResourceNotFoundError) as excinfo:
                 NotificationService.delete_notification(notif_id, other.id)
             assert "不存在或无权访问" in str(excinfo.value)
+
+class TestNotificationCache:
+    """通知缓存层单元测试"""
+    def test_unread_count_increment(self, app, mock_redis):
+        """未读计数 +1"""
+        from app.notifications.cache import NotificationCache
+        with app.app_context():
+            NotificationCache.increment_unread(1)
+            assert NotificationCache.get_unread_count(1) == 1 
+
+    def test_unread_count_decrement(self, app, mock_redis):
+        """未读计数 -1"""
+        from app.notifications.cache import NotificationCache
+        with app.app_context():
+            NotificationCache.increment_unread(1)
+            NotificationCache.increment_unread(1)
+            NotificationCache.decrement_unread(1)
+            assert NotificationCache.get_unread_count(1) == 1
+
+    def test_mark_all_as_read(self,app,mock_redis):
+        """全部标记已读"""
+        from app.notifications.cache import NotificationCache
+        with app.app_context():
+            NotificationCache.increment_unread(1)
+            NotificationCache.clear_unread(1)
+            assert NotificationCache.get_unread_count(1)==0
+    def test_recently_modified(self,app,mock_redis):
+        """强一致标记"""
+        from app.notifications.cache import NotificationCache
+        with app.app_context():
+            NotificationCache.mark_recently_modified(1,ttl=5)
+            assert NotificationCache.is_recently_modified(1) is True
+
+    def test_double_invalidate(self,app,mock_redis):
+        """延迟双删"""
+        from app.notifications.cache import NotificationCache
+        with app.app_context():
+            NotificationCache.set_unread_count(1,5)
+            NotificationCache.double_invalidate_unread(1)
+            #验证第一次删除
+            assert NotificationCache.get_unread_count(1) is None
+
+    def test_empty_cache_protection(self, app, mock_redis):
+        """空值缓存防穿透"""
+        from app.notifications.cache import NotificationCache
+        with app.app_context():
+            NotificationCache.set_empty(1)
+            assert NotificationCache.get_unread_count(1) == 0
+            assert NotificationCache.is_empty(1) is True
+
+
+class TestNotificationEventHandlers:
+    """通知事件处理函数单元测试"""
+
+    def test_handle_comment_created_success(self, app, db_session, mock_redis):
+        """测试评论事件处理函数创建通知"""
+        from app.notifications.services import _handle_comment_created
+        from tests.unit.factories import UserFactory
+        with app.app_context():
+            user = UserFactory()
+            actor = UserFactory()
+            _handle_comment_created({
+                "user_id": user.id,
+                "actor_id": actor.id,
+                "type": "comment",
+                "comment_id": 1,
+                "post_id": 1,
+                "content": "测试评论通知"
+            })
+            from app.notifications.models import Notification
+            notif = Notification.query.filter_by(user_id=user.id).first()
+            assert notif is not None
+            assert notif.type == "comment"
+
+    def test_handle_comment_created_invalid_user(self, app, db_session, mock_redis):
+        """测试评论事件处理函数 - 用户不存在时不抛异常"""
+        from app.notifications.services import _handle_comment_created
+        with app.app_context():
+            _handle_comment_created({
+                "user_id": 999999,
+                "actor_id": 888888,
+                "type": "comment",
+                "content": "测试"
+            })
+
+    def test_register_notification_event_handlers(self, app, mock_redis):
+        """测试注册通知事件处理器"""
+        from app.notifications.services import register_notification_event_handlers
+        from app.common.events import event_bus
+        with app.app_context():
+            register_notification_event_handlers()
+
+

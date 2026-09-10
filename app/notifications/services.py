@@ -13,7 +13,7 @@ from app.notifications.repositories import notification_repository
 from app.notifications.cache import NotificationCache
 from app.common.events import event_bus
 import logging
-
+from core.metrics import NOTIFICATION_OPERATIONS
 logger = logging.getLogger(__name__)
 
 
@@ -85,15 +85,18 @@ class NotificationService:
             NotificationCache.invalidate_empty(user_id)
             NotificationCache.increment_unread(user_id)
             NotificationCache.mark_recently_modified(user_id)
+            NOTIFICATION_OPERATIONS.labels(action='create', result='success').inc()
             return notification_schema.dump(notif)
         except IntegrityError:
             db.session.rollback()
+            NOTIFICATION_OPERATIONS.labels(action='create', result='error').inc()
             raise DatabaseError('创建通知失败，数据库约束错误')
         except Exception as e:
             db.session.rollback()
             logger.error('创建通知失败: %s', e)
             if isinstance(e, (ResourceNotFoundError, ValidationError)):
                 raise
+            NOTIFICATION_OPERATIONS.labels(action='create', result='error').inc()
             raise DatabaseError(f'创建通知失败: {e}')
 
     @staticmethod
@@ -101,6 +104,7 @@ class NotificationService:
         notif = notification_repository.get_by_id(notification_id, user_id)
         if not notif:
             raise ResourceNotFoundError(f'通知(ID:{notification_id})不存在或无权访问')
+        NOTIFICATION_OPERATIONS.labels(action='get', result='success').inc()
         return notification_schema.dump(notif)
 
     @staticmethod
@@ -138,6 +142,7 @@ class NotificationService:
             else:
                 NotificationCache.set_unread_count(user_id, total_unread)
             unread_count = total_unread
+        NOTIFICATION_OPERATIONS.labels(action='list', result='success').inc()
         return {'items': items, 'pagination': pagination_info, 'unread_count': unread_count}
 
     @staticmethod
@@ -153,12 +158,14 @@ class NotificationService:
             NotificationCache.decrement_unread(user_id)
             NotificationCache.double_invalidate_unread(user_id)
             NotificationCache.mark_recently_modified(user_id)
+            NOTIFICATION_OPERATIONS.labels(action='mark_read', result='success').inc()
             return notification_schema.dump(notif)
         except Exception as e:
             db.session.rollback()
             logger.error('标记通知为已读失败: %s', e)
             if isinstance(e, ResourceNotFoundError):
                 raise
+            NOTIFICATION_OPERATIONS.labels(action='mark_read', result='error').inc()
             raise DatabaseError(f'标记通知为已读失败: {e}')
 
     @staticmethod
@@ -171,9 +178,11 @@ class NotificationService:
             NotificationCache.clear_unread(user_id)
             NotificationCache.double_invalidate_unread(user_id)
             NotificationCache.mark_recently_modified(user_id)
+            NOTIFICATION_OPERATIONS.labels(action='mark_all_read', result='success').inc()
         except Exception as e:
             db.session.rollback()
             logger.error('标记所有通知为已读失败: %s', e)
+            NOTIFICATION_OPERATIONS.labels(action='mark_all_read', result='error').inc()
             raise DatabaseError(f'标记所有通知为已读失败: {e}')
 
     @staticmethod
@@ -189,11 +198,13 @@ class NotificationService:
             NotificationCache.clear_unread(user_id)
             NotificationCache.double_invalidate_unread(user_id)
             NotificationCache.mark_recently_modified(user_id)
+            NOTIFICATION_OPERATIONS.labels(action='delete', result='success').inc()
         except Exception as e:
             db.session.rollback()
             logger.error('删除通知失败: %s', e)
             if isinstance(e, ResourceNotFoundError):
                 raise
+            NOTIFICATION_OPERATIONS.labels(action='delete', result='error').inc()
             raise DatabaseError(f'删除通知失败: {e}')
 
 
