@@ -26,6 +26,7 @@ class RedisEventBus:
                     cls._instance._running=False
                     cls._instance._consumer_thread=None
                     cls._instance._redis_key='event_bus:queue'
+                    cls._instance._app=None
         return cls._instance
             
     def subscribe(self,event_name:str,handler:Callable):
@@ -60,7 +61,7 @@ class RedisEventBus:
         """消费者线程：BRPOP取事件并分发"""
         while self._running:
             try:
-                conn=RedisClient.get_conn(for_write=False)
+                conn=RedisClient.get_conn(for_write=True)
                 if not conn:
                     time.sleep(1)
                     continue
@@ -80,7 +81,11 @@ class RedisEventBus:
                     continue
                 for handler in handlers:
                     try:
-                        handler(payload)
+                        if self._app is not None:
+                            with self._app.app_context():
+                                handler(payload)
+                        else:
+                            handler(payload)
                         logger.debug(f"事件处理成功：{event_name}->{handler.__name__}")
                     except Exception as e:
                         logger.error(f"事件处理失败:{event_name}->{handler.__name__}:{e}")
@@ -93,10 +98,11 @@ class RedisEventBus:
             except Exception as e:
                 logger.error(f"消费者线程异常：{e}")
                 time.sleep(1)
-    def start(self):
+    def start(self, app=None):
         '''启动消费者线程'''
         if self._running:
             return 
+        self._app=app
         self._running=True
         self._consumer_thread=threading.Thread(target=self._consume,daemon=True)
         self._consumer_thread.start()

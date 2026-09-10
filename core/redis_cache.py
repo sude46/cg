@@ -188,15 +188,15 @@ class RedisCache:
         if expire:
             client.expire(key,expire)
         return True
-    def sismember(self,key:str,member:str):
+    def sismember(self,key:str,member:str,for_write=False):
         '''Set成员检查（是否已关注/已点赞）'''
-        client = self._get_client(for_write=False)
+        client = self._get_client(for_write=for_write)
         if not client:
             return False
         return client.sismember(key,member)
-    def smembers(self,key:str):
+    def smembers(self,key:str,for_write=False):
         '''Set成员列表（获取粉丝/关注列表）'''
-        client = self._get_client(for_write=False)
+        client = self._get_client(for_write=for_write)
         if not client:
             return set()
         return client.smembers(key)
@@ -206,9 +206,9 @@ class RedisCache:
         if not client:
             return 0
         return client.srem(key,*members)
-    def scard(self,key:str):
+    def scard(self,key:str,for_write=False):
         '''Set获取成员数量'''
-        client = self._get_client(for_write=False)
+        client = self._get_client(for_write=for_write)
         if not client:
             return 0
         return client.scard(key)

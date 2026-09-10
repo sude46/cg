@@ -17,6 +17,16 @@ logger.info(f"当前加载的Flask配置: {config_name}")
 # 3. 初始化应用（显式传入配置名，确保配置加载生效）
 app = create_app(config_name)
 
+#=========prometheus指标端点==============
+from flask import Response
+from prometheus_client import generate_latest,CONTENT_TYPE_LATEST
+
+@app.route('/metrics')
+def prometheus_metrics():
+    '''Prometheus拉去端点'''
+    return Response(generate_latest(),mimetype=CONTENT_TYPE_LATEST)
+
+
 # 4. 从环境变量动态读取主机/端口，提升部署灵活性
 HOST = os.getenv("FLASK_HOST", "0.0.0.0")
 PORT = int(os.getenv("FLASK_PORT", 5000))

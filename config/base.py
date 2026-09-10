@@ -58,6 +58,8 @@ class BaseConfig:
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)
     JWT_BLACKLIST_ENABLED = True
     JWT_BLACKLIST_TOKEN_CHECKS = ['access', 'refresh']
+    # 使用整数 user_id 作为 JWT subject，禁用 PyJWT 对 sub 必须是字符串的校验
+    JWT_VERIFY_SUB = False
     
     # ==================== Redis 配置 ====================
     REDIS_HOST = os.getenv("REDIS_HOST", "localhost")

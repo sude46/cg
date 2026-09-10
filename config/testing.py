@@ -14,6 +14,7 @@ class TestingConfig(BaseConfig):
 
     # 测试环境使用内存数据库
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
+    SQLALCHEMY_BINDS = {}
     SQLALCHEMY_ENGINE_OPTIONS = {
         "connect_args": {
             "check_same_thread": False
@@ -35,7 +36,7 @@ class TestingConfig(BaseConfig):
     # 测试环境邮件配置(使用内存队列)
     MAIL_SUPPRESS_SEND = True
 
-    BCRYPT_LOG_ROUNDS = 10  # 测试环境降低轮次，减少测试耗时
+    BCRYPT_LOG_ROUNDS = 4  # 测试环境降低轮次，减少测试耗时
     
     #日志配置
     LOG_LEVEL="DEBUG"
@@ -46,6 +47,9 @@ class TestingConfig(BaseConfig):
 
     RATE_LIMIT_STORAGE = "memory://"  # 内存存储，无需Redis
     RATE_LIMIT_DEFAULT = []  # 清空默认限流规则
+
+    CELERY_BROKER_URL = "memory://"
+    CELERY_RESULT_BACKEND = "cache"
 
 
 

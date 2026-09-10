@@ -87,12 +87,14 @@ def create_app(config_name: str = None) -> Flask:
 
 
     # 初始化中间件
+    from middlewares.metrics_middleware import init_metrics_middleware
     from middlewares.logging_middleware import init_logging_middleware
     from middlewares.auth_middleware import init_auth_middleware
     from middlewares.rate_limit_middleware import init_rate_limit_middleware
     from middlewares.cors_middleware import init_cors
     from middlewares.security_mw import init_security_headers
 
+    init_metrics_middleware(app)
     init_logging_middleware(app)
     init_auth_middleware(app)
     init_rate_limit_middleware(app)
@@ -123,7 +125,7 @@ def create_app(config_name: str = None) -> Flask:
     # 注册事件订阅器
     register_notification_event_handlers()
     register_search_event_handlers()
-    event_bus.start()
+    event_bus.start(app)
 
     return app
 

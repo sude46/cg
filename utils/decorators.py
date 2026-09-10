@@ -43,7 +43,7 @@ def validate_json(schema_class):
                 return fail_response(ResponseCode.PARAM_ERROR, "请求体不能为空，且必须为JSON格式"), 400
 
             try:
-                schema = schema_class()
+                schema = schema_class() if isinstance(schema_class, type) else schema_class
                 validated_data = schema.load(json_data)
                 g.validated_json = validated_data
                 logger.debug(f"入参校验成功: {validated_data}")

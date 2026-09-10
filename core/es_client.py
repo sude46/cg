@@ -24,11 +24,11 @@ class ESClient:
         if app_config is None:
             config=get_config()
             es_enabled=config.ELASTICSEARCH_ENABLED
-            es_hosts=config.ES_HOSTS_LIST
+            es_hosts=config.ES_HOST_LIST
             es_timeout=config.ELASTICSEARCH_TIMEOUT
         else:
             es_enabled=app_config.get('ELASTICSEARCH_ENABLED',True)
-            hosts=app_config.get('ELASTICSEARCH_HOSTS','http://localhost:9200')
+            hosts=app_config.get('ELASTICSEARCH_HOST') or app_config.get('ELASTICSEARCH_HOSTS','http://localhost:9200')
             es_hosts=hosts if isinstance(hosts,list) else [h.strip() for h in hosts.split(",") if h.strip()]
             es_timeout=app_config.get('ELASTICSEARCH_TIMEOUT',30)
         
@@ -36,13 +36,10 @@ class ESClient:
             logger.info('ES已经禁用，跳过连接')
             return False
         try:
-            self._es=Elasticsearch(
-                es_hosts,
-                timeout=es_timeout
-            )
-            if self._es.ping():
-                info=self._es.info()
-                logger.info(f'ES连接成功:{info['version']['number']}')
+            self._es=Elasticsearch(es_hosts)
+            if self._es.options(request_timeout=es_timeout).ping():
+                info = self._es.options(request_timeout=es_timeout).info()
+                logger.info(f"ES连接成功:{info['version']['number']}")
                 return True
             else:
                 logger.warning ('ES连接失败，ping不通')
