@@ -7,6 +7,7 @@ from app.users.models import User
 from app.common.database import pagination_utils, get_read_session
 from .schemas import UserListSchema
 from sqlalchemy import update, func
+from core.metrics import monitor_db
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +20,7 @@ class UserRepository:
         return get_read_session()
 
     @staticmethod
+    @monitor_db("select", "users")
     def get_by_id(user_id: int, force_master: bool = False) -> Optional[User]:
         """根据 ID 获取未删除的用户"""
         session = db.session if force_master else UserRepository._read_session()
@@ -28,6 +30,7 @@ class UserRepository:
         ).first()
 
     @staticmethod
+    @monitor_db("select", "users")
     def get_by_username(username: str, force_master: bool = False) -> Optional[User]:
         """根据用户名获取未删除的用户"""
         session = db.session if force_master else UserRepository._read_session()
@@ -37,6 +40,7 @@ class UserRepository:
         ).first()
 
     @staticmethod
+    @monitor_db("select", "users")
     def get_by_email(email: str, force_master: bool = False) -> Optional[User]:
         """根据邮箱获取未删除的用户"""
         session = db.session if force_master else UserRepository._read_session()
@@ -46,17 +50,20 @@ class UserRepository:
         ).first()
 
     @staticmethod
+    @monitor_db("update", "users")
     def soft_delete(user: User) -> None:
         """软删除用户"""
         user.deleted_at = utcnow()
 
     @staticmethod
+    @monitor_db("insert", "users")
     def create_user(**fields):
         user = User(**fields)
         db.session.add(user)
         return user
 
     @staticmethod
+    @monitor_db("select", "users")
     def list_users(page: int = 1, per_page: int = 20) -> dict:
         """分页查询用户列表"""
         session = UserRepository._read_session()
@@ -71,6 +78,7 @@ class UserRepository:
         }
 
     @staticmethod
+    @monitor_db("select", "users")
     def search_by_keyword(keyword: str, page: int = 1, per_page: int = 20):
         """根据关键词搜索用户（排除已删除）"""
         session = UserRepository._read_session()
@@ -85,6 +93,7 @@ class UserRepository:
         }
     
     @staticmethod
+    @monitor_db("update", "users")
     def increment_following_count(user_id: int) -> None:
         """原子更新关注计数 +1（写主库）"""
         db.session.execute(
@@ -94,6 +103,7 @@ class UserRepository:
         )
 
     @staticmethod
+    @monitor_db("update", "users")
     def decrement_following_count(user_id: int) -> None:
         """原子更新关注计数 -1（保底不小于 0）"""
         db.session.execute(
@@ -103,6 +113,7 @@ class UserRepository:
         )
 
     @staticmethod
+    @monitor_db("update", "users")
     def increment_follower_count(user_id: int) -> None:
         """原子更新粉丝计数 +1"""
         db.session.execute(
@@ -112,6 +123,7 @@ class UserRepository:
         )
 
     @staticmethod
+    @monitor_db("update", "users")
     def decrement_follower_count(user_id: int) -> None:
         """原子更新粉丝计数 -1（保底不小于 0）"""
         db.session.execute(

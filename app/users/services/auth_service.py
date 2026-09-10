@@ -11,6 +11,7 @@ from ..schemas import UserSchema
 from .password_service import password_service
 from .account_service import AccountLockService
 from .token_service import TokenService
+from core.metrics import USER_OPERATIONS
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +43,7 @@ class AuthService:
         UserCache.set_by_username(user.username, user.id)
         UserCache.set_by_email(user.email, user.id)
         UserCache.mark_recently_modified(user.id, ttl=5)
+        USER_OPERATIONS.labels(action='register', result='success').inc()
         return {'message': '用户注册成功', 'user': serialized_user}
 
     @staticmethod
@@ -72,6 +74,7 @@ class AuthService:
         UserCache.set_profile(user.id, serialized_user)
         UserCache.mark_recently_modified(user.id, ttl=5)
 
+        USER_OPERATIONS.labels(action='login', result='success').inc()
         return {
             'access_token': access_token,
             'refresh_token': refresh_token,
@@ -98,6 +101,7 @@ class AuthService:
         db.session.commit()
 
         UserCache.double_invalidate(user.id, username=user.username, email=user.email)
+        USER_OPERATIONS.labels(action='reset_password', result='success').inc()
         return {'message': '密码重置成功'}
 
     @staticmethod
@@ -106,6 +110,7 @@ class AuthService:
         if not user or not getattr(user, 'is_active', True):
             raise AuthenticationError('用户不存在或被禁用')
         access_token = create_access_token(identity=user_id)
+        USER_OPERATIONS.labels(action='refresh_token', result='success').inc()
         return {'access_token': access_token, 'token_type': 'bearer', 'expires_in': 3600}
 
     @staticmethod
@@ -118,18 +123,6 @@ class AuthService:
             serialized_user = user_schema.dump(user)
             UserCache.set_profile(user_id, serialized_user)
             return {'user': serialized_user}
-
-        cached = UserCache.get_profile(user_id)
-        if cached:
-            return {'user': cached}
-
-        user = user_repository.get_by_id(user_id, force_master=False)
-        if not user or not getattr(user, 'is_active', True):
-            raise AuthenticationError('用户不存在或被禁用')
-        user_schema = UserSchema()
-        serialized_user = user_schema.dump(user)
-        UserCache.set_profile(user_id, serialized_user)
-        return {'user': serialized_user}
 
         cached = UserCache.get_profile(user_id)
         if cached:
