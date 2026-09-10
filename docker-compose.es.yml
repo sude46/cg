@@ -1,0 +1,58 @@
+# docker-compose.es.yml
+# Elasticsearch + Kibana 开发环境
+
+version: '3.8'
+
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: weibo-es
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false  # 开发环境关闭安全认证
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"  # 内存限制
+      - cluster.routing.allocation.disk.threshold_enabled=false
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    networks:
+      - weibo-network
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.11.0
+    container_name: weibo-kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+    networks:
+      - weibo-network
+
+  # 可选：中文分词器插件安装
+  elasticsearch-cn:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: weibo-es-cn
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - cluster.routing.allocation.disk.threshold_enabled=false
+    ports:
+      - "9201:9200"
+    volumes:
+      - es_data_cn:/usr/share/elasticsearch/data
+      - ./elasticsearch/plugins:/usr/share/elasticsearch/plugins  # 挂载插件
+    networks:
+      - weibo-network
+
+volumes:
+  es_data:
+  es_data_cn:
+
+networks:
+  weibo-network:
+    driver: bridge

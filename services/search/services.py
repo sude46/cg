@@ -24,6 +24,9 @@ class PostSearchService:
         '''
         #计算机热度分数
         post_data['hot_score']=cls._calculate_hot_score(post_data)
+        #兜底默认值：查询侧强制过滤 is_deleted=False / is_published=True
+        post_data['is_deleted']=post_data.get('is_deleted',False)
+        post_data['is_published']=post_data.get('is_published',True)
         return PostDocument.index(post_data['id'], post_data)
     @classmethod
     def update_post(cls,post_id:int,**fields):
@@ -109,6 +112,8 @@ class PostSearchService:
         if created_at:
             if isinstance(created_at,str):
                 created_at=datetime.fromisoformat(created_at.replace('Z','+00:00'))
+            if created_at.tzinfo is None:
+                created_at=created_at.replace(tzinfo=timezone.utc)
             hours_since=(datetime.now(timezone.utc)-created_at).total_seconds()/3600
             #24小时内的新帖有加成
             time_bonus=max(0,24-hours_since)*10
