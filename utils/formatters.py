@@ -37,7 +37,7 @@ def desensitize_data(data: dict, sensitive_fields: list = None) -> dict:
     """
     if sensitive_fields is None:
         sensitive_fields = ['password', 'token', 'access_token', 'refresh_token', 'phone']
-    
+
     result = {}
     for key, value in data.items():
         if key in sensitive_fields:

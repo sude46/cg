@@ -1,5 +1,5 @@
-import sys
 import logging
+import sys
 from pathlib import Path
 
 import pytest
@@ -8,8 +8,8 @@ import pytest
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from core.factory import create_app
 from core.database import db
+from core.factory import create_app
 
 # ---------------------- 日志降噪 ------------------------
 logging.getLogger("flask.app").setLevel(logging.WARNING)
@@ -19,12 +19,12 @@ logging.getLogger("celery").setLevel(logging.WARNING)
 
 # ---------------------- 模型注册检查（调试用）----------------------
 try:
-    from app.users.models import User
-    from app.posts.models import Post
     from app.comments.models import Comment
     from app.follows.models import Follow
     from app.likes.models import Like
     from app.notifications.models import Notification
+    from app.posts.models import Post
+    from app.users.models import User
 except Exception as e:
     import traceback
     sys.stderr.write(f"ERROR importing models: {e}\n")
@@ -50,13 +50,13 @@ def app():
     app = create_app(config_name="testing")
     assert app.config['SQLALCHEMY_DATABASE_URI'] == 'sqlite:///:memory:', \
         f"期望内存数据库，实际: {app.config['SQLALCHEMY_DATABASE_URI']}"
-    
+
     # Celery 同步模式（如果配置了）
     if 'celery' in app.extensions:
         celery = app.extensions['celery']
         celery.conf.task_always_eager = True
         celery.conf.task_eager_propagates = True
-    
+
     with app.app_context():
         yield app
         db.session.remove()
@@ -76,7 +76,7 @@ def db_session(app):
     """
     with app.app_context():
         db.create_all()
-        
+
         try:
             from tests.unit import factories
             from tests.unit.factories import BaseFactory
@@ -86,9 +86,9 @@ def db_session(app):
                     obj._meta.sqlalchemy_session = db.session
         except ImportError:
             pass
-        
+
         yield db.session
-        
+
         db.session.rollback()
         db.session.remove()
         db.drop_all()

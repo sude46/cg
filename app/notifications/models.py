@@ -1,7 +1,6 @@
-from datetime import datetime,timezone
 from app.common.database import utcnow
 from core import db
-from sqlalchemy.sql import func
+
 
 class Notification(db.Model):
     __tablename__='notifications'

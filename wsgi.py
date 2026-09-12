@@ -1,5 +1,6 @@
-import os
 import logging
+import os
+
 from app import create_app
 
 # 1. 配置基础日志（便于调试/生产环境排查问题）
@@ -19,7 +20,8 @@ app = create_app(config_name)
 
 #=========prometheus指标端点==============
 from flask import Response
-from prometheus_client import generate_latest,CONTENT_TYPE_LATEST
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
+
 
 @app.route('/metrics')
 def prometheus_metrics():

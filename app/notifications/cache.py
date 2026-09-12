@@ -1,7 +1,7 @@
 import logging
-import time
 import threading
-from typing import Optional,List,Dict,Any
+import time
+
 from core.redis_cache import redis_cache
 
 logger=logging.getLogger(__name__)
@@ -24,15 +24,15 @@ class NotificationCache:
     @classmethod
     def _unread_key(cls,user_id:int):
         return f'user:{user_id}:notif:unread'
-    
+
     @classmethod
     def _empty_key(cls,user_id:int):
         return f'user:{user_id}:notif:empty'
-    
+
     @classmethod
     def _recent_key(cls,user_id:int):
         return f'notif:recent_modify:{user_id}'
-    
+
 
     #==================未读计数缓存==================
     @classmethod
@@ -50,7 +50,7 @@ class NotificationCache:
         except Exception as e:
             logger.error(f'获取用户{user_id}未读数缓存失败：{e}')
             return None
-        
+
     @classmethod
     def set_unread_count(cls, user_id: int, count: int) -> bool:
         """写未读数（走 Redis 主节点）"""
@@ -78,7 +78,7 @@ class NotificationCache:
         except Exception as e:
             logger.error(f'递增用户{user_id}未读数失败: {e}')
             return False
-    
+
     @classmethod
     def decrement_unread(cls,user_id:int):
         '''标记已读时，未读数-1(保底不小余0)'''

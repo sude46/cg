@@ -1,9 +1,11 @@
-import pytest
-from app.users.services.auth_service import AuthService
-from app.users.models import User
-from app.common.exceptions import BusinessException, AuthenticationError, ValidationError
-from tests.unit.factories import UserFactory
 import uuid
+
+import pytest
+
+from app.common.exceptions import AuthenticationError, ValidationError
+from app.users.models import User
+from app.users.services.auth_service import AuthService
+
 
 class TestAuthService:
     """认证模块单元测试"""

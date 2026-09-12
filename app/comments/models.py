@@ -1,7 +1,6 @@
-from datetime import datetime,timezone
 from app.common.database import utcnow
 from core import db
-from sqlalchemy.sql import func
+
 
 class Comment(db.Model):
     __tablename__='comments'
@@ -40,6 +39,6 @@ class Comment(db.Model):
 
     def __repr__(self):
         return f'<Comment{self.id} by User{self.user_id} on Post{self.post_id}>'
-    
+
 
 

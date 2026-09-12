@@ -1,31 +1,21 @@
-from flask import Flask, g, request
-import logging
-import os
-import time
-from config import get_config
-from core.database import db, migrate
-from core.extensions import bcrypt, jwt, mail
-from flask_jwt_extended import get_jwt_identity
-from flask_wtf.csrf import CSRFProtect
 
-from core.logging_config import init_structured_logger
-from core.blueprint_registry import register_all_blueprints
+from flask import Flask
+
 from app.common.error_handlers import register_error_handlers
-
 from app.common.events import event_bus
-from services.search.event_handlers import register_search_event_handlers
 
-# 导入所有模型，确保 db.create_all() 创建完整表结构
-from app.users.models import User
-from app.posts.models import Post
-from app.comments.models import Comment
-from app.likes.models import Like
-from app.follows.models import Follow
-from app.notifications.models import Notification
 # 如果有其他模型，继续导入
-
 # 导入通知模块的事件订阅注册函数
 from app.notifications.services import register_notification_event_handlers
+
+# 导入所有模型，确保 db.create_all() 创建完整表结构
+from config import get_config
+from core.blueprint_registry import register_all_blueprints
+from core.database import db, migrate
+from core.extensions import bcrypt, jwt, mail
+from core.logging_config import init_structured_logger
+from services.search.event_handlers import register_search_event_handlers
+from app.feeds.handlers import register_feed_handlers
 
 def create_app(config_name: str = None) -> Flask:
     app = Flask(__name__)
@@ -69,13 +59,13 @@ def create_app(config_name: str = None) -> Flask:
 
     # 初始化 Elasticsearch
     if app.config.get('ELASTICSEARCH_ENABLED', True):
-        from core.es_client import es_client           # ✅ 从 core 导入
+        from core.es_client import es_client  # ✅ 从 core 导入
+        from services.search.config import SearchConfig  # ✅ 业务配置
         from services.search.document import PostDocument
-        from services.search.config import SearchConfig # ✅ 业务配置
-        
+
         # 初始化业务配置
         SearchConfig.init_app(app.config)
-        
+
         # 连接 ES（传入配置）
         if es_client.connect(app.config):
             PostDocument.create_index()
@@ -87,11 +77,11 @@ def create_app(config_name: str = None) -> Flask:
 
 
     # 初始化中间件
-    from middlewares.metrics_middleware import init_metrics_middleware
-    from middlewares.logging_middleware import init_logging_middleware
     from middlewares.auth_middleware import init_auth_middleware
-    from middlewares.rate_limit_middleware import init_rate_limit_middleware
     from middlewares.cors_middleware import init_cors
+    from middlewares.logging_middleware import init_logging_middleware
+    from middlewares.metrics_middleware import init_metrics_middleware
+    from middlewares.rate_limit_middleware import init_rate_limit_middleware
     from middlewares.security_mw import init_security_headers
 
     init_metrics_middleware(app)
@@ -125,6 +115,7 @@ def create_app(config_name: str = None) -> Flask:
     # 注册事件订阅器
     register_notification_event_handlers()
     register_search_event_handlers()
+    register_feed_handlers()
     event_bus.start(app)
 
     return app

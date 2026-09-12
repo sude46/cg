@@ -3,17 +3,17 @@ Feed流Redis缓存
 推模式：大V发贴时，主动推送到所有粉丝的Feed流
 拉模式：普通用户打开首页时，实时拉去关注对象的最新贴子
 '''
-import logging 
-from core.redis_cache import redis_cache
-from typing import List,Optional,Union
+import logging
 from datetime import datetime
+
+from core.redis_cache import redis_cache
 
 logger=logging.getLogger(__name__)
 
 class FeedCache:
     '''
     用户时间线缓存
-    
+
     数据结构:Sorted Set
     -key:feed:user:{uid}
     -score:帖子创建时间戳(保证时序)
@@ -21,7 +21,7 @@ class FeedCache:
     '''
 
     #配置常量(便于集中管理和动态调整)
-    MAX_FEED_SIZE=500 #每个用户时间线保留的最大贴子数 
+    MAX_FEED_SIZE=500 #每个用户时间线保留的最大贴子数
     FEED_EXPIRE_DAYS=7  #缓存过期天数
     BIG_V_THRESHOLD=1000 #大V判定阈值:粉丝数超过次数用拉模式
     EMPTY_CACHE_TTL=60   #空缓存防穿透过期时间(秒)
@@ -34,13 +34,13 @@ class FeedCache:
     def _empty_key(cls,user_id:int):
         '''空缓存标记键，用于防缓存穿透'''
         return f'feed:user:{user_id}:empty'
-    
+
     @classmethod
     def is_big_v(cls, follower_count: int) -> bool:
         return follower_count >= cls.BIG_V_THRESHOLD
-    
+
     @classmethod
-    def push_to_followers(cls,post_id:int,created_at:float,follower_ids:List[int],follower_count=None):
+    def push_to_followers(cls,post_id:int,created_at:float,follower_ids:list[int],follower_count=None):
         '''
         推模式：帖子创建后，推送到所有粉丝的时间线
         Args:
@@ -55,7 +55,7 @@ class FeedCache:
         #统一时间戳格式
         if isinstance(created_at,datetime):
             created_at=created_at.timestamp()
-        
+
         #大v判断：粉丝过多时不推，避免写入爆炸
         actual_count=follower_count if follower_count is not None else len(follower_ids)
 
@@ -166,9 +166,9 @@ class FeedCache:
         except Exception as e:
             logger.error(f"从用户{user_id}时间线移除帖子{post_id}失败: {e}")
             return False
-        
+
     @classmethod
-    def remove_post_from_all_followers(cls,post_id:int,follower_ids:List[int]):
+    def remove_post_from_all_followers(cls,post_id:int,follower_ids:list[int]):
         '''
         帖子删除时，从所有粉丝的时间线中移除
         **重要**:此操作可能较重，建议通过Celery/RQ异步执行
@@ -199,7 +199,7 @@ class FeedCache:
         except Exception as e:
             logger.error(f"从粉丝时间线移除帖子{post_id}失败: {e}")
             return {"post_id": post_id, "removed_from": 0, "error": str(e)}
-    
+
     @classmethod
     def set_empty_cache(cls,user_id:int):
         '''
@@ -232,9 +232,9 @@ class FeedCache:
         except Exception as e:
             logger.error(f"清除用户{user_id}时间线缓存失败: {e}")
             return False
-    
+
     @classmethod
-    def batch_fill_cache(cls,user_id:int,posts:List[dict]):
+    def batch_fill_cache(cls,user_id:int,posts:list[dict]):
         '''
         批量填充用户时间线缓存（数据库查询后回填）
         Args:
@@ -280,6 +280,6 @@ class FeedCache:
         except Exception as e:
             logger.error(f"获取用户{user_id}时间线总数失败: {e}")
             return 0
-       
+
 
 

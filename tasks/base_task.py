@@ -1,6 +1,9 @@
-from celery import Task
-from core.metrics import CELERY_TASKS,CELERY_TASK_LATENCY
 import time
+
+from celery import Task
+
+from core.metrics import CELERY_TASK_LATENCY, CELERY_TASKS
+
 
 class MonitoredTask(Task):
     '''celery控制基类，自动埋点任务执行指标'''

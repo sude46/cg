@@ -1,5 +1,4 @@
-import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 
 class TestAuthMiddleware:
@@ -74,7 +73,7 @@ class TestRateLimitMiddleware:
     def test_get_route_limit_no_app_context(self, app):
         from middlewares.rate_limit_middleware import get_route_limit
         with app.app_context():
-            route_limit = get_route_limit()
+            get_route_limit()
 
     def test_get_identifier_with_user(self, app):
         from middlewares.rate_limit_middleware import _get_identifier
@@ -128,9 +127,7 @@ class TestLoggingMiddleware:
                 assert resp.headers.get("X-Request-ID") is not None
 
     def test_filter_sensitive_data(self, app):
-        from middlewares.logging_middleware import init_logging_middleware
         with app.app_context():
-            from flask import g
 
             def filter_sensitive_data(data, depth=0):
                 sensitive_keys = {
@@ -168,7 +165,7 @@ class TestRequestHooks:
     """请求钩子单元测试"""
 
     def test_before_request_hook(self, app):
-        from middlewares.request_hooks import before_request_hook, after_request_hook
+        from middlewares.request_hooks import before_request_hook
         with app.test_request_context():
             before_request_hook()
             from flask import g
@@ -177,7 +174,7 @@ class TestRequestHooks:
             assert hasattr(g, "log_extra")
 
     def test_after_request_hook(self, app):
-        from middlewares.request_hooks import before_request_hook, after_request_hook
+        from middlewares.request_hooks import after_request_hook, before_request_hook
         with app.test_request_context():
             before_request_hook()
             resp = MagicMock()
@@ -219,8 +216,8 @@ class TestErrorMiddleware:
                 assert data["error"] == "资源未找到"
 
     def test_format_error_response(self, app):
-        from middlewares.error_middleware import _format_error_response
         from app.common.exceptions import ValidationError
+        from middlewares.error_middleware import _format_error_response
         with app.app_context():
             error = ValidationError("参数错误", error_code=10001)
             resp, status = _format_error_response(error)

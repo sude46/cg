@@ -2,12 +2,12 @@
 限流中间件 - 符合工厂模式设计
 通过 app 实例挂载，避免全局状态
 """
-from functools import wraps
-from flask import current_app, request, g
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
-from flask_limiter.errors import RateLimitExceeded
 import logging
+
+from flask import current_app
+from flask_limiter import Limiter
+from flask_limiter.errors import RateLimitExceeded
+from flask_limiter.util import get_remote_address
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +22,7 @@ def init_rate_limit_middleware(app):
         app.limiter = None
         app.route_limit = _empty_route_limit
         return
-    
+
     # 生产环境：初始化 Flask-Limiter
     storage_uri=app.config.get('RATE_LIMIT_STORAGE','memory://')
     if storage_uri=='memory://':
@@ -31,16 +31,17 @@ def init_rate_limit_middleware(app):
         app=app,
         key_func=_get_identifier,
         default_limits=app.config.get('RATE_LIMIT_DEFAULT', ['100 per minute']),
+        default_limits_exempt_when=_is_exempt_path,
         storage_uri=storage_uri,
         strategy="fixed-window"
     )
-    
+
     # 挂载到 app 实例
     app.limiter = limiter
-    
+
     # 提供路由限流装饰器)
     app.route_limit = _make_route_limit(limiter)
-    
+
     # 注册错误处理器
     @app.errorhandler(RateLimitExceeded)
     def handle_rate_limit(e):
@@ -50,19 +51,35 @@ def init_rate_limit_middleware(app):
             "error": "请求过于频繁，请稍后重试",
             "retry_after": retry_after
         }, 429
-    
+
     logger.info(f"Rate limiter initialized with storage: {storage_uri}")
+
+
+# 监控/健康检查端点白名单：这些端点不做限流
+EXEMPT_PATHS = {'/metrics', '/health'}
+
+
+def _is_exempt_path():
+    """白名单端点（监控/健康检查）：豁免默认限流"""
+    from flask import request
+    return request.path in EXEMPT_PATHS
 
 
 def _get_identifier():
     """获取限流标识：优先用户ID，其次IP"""
+    from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
+    from flask_jwt_extended.exceptions import JWTExtendedException
+
     try:
-        from flask_jwt_extended import get_jwt_identity
+        verify_jwt_in_request(optional=True)
         user_id = get_jwt_identity()
-        if user_id:
-            return f"user:{user_id}"
-    except:
-        pass
+    except JWTExtendedException:
+        # 无效 token（过期/签名错/已撤销）降级为 IP 限流，不抛 500
+        user_id = None
+
+    if user_id:
+        return f"user:{user_id}"
+    logger.debug("无有效token，降级为IP限流")
     return get_remote_address()
 
 
@@ -92,5 +109,4 @@ def get_route_limit():
     延迟获取 route_limit
     在应用上下文可用时调用
     """
-    from flask import current_app
     return getattr(current_app, 'route_limit', _empty_route_limit)

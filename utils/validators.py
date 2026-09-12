@@ -1,7 +1,9 @@
 import re
-from typing import Optional,Union,List
+
 from marshmallow import ValidationError
+
 from core.security import security_manager
+
 
 def validate_username(username: str) -> bool:
     '''验证用户名格式'''

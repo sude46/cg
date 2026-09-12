@@ -1,6 +1,8 @@
-from celery import shared_task
-from app.notifications.cache import NotificationCache
 import logging
+
+from celery import shared_task
+
+from app.notifications.cache import NotificationCache
 
 logger = logging.getLogger(__name__)
 

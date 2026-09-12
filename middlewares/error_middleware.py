@@ -1,17 +1,18 @@
-from flask import jsonify, request, current_app, g
 import logging
 import traceback
 from datetime import datetime
-from typing import Dict, Any
+from typing import Any
+
+from flask import current_app, g, jsonify, request
 
 from app.common.exceptions import (
-    BaseError, 
-    ValidationError, 
-    ResourceNotFoundError, 
-    PermissionError, 
     AuthenticationError,
+    BaseError,
+    DatabaseError,
+    PermissionError,
     RateLimitError,  # 新增：导入限流异常
-    DatabaseError
+    ResourceNotFoundError,
+    ValidationError,
 )
 
 logger = logging.getLogger(__name__)
@@ -71,7 +72,7 @@ def _format_error_response(error: BaseError) -> tuple:
     # 优先从g获取request_id（logging_middleware生成），其次从请求头
     request_id = getattr(g, 'request_id', request.headers.get("X-Request-ID")) or "unknown"
 
-    response: Dict[str, Any] = {
+    response: dict[str, Any] = {
         "code": error.error_code,
         "error": error.message,
         "details": error.details or {},

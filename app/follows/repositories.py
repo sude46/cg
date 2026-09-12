@@ -1,12 +1,11 @@
-from typing import Optional, Dict, Any
-from sqlalchemy.orm import selectinload,joinedload
-from core import db
+from typing import Any
+
+from sqlalchemy.orm import aliased, selectinload
+
+from app.common.database import get_read_session, pagination_utils, utcnow
 from app.follows.models import Follow
-from app.common.database import pagination_utils, get_read_session
-from sqlalchemy.orm import aliased
 from app.users.models import User
-from datetime import datetime,timezone
-from app.common.database import utcnow
+from core import db
 from core.metrics import monitor_db
 
 
@@ -16,11 +15,11 @@ class FollowRepository:
     @staticmethod
     def _read_session():
         return get_read_session()
-    
+
 
     @staticmethod
     @monitor_db("select", "follows")
-    def get_relation(follower_id: int, followed_id: int,lock:bool=False) -> Optional[Follow]:
+    def get_relation(follower_id: int, followed_id: int,lock:bool=False) -> Follow | None:
         """
         获取某个关注关系（唯一约束，未删除）。
         lock=True:走主库+select for update（写操作钱校验）
@@ -35,7 +34,7 @@ class FollowRepository:
             Follow.followed_id==followed_id,
             Follow.deleted_at.is_(None)
         ).first()
-    
+
     @staticmethod
     @monitor_db("select", "follows")
     def get_follower_ids(followed_id:int):
@@ -49,7 +48,7 @@ class FollowRepository:
             Follow.deleted_at.is_(None)
         ).all()
         return [r[0] for r in rows]
-    
+
 
     @staticmethod
     @monitor_db("insert", "follows")
@@ -68,7 +67,7 @@ class FollowRepository:
 
     @staticmethod
     @monitor_db("select", "follows")
-    def list_following(user_id: int, page: int = 1, per_page: int = 20) -> Dict[str, Any]:
+    def list_following(user_id: int, page: int = 1, per_page: int = 20) -> dict[str, Any]:
         """分页获取我关注的人。"""
         session=FollowRepository._read_session()
         query = session.query(Follow).options(
@@ -77,7 +76,7 @@ class FollowRepository:
             Follow.follower_id==user_id,
             Follow.deleted_at.is_(None)
             ).order_by(Follow.id.desc())
-        
+
         result=pagination_utils.paginate(query, page=page, per_page=per_page)
         return {
             'items':result['items'],
@@ -86,7 +85,7 @@ class FollowRepository:
 
     @staticmethod
     @monitor_db("select", "follows")
-    def list_followers(user_id: int, page: int = 1, per_page: int = 20) -> Dict[str, Any]:
+    def list_followers(user_id: int, page: int = 1, per_page: int = 20) -> dict[str, Any]:
         """分页获取关注我的人"""
         session=FollowRepository._read_session()
         query = (
@@ -108,7 +107,7 @@ class FollowRepository:
         """
         F1 = aliased(Follow)  # A -> user_id
         F2 = aliased(Follow)  # user_id -> A
-        
+
         session=FollowRepository._read_session()
 
         query = session.query(User).join(
@@ -121,10 +120,10 @@ class FollowRepository:
             F2.follower_id == user_id,
             F2.deleted_at.is_(None)
         ).order_by(F1.created_at.desc()).distinct()
-        
-        
+
+
         return pagination_utils.paginate(query, page=page, per_page=per_page)
-    
+
 
 
 follow_repository = FollowRepository()

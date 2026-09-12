@@ -8,15 +8,15 @@
 - TokenService: Token管理服务
 """
 
-from .auth_service import AuthService
-from .password_service import PasswordService
-from .mfa_service import MFAService
 from .account_service import AccountLockService
+from .auth_service import AuthService
+from .mfa_service import MFAService
+from .password_service import PasswordService
 from .token_service import TokenService
 
 __all__ = [
     'AuthService',
-    'PasswordService', 
+    'PasswordService',
     'MFAService',
     'AccountLockService',
     'TokenService',

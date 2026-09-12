@@ -1,6 +1,6 @@
 import pytest
+
 from app.permissions.services import PermissionService
-from app.common.exceptions import AuthenticationError
 
 
 class TestPermissionService:

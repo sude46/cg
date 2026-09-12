@@ -1,7 +1,9 @@
+import logging
+
 from celery import shared_task
+
 from app.posts.cache import PostCache
-import logging 
-from tasks.base_task import MonitoredTask 
+from tasks.base_task import MonitoredTask
 
 logger=logging.getLogger(__name__)
 

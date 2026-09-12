@@ -84,5 +84,5 @@ __all__ = [
     "ResourceNotFoundError",
     "DatabaseError",
     "RateLimitError",
-    "ConflictError"  
+    "ConflictError"
 ]

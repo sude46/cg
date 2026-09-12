@@ -1,6 +1,8 @@
+from flask import current_app, g
+
 from utils.snowflake_util import Snowflake
-from flask import g, current_app
-from utils.security_utils import html_escape
+
+
 # ---------------------- 第一步：统一管理业务错误码 ----------------------
 class ResponseCode:
     """响应业务码枚举（与 HTTP 状态码对应，方便前后端对接）"""
@@ -15,7 +17,7 @@ class ResponseCode:
     VALIDATION_ERROR = 10001
     PERMISSION_DENIED = 10003
     AUTHENTICATION_FAILED = 10004
-    INTERNAL_ERROR = 5000  
+    INTERNAL_ERROR = 5000
 
 # ---------------------- 第二步：生成请求唯一标识（用于问题追踪） ----------------------
 def generate_request_id():
@@ -39,18 +41,16 @@ def success_response(data=None, message="操作成功"):
     :param message: 成功提示语（可选，默认"操作成功"）
     :return: 格式化后的成功响应体（可直接作为 Flask 接口返回值）
     """
-    # 处理 data 为 None 的情况，避免返回 null 导致前端报错
-    escaped_data = html_escape(data)
     response_data = {
         "code": ResponseCode.SUCCESS,
-        "data": escaped_data or {},
+        "data": data if data is not None else {},
         "message": message
     }
-    
+
     # 日志记录（可选，便于调试，关联请求ID）
     request_id = getattr(g, "request_id", "unknown")
     current_app.logger.debug(f"[SUCCESS] request_id={request_id}, response={response_data}")
-    
+
     return response_data
 
 def fail_response(code, error_msg):
@@ -62,16 +62,16 @@ def fail_response(code, error_msg):
     """
     # 获取全局请求ID（若未生成，自动生成一个）
     request_id = getattr(g, "request_id", generate_request_id())
-    
+
     response_data = {
         "code": code,
         "error": error_msg,
         "request_id": request_id
     }
-    
+
     # 日志记录（错误级别，便于问题追踪）
     current_app.logger.error(f"[FAIL] request_id={request_id}, response={response_data}")
-    
+
     return response_data
 
 def pagination_response(data_list, page, size, total):
@@ -87,7 +87,7 @@ def pagination_response(data_list, page, size, total):
     page = max(1, page)  # 页码最小为1
     size = max(1, size)  # 每页条数最小为1
     total = max(0, total)  # 总条数最小为0
-    
+
     return {
         "list": data_list or [],
         "page": page,

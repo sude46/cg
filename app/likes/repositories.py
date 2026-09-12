@@ -1,12 +1,13 @@
-from typing import Optional, Dict, Any
-from sqlalchemy.orm import selectinload,joinedload
-from core import db
-from app.likes.models import Like
-from app.common.database import pagination_utils, get_read_session
+from typing import Any
+
+from sqlalchemy.orm import joinedload, selectinload
+
+from app.common.database import get_read_session, pagination_utils, utcnow
 from app.common.exceptions import ConflictError
-from datetime import datetime,timezone
-from app.common.database import utcnow
+from app.likes.models import Like
+from core import db
 from core.metrics import monitor_db
+
 
 class LikeRepository:
     """点赞仓储：封装帖子/评论点赞的数据库访问。"""
@@ -21,7 +22,7 @@ class LikeRepository:
 
     @staticmethod
     @monitor_db("select","likes")
-    def get_by_id(like_id: int, force_master: bool = False) -> Optional[Like]:
+    def get_by_id(like_id: int, force_master: bool = False) -> Like | None:
         session = LikeRepository._get_session(force_master)
         return session.query(Like).filter(
             Like.id == like_id,
@@ -30,7 +31,7 @@ class LikeRepository:
 
     @staticmethod
     @monitor_db("select","likes")
-    def get_post_like(user_id: int, post_id: int, force_master: bool = False) -> Optional[Like]:
+    def get_post_like(user_id: int, post_id: int, force_master: bool = False) -> Like | None:
         session = LikeRepository._get_session(force_master)
         return session.query(Like).options(
             joinedload(Like.user)
@@ -42,7 +43,7 @@ class LikeRepository:
 
     @staticmethod
     @monitor_db("select","likes")
-    def get_comment_like(user_id: int, comment_id: int, force_master: bool = False) -> Optional[Like]:
+    def get_comment_like(user_id: int, comment_id: int, force_master: bool = False) -> Like | None:
         session = LikeRepository._get_session(force_master)
         return session.query(Like).options(
             joinedload(Like.user)
@@ -89,7 +90,7 @@ class LikeRepository:
 
     @staticmethod
     @monitor_db("select","likes")
-    def list_post_likes(post_id: int, page: int = 1, per_page: int = 20) -> Dict[str, Any]:
+    def list_post_likes(post_id: int, page: int = 1, per_page: int = 20) -> dict[str, Any]:
         """分页获取某帖子下的点赞列表（排除已删除）。"""
         session = LikeRepository._read_session()
         query = session.query(Like).options(
@@ -106,7 +107,7 @@ class LikeRepository:
 
     @staticmethod
     @monitor_db("select","likes")
-    def list_comment_likes(comment_id: int, page: int = 1, per_page: int = 20) -> Dict[str, Any]:
+    def list_comment_likes(comment_id: int, page: int = 1, per_page: int = 20) -> dict[str, Any]:
         """分页获取某评论下的点赞列表（排除已删除）。"""
         session = LikeRepository._read_session()
         query = session.query(Like).options(
@@ -164,7 +165,7 @@ class LikeRepository:
             Like.post_id.in_(post_ids),
             Like.deleted_at.is_(None)
         ).all()
-        return {l.post_id for l in liked}
+        return {like.post_id for like in liked}
 
     @staticmethod
     @monitor_db("count","likes")

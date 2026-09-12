@@ -1,9 +1,11 @@
+import logging
+from datetime import UTC, datetime, timedelta
+
 from celery import shared_task
 from sqlalchemy import text
+
 from app.posts.cache import PostCache
-from  core import db
-import logging
-from datetime import datetime,timezone,timedelta
+from core import db
 
 logger=logging.getLogger(__name__)
 
@@ -16,7 +18,7 @@ def calculate_hot_posts(periode:str='daily',limit:int=1000):
     '''
 
     try:
-        since=datetime.now(timezone.utc)-timedelta(days=1)  #只查二十四小时
+        since=datetime.now(UTC)-timedelta(days=1)  #只查二十四小时
 
         #游标分页查询，避免OOM
         batch_size=500
@@ -25,9 +27,9 @@ def calculate_hot_posts(periode:str='daily',limit:int=1000):
         while True:
             sql=text(
                 """
-                SELECT id, like_count, comment_count, created_at 
-                FROM posts 
-                WHERE deleted_at IS NULL 
+                SELECT id, like_count, comment_count, created_at
+                FROM posts
+                WHERE deleted_at IS NULL
                   AND is_published = TRUE
                   AND created_at > :since
                 ORDER BY created_at DESC
@@ -47,7 +49,7 @@ def calculate_hot_posts(periode:str='daily',limit:int=1000):
                 score=PostCache.calc_hot_score(
                     like_count=row.like_count,
                     comment_count=row.comment_count,
-                    created_at=row.created_at 
+                    created_at=row.created_at
                 )
                 all_posts.append({'post_id': row.id, 'score': score})
 
@@ -59,7 +61,7 @@ def calculate_hot_posts(periode:str='daily',limit:int=1000):
                 break
 
         #按分数倒序，取Top limit
-        all_posts.sort(key=lambda x:x['score'],reverser=True)
+        all_posts.sort(key=lambda x:x['score'],reverse=True)
         top_posts=all_posts[:limit]
 
         PostCache.update_hot_posts(top_posts,period=periode)
@@ -68,4 +70,3 @@ def calculate_hot_posts(periode:str='daily',limit:int=1000):
     except Exception as e:
         logger.error(f'[HotPosts]计算失败:{e}')
         return {'status':'failed','error':str(e)}
-    

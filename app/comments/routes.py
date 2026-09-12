@@ -1,8 +1,15 @@
-from flask import request,current_app
-from flask_jwt_extended import jwt_required,get_jwt_identity
-from flask_restx import Namespace,Resource,fields,reqparse,Api
-import traceback
+
+from flask import current_app, request
+from flask_jwt_extended import get_jwt_identity, jwt_required
+from flask_restx import Api, Namespace, Resource, fields, reqparse
+
+from utils.decorators import validate_json
+from utils.pagination import get_pagination_params
+from utils.response import success_response
+
 from . import comments_bp
+from .schemas import comment_create_schema, comment_update_schema
+from .services import CommentService
 
 authorizations = {
     'Bearer': {
@@ -12,12 +19,6 @@ authorizations = {
         'description': 'JWT Token (Bearer token)'
     }
 }
-from .services import CommentService
-from .schemas import (comment_create_schema,comment_update_schema,comment_schema,comments_schema)
-from app.common.exceptions import (ResourceNotFoundError,PermissionError,ValidationError,DatabaseError,ConflictError)
-from utils.decorators import validate_json
-from utils.response import success_response,fail_response,ResponseCode
-from utils.pagination import get_pagination_params
 
 api_restx=Api(
         comments_bp,
@@ -26,7 +27,7 @@ api_restx=Api(
         description='提供评论相关的API接口',
         authorizations=authorizations,
         security='Bearer',
-        doc='/docs' 
+        doc='/docs'
         )
 api=Namespace('comments',description='评论相关操作',path='/')
 
@@ -58,7 +59,7 @@ class CommentListResource(Resource):
         current_user_id=get_jwt_identity()
         data=request.get_json()
         current_app.logger.info(f'用户{current_user_id}尝试创建新评论:{data}')
-        
+
         result=CommentService.create_comment(user_id=current_user_id,data=data)
         comment_id = result['comment'].get('id') if isinstance(result['comment'], dict) else getattr(result['comment'], 'id', None)
         current_app.logger.info(f'用户{current_user_id}成功创建评论,评论ID:{comment_id}')
@@ -97,11 +98,11 @@ class CommentResource(Resource):
         '''删除评论'''
         current_user_id=get_jwt_identity()
         current_app.logger.info(f'用户{current_user_id}尝试删除评论,评论ID:{comment_id}')
-        
-        result=CommentService.delete_comment(comment_id=comment_id,user_id=current_user_id)
+
+        CommentService.delete_comment(comment_id=comment_id,user_id=current_user_id)
         current_app.logger.info(f'用户{current_user_id}成功删除评论,评论ID:{comment_id}')
         return success_response(message='评论删除成功'),200
-        
+
 @api.route('/posts/<int:post_id>/comments')
 @api.param('post_id','帖子ID')
 class PostCommentsResource(Resource):
@@ -110,11 +111,11 @@ class PostCommentsResource(Resource):
     @api.response(200,'获取帖子评论成功')
     def get(self, post_id):
         '''根据帖子ID获取评论列表（符合 /posts/{id}/comments 层级）'''
-        args=comments_parser.parse_args()
+        comments_parser.parse_args()
         page,per_page=get_pagination_params()
         current_app.logger.info(f'尝试获取帖子ID{post_id}的评论列表，页码:{page},每页数量:{per_page}')
 
-       
+
         result=CommentService.get_comments_by_post_id(
                     post_id=post_id,
                     page=page,

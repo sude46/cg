@@ -1,27 +1,28 @@
-from flask import request, g
-import time
-import logging
-import uuid
 import json
-from datetime import datetime, timezone
-from typing import Dict, Any
+import logging
 import sys
+import time
 import traceback
+import uuid
+from datetime import UTC, datetime
+from typing import Any
 
-logger = logging.getLogger(__name__)  
+from flask import g, request
+
+logger = logging.getLogger(__name__)
 
 
 def init_logging_middleware(app):
     """初始化结构化日志中间件：request_id + 请求/响应日志 + 敏感信息过滤"""
 
-    def filter_sensitive_data(data: Dict[str, Any],depth:int=0) -> Dict[str, Any]:
+    def filter_sensitive_data(data: dict[str, Any],depth:int=0) -> dict[str, Any]:
         """过滤敏感信息（密码、token等）"""
         if depth>3:
             return '[nested]'
         if not isinstance(data,dict):
             return data
         sensitive_keys = {
-            'password', 'token', 'secret', 'authorization', 
+            'password', 'token', 'secret', 'authorization',
             'cookie', 'session', 'api_key', 'apikey', 'access_token',
             'refresh_token', 'jwt'
         }
@@ -47,7 +48,7 @@ def init_logging_middleware(app):
 
         # 构造请求日志（脱敏）
         log_data = {
-            "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
+            "timestamp": datetime.now(UTC).isoformat() + "Z",
             "level": "INFO",
             "request_id": g.request_id,
             "method": request.method,
@@ -57,7 +58,7 @@ def init_logging_middleware(app):
             "content_length": request.content_length or 0
         }
 
-        
+
         # 安全记录请求题，避免阻塞和内存溢出
         if request.method in ['POST', 'PUT', 'PATCH'] and not request.is_json:
             try:
@@ -93,7 +94,7 @@ def init_logging_middleware(app):
         # 响应日志
         log_level = logging.INFO if response.status_code < 400 else logging.WARNING
         log_data = {
-            "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
+            "timestamp": datetime.now(UTC).isoformat() + "Z",
             "level": "INFO" if log_level == logging.INFO else "WARNING",
             "request_id": g.request_id,
             "status_code": response.status_code,

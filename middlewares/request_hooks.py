@@ -1,6 +1,8 @@
 import time
 import uuid
+
 from flask import g, request
+
 
 def before_request_hook():
     g.request_id = request.headers.get('X-Request-ID', str(uuid.uuid4()))

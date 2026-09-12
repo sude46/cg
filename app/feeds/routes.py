@@ -1,13 +1,12 @@
-from flask import request,current_app
-from flask_jwt_extended import  jwt_required,get_jwt_identity
-from flask_restx import Namespace ,Resource,fields,Api
+from flask import current_app, request
+from flask_jwt_extended import get_jwt_identity, jwt_required
+from flask_restx import Api, Namespace, Resource, fields
+
+from utils.pagination import get_pagination_params
+from utils.response import ResponseCode, fail_response, success_response
+
 from . import feeds_bp
 from .services import FeedService
-from app.common.exceptions import ResourceNotFoundError,ValidationError,DatabaseError
-from utils.decorators import validate_json
-from utils.response import success_response,fail_response,ResponseCode
-from utils.pagination import get_pagination_params
-
 
 authorizations={
     'Bearer':{
@@ -50,7 +49,7 @@ class TimelineResource(Resource):
     def get(self):
         '''获取当前用户的时间线（分页）'''
         current_user_id=get_jwt_identity()
-        args=feed_parser.parse_args()
+        feed_parser.parse_args()
         page,per_page=get_pagination_params()
         current_app.logger.info(
             f'用户{current_user_id}获取时间线，页码:{page},每页数量:{per_page}'
@@ -61,7 +60,7 @@ class TimelineResource(Resource):
             per_page=per_page
         )
         return success_response(data=result,message='获取时间线成功'),200
-    
+
 @api.route('/publish')
 class FeedPublishResource(Resource):
     @api.doc('publish_post_to_feed')

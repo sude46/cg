@@ -1,13 +1,14 @@
+import logging
+
 from celery import shared_task
-from core import db
+
+from app.comments.repositories import comment_repository
+from app.likes.cache import LikeCache
 from app.likes.repositories import like_repository
 from app.posts.repositories import post_repository
-from app.likes.cache import LikeCache
+from core import db
 from core.redis_cache import redis_cache
-from app.comments.repositories import comment_repository
-import logging
 from tasks.base_task import MonitoredTask
-
 
 logger=logging.getLogger(__name__)
 DIRTY_LIKES_KEY = "dirty:likes"
@@ -55,8 +56,8 @@ def async_like_to_do(self,user_id:int,target_type:str,target_id:int,action:str,p
         LikeCache.delete_dirty(target_type,target_id)
         redis_cache.srem(DIRTY_LIKES_KEY,dirty_tag)
         logger.info(f'[celery] 清理脏标记成功 {dirty_tag}')
-        
-        
+
+
         return{'status':'success','pending_id':pending_id}
     except Exception as e:
         db.session.rollback()

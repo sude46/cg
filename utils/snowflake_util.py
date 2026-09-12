@@ -1,8 +1,9 @@
 # utils/snowflake_util.py
 # 完全移除 Flask current_app 依赖，不依赖应用上下文
-import time
-import threading
 import os  # 新增：用环境变量读取配置，而非 Flask 配置
+import threading
+import time
+
 
 class Snowflake:
     """雪花算法生成唯一ID（无 Flask 上下文依赖）"""

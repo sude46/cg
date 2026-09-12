@@ -1,7 +1,9 @@
-from .base import BaseConfig
-from datetime import timedelta
 import os
+from datetime import timedelta
+
 from dotenv import load_dotenv
+
+from .base import BaseConfig
 
 load_dotenv()
 
@@ -37,7 +39,7 @@ class TestingConfig(BaseConfig):
     MAIL_SUPPRESS_SEND = True
 
     BCRYPT_LOG_ROUNDS = 4  # 测试环境降低轮次，减少测试耗时
-    
+
     #日志配置
     LOG_LEVEL="DEBUG"
     LOG_FORMAT="%(asctime)s%(levelname)s%(request_id)s%(message)s"

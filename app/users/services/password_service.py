@@ -1,18 +1,17 @@
 from core import db
 from core.extensions import bcrypt
-from core.security import password_validator
+
 
 class PasswordService:
     MAX_HISTORY=5
 
     def hash_password(self,plain_password:str):
         return bcrypt.generate_password_hash(plain_password).decode('utf-8')
-    
+
     def verify_password(self,hashed:str,plain:str):
         return bcrypt.check_password_hash(hashed,plain)
-    
+
     def is_password_reused(self,user,new_password:str):
-        from app.users.models import PasswordHistory
         '''检查新密码是否在用户的密码历史中被重用'''
         if not user.password_histories:
             return False
@@ -21,7 +20,7 @@ class PasswordService:
             if self.verify_password(history.password_hash,new_password):
                 return True
         return False
-    
+
     def update_password(self,user,new_password:str):
         '''带历史记录的记录的密码更新（事务内更新）'''
         from app.users.models import PasswordHistory

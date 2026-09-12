@@ -1,8 +1,9 @@
-import json 
-import logging 
+import json
+import logging
 import threading
 import time
-from  typing import Callable,Dict,List
+from collections.abc import Callable
+
 from utils.redis_util import RedisClient
 
 logger=logging.getLogger(__name__)
@@ -28,7 +29,7 @@ class RedisEventBus:
                     cls._instance._redis_key='event_bus:queue'
                     cls._instance._app=None
         return cls._instance
-            
+
     def subscribe(self,event_name:str,handler:Callable):
         '''订阅事件'''
         if event_name not in self._subscribers:
@@ -51,7 +52,7 @@ class RedisEventBus:
             conn=RedisClient.get_conn(for_write=True)
             if not conn:
                 logger.error("Redis 未连接，事件丢失")
-                return 
+                return
             conn.lpush(self._redis_key,json.dumps(event))
             logger.debug(f"事件已入队：{event_name}")
         except Exception as e:
@@ -101,13 +102,13 @@ class RedisEventBus:
     def start(self, app=None):
         '''启动消费者线程'''
         if self._running:
-            return 
+            return
         self._app=app
         self._running=True
         self._consumer_thread=threading.Thread(target=self._consume,daemon=True)
         self._consumer_thread.start()
         logger.info("EventBus消费者线程已启动")
-    
+
     def stop(self):
         """停止消费者线程"""
         self._running = False
@@ -116,6 +117,6 @@ class RedisEventBus:
             logger.info("EventBus 消费者线程已停止")
 event_bus = RedisEventBus()
 
-    
+
 
 

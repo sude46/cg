@@ -1,12 +1,11 @@
-from core.metrics import monitor_db 
-from typing import Optional, Dict, Any
-from datetime import datetime, timezone
-from app.common.database import utcnow
-from sqlalchemy.orm import joinedload
-from core import db
-from app.posts.models import Post
-from app.common.database import pagination_utils, get_read_session
+
 from sqlalchemy import case, update
+from sqlalchemy.orm import joinedload
+
+from app.common.database import get_read_session, pagination_utils, utcnow
+from app.posts.models import Post
+from core import db
+from core.metrics import monitor_db
 
 
 class PostRepository:
@@ -18,10 +17,10 @@ class PostRepository:
     @staticmethod
     @monitor_db("select", "posts")
     def get_by_id(
-        post_id: int, 
-        lock: bool = False, 
+        post_id: int,
+        lock: bool = False,
         force_master: bool = False
-    ) -> Optional[Post]:
+    ) -> Post | None:
         """
         根据ID获取帖子
         - lock=True / force_master=True → 走主库
@@ -38,7 +37,7 @@ class PostRepository:
             Post.id == post_id,
             Post.deleted_at.is_(None)
         )
-        
+
         if lock:
             query = query.with_for_update()
         return query.first()
@@ -47,9 +46,9 @@ class PostRepository:
     @monitor_db("insert", "posts")
     def create_post(user_id: int, content: str, image_url: str = None) -> Post:
         post = Post(
-            content=content, 
-            image_url=image_url, 
-            user_id=user_id, 
+            content=content,
+            image_url=image_url,
+            user_id=user_id,
             is_published=True
         )
         db.session.add(post)
@@ -58,9 +57,9 @@ class PostRepository:
     @staticmethod
     @monitor_db("select", "posts")
     def list_posts(
-        page: int = 1, 
-        per_page: int = 20, 
-        user_id: Optional[int] = None
+        page: int = 1,
+        per_page: int = 20,
+        user_id: int | None = None
     ):
         session = PostRepository._read_session()
         query = session.query(Post).options(
@@ -69,7 +68,7 @@ class PostRepository:
             Post.is_published.is_(True),
             Post.deleted_at.is_(None)
         )
-        
+
         if user_id:
             query = query.filter_by(user_id=user_id)
         query = query.order_by(Post.created_at.desc())
@@ -102,15 +101,15 @@ class PostRepository:
         """软删除帖子及相关评论"""
         now = utcnow()
         post.deleted_at = now
-        
+
         # TODO: 确保 Comment 模型也有 deleted_at 字段，否则此处会报错
         for comment in post.comments.all():
             comment.deleted_at = now
-        
+
         # Like 硬删除（无 deleted_at）
         for like in post.likes.all():
             db.session.delete(like)
-        
+
         db.session.add(post)
 
     @staticmethod

@@ -1,16 +1,17 @@
 '''
 Feed流异步任务
 '''
-from celery import shared_task
-from typing import List
-from app.feeds.cache import FeedCache
 import logging
+
+from celery import shared_task
+
+from app.feeds.cache import FeedCache
 
 logger = logging.getLogger(__name__)
 
 
 @shared_task(bind=True, max_retries=3, default_retry_delay=5)
-def async_remove_post_from_followers(self, post_id: int, follower_ids: List[int]):
+def async_remove_post_from_followers(self, post_id: int, follower_ids: list[int]):
     '''
     异步从所有粉丝时间线中移除帖子
     '''
@@ -33,7 +34,7 @@ def async_remove_post_from_followers(self, post_id: int, follower_ids: List[int]
 
 
 @shared_task(bind=True, max_retries=3, default_retry_delay=5)
-def async_push_to_followers(self, post_id: int, created_at: float, follower_ids: List[int]):
+def async_push_to_followers(self, post_id: int, created_at: float, follower_ids: list[int]):
     '''
     异步推送到粉丝时间线（用于超大粉丝量的分批推送）
     当粉丝数极大时，同步推送会阻塞请求，改为异步任务分批执行

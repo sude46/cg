@@ -102,7 +102,6 @@ weibo-platform/
 │   ├── follows/             # 关注/粉丝/互相关注
 │   ├── feeds/               # Feed 流（推拉结合，粉丝>=1000 用拉模式）
 │   ├── notifications/       # 通知（事件驱动，订阅 comment.created）
-│   ├── auth/                # （新，尚未接入 blueprint_registry）
 │   ├── permissions/         # 权限服务（services.py）
 │   └── common/              # 异常/常量/数据库工具/事件总线
 ├── core/                    # 基础设施
@@ -116,8 +115,7 @@ weibo-platform/
 │   ├── celery_app.py        # Celery 实例 + beat_schedule
 │   ├── extensions.py        # bcrypt/jwt/mail + init_redis（注意 factory 没用这套 init）
 │   ├── security.py          # SecurityManager（密码强度/哈希/JWT 手写）
-│   ├── logging_config.py    # 结构化日志（TimedRotatingFileHandler）
-│   └── config.py            # ⚠️ 与 config/ 目录重复！另一个 get_config（返回 dict，含 postgres 默认值）
+│   └── logging_config.py    # 结构化日志（TimedRotatingFileHandler）
 ├── config/                  # Flask 配置（base/development/production/testing）
 ├── services/search/         # ES 搜索（config/document/repositories/services/event_handlers）
 ├── middlewares/             # 认证/限流/CORS/安全头/日志/metrics/错误
@@ -165,14 +163,13 @@ weibo-platform/
 - 粉丝 >=1000：拉模式（读时 `_pull_from_database` 聚合）
 - `BIG_V_THRESHOLD=1000`，key `feed:user:{uid}` ZSet
 
-## 已知代码 bug（尚未修复，遇到相关报错先查这里）
+## 已知代码 bug（本次会话已全部修复，留档备查）
 
-> 监控相关的语法/拼写 bug 已在「监控体系」会话中全部修复，此处仅剩与监控无关的遗留项。
-
-- `core/config.py` 与 `config/__init__.py` 各有一套 `get_config`，前者返回 dict 含 postgres 默认值（core/celery_app.py 用的 config/get_config，别用混）
-- `tasks/data_tasks.py:62` `reverser=True` 应为 `reverse=True`
-- `tests/unit/test_security.py` 调用 `AuthService.get_user_entity(...)`，但新旧 AuthService 都没有此方法（测试疑似过时，未验证）
-- `core/metrics.py` 的 `CELERY_QUEUE_DEPTH`（`weibo_celery_queue_depth`）从未被 set，恒 0，已废弃（告警已改用 celery-exporter 的 `celery_queue_length`），可删
+- [已修复] `core/config.py` 与 `config/__init__.py` 两套 `get_config` 冲突 → 删除死代码 `core/config.py`（全项目无引用）
+- [已修复] `app/auth/` 假登录 stub（users 模块已完整覆盖认证）→ 删除整个死模块目录
+- [已修复] `tasks/data_tasks.py:62` `reverser=True` → `reverse=True`
+- [已修复] `tests/unit/test_security.py` 调用不存在的 `AuthService.get_user_entity` → 改用 `user_repository.get_by_id`；顺带修复 3 个过时测试（密码数据含连续字符被拒、`verify_jwt_token` 过期返回 None 而非抛异常）
+- [已修复] `core/metrics.py` `CELERY_QUEUE_DEPTH` 恒 0 已废弃 → 删除
 
 ## 监控体系
 
@@ -201,6 +198,21 @@ venv/bin/python monitoring/alert_webhook.py   # 端口 5001
 ```
 
 ### 待办（未完成）
-- Grafana 面板：`monitoring/grafana/provisioning/dashboards/` 目录为空，还没写任何 json 面板
 - mysqld-exporter 用 root 连库，可换专用监控账号（需 PROCESS/REPLICATION CLIENT 权限）
-- alert_webhook.py 未容器化，靠宿主机跑（alertmanager 通过 `host.docker.internal:5001` 回调）
+
+## 发展规划 / 演进方向
+
+> 定位：可申请软著的分布式社交平台系统。当前缺前端 + CI/CD + 代码规范，补齐即可产品化。
+
+### 短期（补成完整产品，软著落地）
+- 前端：AI 生成（Vue3 + Vite + TypeScript + Element Plus），以 Swagger/OpenAPI 为输入
+- CI/CD：GitHub Actions（ruff → pytest → docker build）
+- 代码规范：pre-commit + editorconfig + ruff；统一缩进为 4 空格（现有 13 个 tab 缩进文件待清理）
+
+### 中期（加业务模块，架构上每个都是 `app/<domain>/` 下加目录）
+- 私信（IM）、话题/标签、收藏、举报与内容审核、搜索推荐
+
+### 长期（架构演进）
+- 微服务化拆分（事件总线已是解耦雏形，天然利于拆分）
+- K8s + API 网关 + 服务网格
+- 推荐系统（已有 ES + 热搜 + 行为数据基础）

@@ -1,10 +1,10 @@
-from app.posts.models import Post
 import pytest
-from app.posts.services import PostService
-from app.likes.services import LikeService
+
+from app.common.exceptions import AuthenticationError, ValidationError
 from app.posts.models import Post
-from app.common.exceptions import ValidationError, ResourceNotFoundError, AuthenticationError
-from tests.unit.factories import UserFactory, PostFactory
+from app.posts.services import PostService
+from tests.unit.factories import PostFactory, UserFactory
+
 
 class TestPostService:
     """帖子模块单元测试"""
@@ -286,4 +286,4 @@ class TestPostCache:
         for p in posts:
             assert cache.get(p['id']) == p
 
-    
+

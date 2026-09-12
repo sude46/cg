@@ -1,20 +1,22 @@
-from datetime import datetime, timezone
+import logging
+
 from sqlalchemy.exc import IntegrityError
-from core import db
-from .models import Follow
-from .repositories import follow_repository
-from .cache import FollowCache
-from .schemas import follow_response_schema
-from app.users.repositories import user_repository
+
 from app.common.exceptions import (
-    ResourceNotFoundError,
-    ValidationError,
     ConflictError,
     DatabaseError,
+    ResourceNotFoundError,
+    ValidationError,
 )
 from app.feeds.cache import FeedCache
-import logging
+from app.users.repositories import user_repository
+from core import db
 from core.metrics import FOLLOW_OPERATIONS
+
+from .cache import FollowCache
+from .repositories import follow_repository
+from .schemas import follow_response_schema
+
 logger = logging.getLogger(__name__)
 
 
@@ -39,7 +41,7 @@ class FollowService:
                 raise ConflictError('已关注改用户')
              # 3. 创建关注关系（主库写）
             follow = follow_repository.create_follow(follower_id, followed_id)
-            db.session.flush() 
+            db.session.flush()
             user_repository.increment_follower_count(followed_id)
             user_repository.increment_following_count(followed_id)
             db.session.commit()
@@ -53,13 +55,13 @@ class FollowService:
             logger.info(f'用户{follower_id}关注了用户{followed_id}')
             FOLLOW_OPERATIONS.labels(action='follow', result='success').inc()
             return {'message': '关注成功', 'follow': follow_response_schema.dump(follow)}
-            
+
         except IntegrityError:
             db.session.rollback()
             logger.warning(f'用户{follower_id}重复关注用户{followed_id}')
             FOLLOW_OPERATIONS.labels(action='follow', result='duplicate').inc()
             raise ConflictError('已关注用户')
-            
+
         except Exception as e:
             db.session.rollback()
             logger.error('关注用户失败: %s', e)
@@ -134,7 +136,7 @@ class FollowService:
                 raise ResourceNotFoundError('用户不存在或已被禁用')
 
             result = follow_repository.list_followers(user_id, page=page, per_page=per_page)
-            items = follow_response_schema.dump(result.get('items', []), many=True) 
+            items = follow_response_schema.dump(result.get('items', []), many=True)
             FOLLOW_OPERATIONS.labels(action='list_followers', result='success').inc()
             return {'follows': items, 'pagination': result.get('pagination', {})}
         except Exception as e:
@@ -142,16 +144,16 @@ class FollowService:
             if isinstance(e, ResourceNotFoundError):
                 raise
             raise DatabaseError('获取列表失败，请稍后重试')
-        
+
     @staticmethod
     def get_mutual_follows(user_id: int, page: int = 1, per_page: int = 20):
         user = user_repository.get_by_id(user_id)
         if not user or not getattr(user, 'is_active', True):
             raise ResourceNotFoundError('目标用户不存在或已被禁用')
-        
+
         result = follow_repository.get_mutual_follows(
-            user_id=user_id, 
-            page=page, 
+            user_id=user_id,
+            page=page,
             per_page=per_page
         )
         from app.users.schemas import UserListSchema

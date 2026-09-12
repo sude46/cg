@@ -1,6 +1,7 @@
-import os
 import inspect
-from typing import Dict, Any
+import os
+from typing import Any
+
 from .base import BaseConfig
 from .development import DevelopmentConfig
 from .production import ProductionConfig
@@ -36,7 +37,7 @@ def get_config(config_name: str = None):
 
 
 
-def _get_config_attributes(config_obj: BaseConfig) -> Dict[str, Any]:
+def _get_config_attributes(config_obj: BaseConfig) -> dict[str, Any]:
     """
     私有方法：提取配置类的所有有效属性（适配类级属性，解决__dict__缺失问题）
     :param config_obj: 配置实例（BaseConfig 及其子类实例）
@@ -62,7 +63,7 @@ def _get_config_attributes(config_obj: BaseConfig) -> Dict[str, Any]:
     return config_dict
 
 
-def sanitize_config(config_obj: BaseConfig) -> Dict[str, Any]:
+def sanitize_config(config_obj: BaseConfig) -> dict[str, Any]:
     """
     配置脱敏方法：过滤敏感字段，避免日志泄露（适配BaseConfig无__dict__的场景）
     :param config_obj: BaseConfig 及其子类的配置实例

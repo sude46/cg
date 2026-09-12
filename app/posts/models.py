@@ -1,7 +1,7 @@
-from core import db 
-from datetime import datetime, timezone
+
 from app.common.database import utcnow
-from typing import List,Optional
+from core import db
+
 
 class Post(db.Model):
 	'''帖子模型'''
@@ -17,7 +17,7 @@ class Post(db.Model):
 	comment_count=db.Column(db.Integer,default=0)
 	deleted_at=db.Column(db.DateTime,nullable=True,default=None,index=True)
 
-	
+
 	version_id=db.Column(db.Integer,default=0,nullable=False)
 
 	__mapper_args__={
@@ -45,5 +45,5 @@ class Post(db.Model):
 
 	def __repr__(self):
 		return f'<Post{self.id} by User{self.user_id}>'
-			
-			
+
+

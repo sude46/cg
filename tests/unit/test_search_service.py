@@ -1,4 +1,3 @@
-import pytest
 
 
 class TestPostSearchService:
@@ -14,8 +13,9 @@ class TestPostSearchService:
             assert score == 20
 
     def test_index_post(self, app, monkeypatch):
-        from services.search.services import PostSearchService
         from unittest.mock import MagicMock
+
+        from services.search.services import PostSearchService
         fake_doc = MagicMock()
         fake_doc.index.return_value = {"result": "created", "_id": "123"}
         monkeypatch.setattr('services.search.services.PostDocument', fake_doc)
@@ -29,8 +29,9 @@ class TestPostSearchService:
             assert result is not None
 
     def test_update_post(self, app, monkeypatch):
-        from services.search.services import PostSearchService
         from unittest.mock import MagicMock
+
+        from services.search.services import PostSearchService
         fake_doc = MagicMock()
         fake_doc.update.return_value = {"result": "updated"}
         monkeypatch.setattr('services.search.services.PostDocument', fake_doc)
@@ -39,8 +40,9 @@ class TestPostSearchService:
             assert result["result"] == "updated"
 
     def test_delete_post(self, app, monkeypatch):
-        from services.search.services import PostSearchService
         from unittest.mock import MagicMock
+
+        from services.search.services import PostSearchService
         fake_doc = MagicMock()
         fake_doc.delete.return_value = {"result": "deleted"}
         monkeypatch.setattr('services.search.services.PostDocument', fake_doc)
@@ -49,8 +51,9 @@ class TestPostSearchService:
             assert result["result"] == "deleted"
 
     def test_search_empty(self, app, monkeypatch):
-        from services.search.services import PostSearchService
         from unittest.mock import MagicMock
+
+        from services.search.services import PostSearchService
         fake_repo = MagicMock()
         fake_repo.search.return_value = ([], 0)
         monkeypatch.setattr('services.search.services.PostSearchRepository', fake_repo)
@@ -60,8 +63,9 @@ class TestPostSearchService:
             assert len(result["items"]) == 0
 
     def test_search_with_results(self, app, monkeypatch):
-        from services.search.services import PostSearchService
         from unittest.mock import MagicMock
+
+        from services.search.services import PostSearchService
         fake_repo = MagicMock()
         fake_repo.search.return_value = (
             [{"id": 1, "content": "hello"}, {"id": 2, "content": "world"}],
@@ -74,8 +78,9 @@ class TestPostSearchService:
             assert len(result["items"]) == 2
 
     def test_search_pagination(self, app, monkeypatch):
-        from services.search.services import PostSearchService
         from unittest.mock import MagicMock
+
+        from services.search.services import PostSearchService
         fake_repo = MagicMock()
         fake_repo.search.return_value = ([{"id": 1}] * 20, 50)
         monkeypatch.setattr('services.search.services.PostSearchRepository', fake_repo)

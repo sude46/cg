@@ -1,9 +1,9 @@
-import logging 
-import time
+import logging
 import threading
-from typing import Optional,Dict,Any,List
-from core.redis_cache import redis_cache
+import time
+from typing import Any
 
+from core.redis_cache import redis_cache
 
 logger=logging.getLogger(__name__)
 
@@ -34,19 +34,19 @@ class UserCache:
     @classmethod
     def _email_key(cls,email:str):
         return f'user:email:{email.lower()}'
-    
+
     #=========================敏感数据过滤=================
     # 防御纵深（Defense-in-Depth）：
     # 第一层：UserSchema 控制响应字段（schema 里不定义就不输出）
     # 第二层：_sanitize 兜底——即使有人绕过 schema 直接缓存 model dict，也绝不泄露
     @classmethod
-    def _sanitize(cls,user_data:Dict[str,Any]):
+    def _sanitize(cls,user_data:dict[str,Any]):
         sensitive={'password_hash','mfa_secret','lock_until','login_fail_count'}
         leaked=[k for k in sensitive if k in user_data]
         if leaked:
             logger.warning(f'敏感字段 {leaked} 到达缓存层，已被过滤（Schema 应提前拦截）')
         return {k:v for k,v in user_data.items() if k not in sensitive}
-    
+
 
     #================基础CRUD==============================
     @classmethod
@@ -57,10 +57,10 @@ class UserCache:
         except Exception as e:
             logger.error(f'获取用户{user_id}缓存失败:{e}')
             return None
-        
+
 
     @classmethod
-    def set_profile(cls,user_id:int,user_data:Dict[str,Any]):
+    def set_profile(cls,user_id:int,user_data:dict[str,Any]):
         '''写用户资料缓存（自动过滤敏感字段）'''
         try:
             safe_data=cls._sanitize(user_data)
@@ -73,7 +73,7 @@ class UserCache:
         except Exception as e:
             logger.error(f'设置用户{user_id}缓存失败:{e}')
             return False
-        
+
     @classmethod
     def invalidate(cls,user_id:int):
         '''删除用户资料缓存'''
@@ -83,7 +83,7 @@ class UserCache:
         except Exception as e:
             logger.error(f'删除用户{user_id}缓存失败:{e}')
             return False
-        
+
 
     #==================强一致标记===============
     @classmethod
@@ -100,7 +100,7 @@ class UserCache:
         except Exception as e:
             logger.error(f'标记用户{user_id}最近修改失败:{e}')
             return False
-        
+
     @classmethod
     def is_recently_modified(cls,user_id:int):
         '''检查用户是否在强一致窗口内'''
@@ -109,7 +109,7 @@ class UserCache:
         except Exception as e:
             logger.error(f'检查用户{user_id}最近修改失败:{e}')
             return False
-        
+
 
     #===================用户名/邮箱索引（存在性快速校验）==============
     @classmethod
@@ -124,7 +124,7 @@ class UserCache:
         except Exception as e:
             logger.error(f'获取用户名{username}缓存失败:{e}')
             return None
-        
+
     @classmethod
     def set_by_username(cls,username:str,user_id:int):
         try:
@@ -145,7 +145,7 @@ class UserCache:
         except Exception as e:
             logger.error(f'删除用户名{username}缓存失败:{e}')
             return False
-        
+
     @classmethod
     def get_by_email(cls,email:str):
         '''通过邮箱反查user_id'''
@@ -155,7 +155,7 @@ class UserCache:
         except Exception as e:
             logger.error(f'获取邮箱{email}缓存失败:{e}')
             return None
-        
+
     @classmethod
     def set_by_email(cls,email:str,user_id:int):
         try:
@@ -168,7 +168,7 @@ class UserCache:
         except Exception as e:
             logger.error(f'设置邮箱{email}缓存失败: {e}')
             return False
-        
+
     @classmethod
     def invalidate_by_email(cls, email: str) -> bool:
         try:
@@ -179,7 +179,7 @@ class UserCache:
             return False
     #=============批量预加载===================
     @classmethod
-    def preload_profiles(cls,user_ids:List[int]):
+    def preload_profiles(cls,user_ids:list[int]):
         '''
         批量预加载用户资料（用于帖子列表反查作者）
         返回:{user_id:profile_dict,....}
@@ -192,7 +192,7 @@ class UserCache:
             if data:
                 profiles[uid]=data
         return profiles
-    
+
     #==============延迟双删=============
     @classmethod
     def double_invalidate(cls, user_id: int, username: str = None, email: str = None):
@@ -231,6 +231,6 @@ class UserCache:
         threading.Thread(target=_delayed, daemon=True).start()
 
 
-        
+
 
 

@@ -1,8 +1,10 @@
 '''数据库锁工具：死锁重试、悲观锁封装'''
-import logging 
-import time 
+import logging
+import time
 from functools import wraps
+
 from sqlalchemy.exc import OperationalError
+
 from core.database import db
 
 logger=logging.getLogger(__name__)
@@ -13,7 +15,7 @@ def with_deadlock_retry(max_retries:int=3,base_delay:float=0.1):
     用法：
     @with_deadlock_retry(max_retries=3)
     def transfer_followers(...):
-    
+
     原理：捕获数据库死锁异常（mysql:1213,PostgreSQL:40P01),
     安直树退避策略延迟后重试。
     '''
@@ -77,5 +79,5 @@ def pessimistic_get(model_class,*filters,lock_mode='update',**filter_by):
         query=query.with_for_update(read=True)
     else:
         raise ValueError(f'不支持的lock_mode:{lock_mode}')
-    
+
     return query.first()

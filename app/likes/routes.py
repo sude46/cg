@@ -1,8 +1,14 @@
-from flask import request,current_app
-from flask_jwt_extended import jwt_required, get_jwt_identity
-from flask_restx import Resource, fields, Namespace,Api
+from flask import request
+from flask_jwt_extended import get_jwt_identity, jwt_required
+from flask_restx import Api, Namespace, Resource, fields
+
 from middlewares import route_limit
+from utils.decorators import validate_json
+from utils.response import success_response
+
 from . import likes_bp
+from .schemas import like_create_schema
+from .services import LikeService
 
 authorizations = {
     'Bearer': {
@@ -12,11 +18,6 @@ authorizations = {
         'description': 'JWT Token (Bearer token)'
     }
 }
-from .services import LikeService
-from .schemas import like_schema, likes_schema, like_create_schema
-from utils.decorators import validate_json
-from app.common.exceptions import ResourceNotFoundError, ValidationError, ConflictError  # 导入冲突异常
-from utils.response import success_response, fail_response, ResponseCode
 
 api_restx=Api(
     likes_bp,
@@ -25,7 +26,7 @@ api_restx=Api(
     description='提供点赞相关的API接口',
     authorizations=authorizations,
     security='Bearer',
-    doc='/docs'  
+    doc='/docs'
 )
 api=Namespace('likes', description='点赞相关操作', path='/')
 
@@ -42,13 +43,13 @@ class LikeOperation(Resource):
     @api.response(201, '点赞成功')
     @jwt_required()
     @validate_json(like_create_schema)
-    @route_limit("30")
+    @route_limit("30 per minute")
     def post(self):
         """创建点赞"""
         data = request.get_json()
         current_user_id = get_jwt_identity()
 
-        
+
         result = LikeService.create_like(
                 user_id=current_user_id, post_id=data.get('post_id'), comment_id=data.get('comment_id')
             )
@@ -66,7 +67,7 @@ class LikeOperation(Resource):
         data = request.get_json()
         current_user_id = get_jwt_identity()
 
-        
+
         result = LikeService.delete_like(
                 user_id=current_user_id, post_id=data.get('post_id'), comment_id=data.get('comment_id')
             )
@@ -80,7 +81,7 @@ class PostLikeResource(Resource):
     @api.doc('点赞帖子')
     @api.response(201, '点赞成功')
     @jwt_required()
-    @route_limit("60")
+    @route_limit("60 per minute")
     def post(self, post_id):
         """点赞帖子（/posts/{post_id}/likes）"""
         current_user_id = get_jwt_identity()
@@ -90,7 +91,7 @@ class PostLikeResource(Resource):
                 data=result,
                 message='点赞成功'
             ), 201
-        
+
 
 # 取消点赞带like_id（符合 /posts/{id}/likes/{like_id} 规范）
 @api.route('/posts/<int:post_id>/likes/<int:like_id>')
@@ -123,14 +124,14 @@ class UserLikes(Resource):
         per_page = request.args.get('per_page', 20, type=int)
         # 限制per_page最大值
         per_page = min(per_page, 100)
-        
+
         result = LikeService.get_user_likes(user_id=current_user_id, page=page, per_page=per_page)
         return success_response(data=result), 200
 
 
 api_restx.add_namespace(api)
 
-        
+
 
 
 

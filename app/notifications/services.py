@@ -1,19 +1,20 @@
-from sqlalchemy.exc import IntegrityError
-from core import db
-from .models import Notification
-from app.users.repositories import user_repository
-from app.common.exceptions import (
-    ResourceNotFoundError,
-    PermissionError,
-    ValidationError,
-    DatabaseError,
-)
-from app.notifications.schemas import notification_schema, notifications_schema
-from app.notifications.repositories import notification_repository
-from app.notifications.cache import NotificationCache
-from app.common.events import event_bus
 import logging
+
+from sqlalchemy.exc import IntegrityError
+
+from app.common.events import event_bus
+from app.common.exceptions import (
+    DatabaseError,
+    ResourceNotFoundError,
+    ValidationError,
+)
+from app.notifications.cache import NotificationCache
+from app.notifications.repositories import notification_repository
+from app.notifications.schemas import notification_schema, notifications_schema
+from app.users.repositories import user_repository
+from core import db
 from core.metrics import NOTIFICATION_OPERATIONS
+
 logger = logging.getLogger(__name__)
 
 

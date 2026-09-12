@@ -1,5 +1,5 @@
 import logging
-from typing import List,Optional
+
 from core.redis_cache import redis_cache
 
 logger=logging.getLogger(__name__)
@@ -21,15 +21,15 @@ class FollowCache:
     @classmethod
     def _following_key(cls,user_id:int):
         return f'following:{user_id}'
-    
+
     @classmethod
     def _followers_key(cls,user_id:int):
         return f'followers:{user_id}'
-    
+
     @classmethod
     def _lock_key(cls, follower_id: int, followed_id: int) -> str:
         return f'lock:follow:{follower_id}:{followed_id}'
-    
+
     @classmethod
     def acquire_lock(cls, follower_id: int, followed_id: int) -> bool:
         """获取分布式锁，防止并发重复关注/取关"""
@@ -42,8 +42,8 @@ class FollowCache:
     @classmethod
     def release_lock(cls, follower_id: int, followed_id: int) -> bool:
         """释放分布式锁"""
-        return redis_cache.delete(cls._lock_key(follower_id, followed_id)) 
-    
+        return redis_cache.delete(cls._lock_key(follower_id, followed_id))
+
     #=============读操作=============
     @classmethod
     def  is_following(cls,follower_id:int,followed_id:int):
@@ -58,7 +58,7 @@ class FollowCache:
         except Exception as e:
             logger.error(f'[FollowCache]查关注状态失败{follower_id}->{followed_id}:{e}')
             return None
-    
+
     @classmethod
     def get_following_ids(cls,user_id:int):
         '''获取关注列表(None表示miss或故障)'''
@@ -76,9 +76,9 @@ class FollowCache:
         except Exception as e:
             logger.error(f'[FollowCache]词查关注列表失败 uid={user_id}:{e}')
             return None
-        
+
     @classmethod
-    def get_follower_ids(cls, user_id: int) -> Optional[List[int]]:
+    def get_follower_ids(cls, user_id: int) -> list[int] | None:
         """获取粉丝列表（Feed 推送用）"""
         try:
             members = redis_cache.smembers(
@@ -94,7 +94,7 @@ class FollowCache:
         except Exception as e:
             logger.error(f'[FollowCache] 查粉丝列表失败 uid={user_id}: {e}')
             return None
-        
+
     #==========写操作
     @classmethod
     def add_relation(cls,follower_id:int,followed_id:int):
@@ -148,7 +148,6 @@ class FollowCache:
             logger.error(f'[FollowCache] 清空缓存失败 uid={user_id}: {e}')
             return False
 
-        
 
-        
-    
+
+

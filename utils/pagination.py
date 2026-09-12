@@ -1,5 +1,6 @@
 from flask import request
 
+
 def get_pagination_params(default_page=1, default_per_page=10):
     """统一获取分页参数，避免重复代码"""
     try:

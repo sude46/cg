@@ -1,9 +1,13 @@
-from utils.pagination import get_pagination_params
+from flask import current_app, request
+from flask_jwt_extended import get_jwt_identity, jwt_required
+from flask_restx import Api, Namespace, Resource, fields, reqparse
+
+from utils.decorators import validate_json
+from utils.response import success_response
+
 from . import notifications_bp
-from flask import request,current_app
-from flask_jwt_extended import jwt_required,get_jwt_identity
-from flask_restx import Api,Namespace,Resource,fields,reqparse
-import traceback
+from .schemas import notification_create_schema
+from .services import NotificationService
 
 authorizations = {
     'Bearer': {
@@ -13,22 +17,6 @@ authorizations = {
         'description': 'JWT Token (Bearer token)'
     }
 }
-
-from .services import NotificationService
-from .schemas import (
-        notification_create_schema,
-        notification_schema,
-        notifications_schema
-        )
-from app.common.exceptions import (
-        ResourceNotFoundError,
-        PermissionError,
-        ValidationError,
-        DatabaseError,
-        ConflictError
-        )
-from  utils.decorators import validate_json,inject_current_user
-from utils.response import success_response, fail_response, ResponseCode
 
 api_restx=Api(
         notifications_bp,
@@ -100,7 +88,7 @@ class NotificationListResource(Resource):
         current_user_id=get_jwt_identity()
         data=request.get_json()
         current_app.logger.info(f'用户{current_user_id}尝试创建通知:{data}')
-        
+
         notification=NotificationService.create_notification(data)
         notification_id = notification.get('id') if isinstance(notification, dict) else getattr(notification, 'id', None)
         current_app.logger.info(f'用户{current_user_id}成功创建通知,ID:{notification_id}')
@@ -116,7 +104,7 @@ class NotificationResource(Resource):
     def get(self,notification_id):
         current_user_id=get_jwt_identity()
         current_app.logger.info(f'用户{current_user_id}请求获取通知详情,ID:{notification_id}')
-        
+
         notification=NotificationService.get_notification_by_id(notification_id,current_user_id)
         current_app.logger.info(f'用户{current_user_id}成功获取通知详情,ID:{notification_id}')
         return success_response(data=notification, message='获取通知详情成功'), 200
@@ -126,10 +114,10 @@ class NotificationResource(Resource):
     def delete(self,notification_id):
         current_user_id=get_jwt_identity()
         current_app.logger.info(f'用户{current_user_id}尝试删除通知,ID:{notification_id}')
-        
+
         NotificationService.delete_notification(notification_id,current_user_id)
         current_app.logger.info(f'用户{current_user_id}成功删除通知,ID:{notification_id}')
-        return success_response(message='通知删除成功'), 200    
+        return success_response(message='通知删除成功'), 200
 
 @api.route('/<int:notification_id>/read')
 @api.param('notification_id','通知ID')
@@ -140,7 +128,7 @@ class NotificationReadResource(Resource):
     def patch(self,notification_id):
         current_user_id=get_jwt_identity()
         current_app.logger.info(f'用户{current_user_id}尝试标记通知已读,ID:{notification_id}')
-        
+
         notification=NotificationService.mark_as_read(notification_id,current_user_id)
         current_app.logger.info(f'用户{current_user_id}成功标记通知为已读,ID:{notification_id}')
         return success_response(data=notification, message='标记通知为已读成功'), 200
@@ -152,7 +140,7 @@ class NotificationReadAllResource(Resource):
     def patch(self):
         current_user_id=get_jwt_identity()
         current_app.logger.info(f'用户{current_user_id}尝试标记所有通知为已读')
-        
+
         NotificationService.mark_all_as_read(current_user_id)
         current_app.logger.info(f'用户{current_user_id}成功标记所有通知为已读')
         return success_response(message='所有通知已标记为已读'), 200

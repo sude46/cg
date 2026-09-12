@@ -1,14 +1,16 @@
-from core import db  # 直接复用core中初始化的SQLAlchemy实例
-from datetime import datetime, timezone
-from typing import Optional, Dict, Any
+import logging
+from datetime import UTC, datetime
+from typing import Any
+
 from sqlalchemy import inspect
 from sqlalchemy.orm import Query
-import logging
+
+from core import db  # 直接复用core中初始化的SQLAlchemy实例
 
 
 def utcnow():
     """返回 naive UTC datetime（兼容 SQLite + MySQL，替代废弃的 datetime.utcnow）"""
-    return datetime.now(timezone.utc).replace(tzinfo=None)
+    return datetime.now(UTC).replace(tzinfo=None)
 
 
 logger = logging.getLogger(__name__)
@@ -59,7 +61,7 @@ class PaginationUtils:
         query: Query,
         page: int = 1,
         per_page: int = PAGINATION_DEFAULTS['PER_PAGE']
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         page = max(1, page)
         per_page = min(PAGINATION_DEFAULTS['MAX_PER_PAGE'], max(1, per_page))
 
@@ -82,9 +84,9 @@ class PaginationUtils:
     @staticmethod
     def keyset_paginate(
         query: Query,
-        last_id: Optional[int] = None,
+        last_id: int | None = None,
         per_page: int = PAGINATION_DEFAULTS['PER_PAGE']
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         游标分页（优化大数据量分页性能）
         :param query: SQLAlchemy查询对象
@@ -145,7 +147,7 @@ class PaginationUtils:
             except Exception:
                 # 最后回退：尝试访问属性名 'id'
                 next_cursor = getattr(last_item, 'id', None)
-        
+
         return {
             'items': items,
             'pagination': {

@@ -1,9 +1,11 @@
+import logging
 import os
 import secrets
-from .base import BaseConfig
-import logging
 from urllib.parse import quote_plus
+
 from dotenv import load_dotenv
+
+from .base import BaseConfig
 
 load_dotenv()
 
@@ -35,7 +37,7 @@ class DevelopmentConfig(BaseConfig):
 			if not mysql_db:
 				missing_configs.append('MYSQL_DB')
 			if missing_configs:
-				raise EnvironmentError(
+				raise OSError(
 					f"开发环境数据库配置缺失：{', '.join(missing_configs)}，请通过环境变量设置"
 				)
 
@@ -73,13 +75,12 @@ class DevelopmentConfig(BaseConfig):
 		"""安全地构建数据库 URI（对密码进行 URL 编码）。
 		为常见 MySQL 驱动使用 `mysql+pymysql://`，可根据依赖调整。
 		"""
-		from urllib.parse import quote_plus
 		encoded_password = quote_plus(password)
 		uri = f'mysql+pymysql://{user}:{encoded_password}@{host}/{database}'
 		return uri
 	SESSION_COOKIE_SECURE=False
 	PROPAGATE_EXCEPTIONS=True
-	
+
 	@classmethod
 	def init_app(cls,app):
 		BaseConfig.init_app(app)

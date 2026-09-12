@@ -1,8 +1,14 @@
 import pytest
-from app.follows.services import FollowService
+
+from app.common.exceptions import (
+    ConflictError,
+    ResourceNotFoundError,
+    ValidationError,
+)
 from app.follows.models import Follow
-from app.common.exceptions import ValidationError, ConflictError, ResourceNotFoundError, DatabaseError
+from app.follows.services import FollowService
 from tests.unit.factories import UserFactory
+
 
 class TestFollowService:
     """关注模块单元测试"""

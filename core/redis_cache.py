@@ -1,10 +1,12 @@
 import json
-import random
 import logging
+import random
 import time
-from typing import Any,Optional,Union,List,Dict
 from functools import wraps
+from typing import Any
+
 from flask import current_app
+
 from utils.redis_util import RedisClient
 
 logger=logging.getLogger(__name__)
@@ -22,12 +24,12 @@ class RedisCache:
             cls._instance=super().__new__(cls)
             cls._instance._client=None
         return cls._instance
-    
+
     #================缓存防护常量===============
     NULL_VALUE='__NULL__'    #空值缓存标记
     NULL_TTL=60              #空值缓存短TTL(秒)
     JITTER_RANGE=(0,60)      #随机偏移范围(放雪崩)
-    
+
     def _get_client(self, for_write=False):
         '''获取 Redis 连接（支持主从切换）'''
         # 直接透传给 RedisClient，不缓存，确保读写分离生效
@@ -35,7 +37,7 @@ class RedisCache:
         if conn is None:
             logger.error(f"Redis 未连接 (for_write={for_write})")
         return conn
-    
+
     def get(self,key:str,for_write=False):
         '''获取缓存，命中空值标记是返回None(防穿透)'''
 
@@ -54,7 +56,7 @@ class RedisCache:
         except Exception as e:
             logger.error(f'Redis get error:{e}')
             return None
-        
+
     def set(self,key:str,value:Any,expire:int=300,for_write:bool=False):
         '''
         设置缓存（自动JSON序列化）
@@ -79,7 +81,7 @@ class RedisCache:
         except Exception as e:
             current_app.logger.error(f'Redis set error:{e}')
             return False
-    
+
     #=========cache_through(防击穿)
     def cache_through(self,key:str,loader,expire:int=300,for_write:bool=False,lock_timeout:int=10):
         '''
@@ -110,7 +112,7 @@ class RedisCache:
             cached=self.get(key,for_write=for_write)
             if cached is not None:
                 return cached
-            
+
             #回源加载
             value=loader()
             self.set(key,value,expire=expire,for_write=for_write)
@@ -122,7 +124,7 @@ class RedisCache:
         finally:
             #释放锁
             self.release_lock(lock_key,lock_value,for_write=for_write)
-            
+
 
     def delete(self,key:str):
         '''删除缓存'''
@@ -158,7 +160,7 @@ class RedisCache:
         if not client:
             return 0
         return client.hincrby(key,field,amount)
-    def zadd(self,key:str,mapping:Dict[str,float],expire:int=None):
+    def zadd(self,key:str,mapping:dict[str,float],expire:int=None):
         '''Sorted set添加'''
         client = self._get_client(for_write=True)
         if not client:
@@ -292,7 +294,7 @@ class RedisCache:
         if not client:
             raise RuntimeError("Redis client not initialized")
         return client.scan_iter(match=match,count=count)
-    
+
     def script_load(self,script:str):
         '''加载Lua脚本，返回sha1摘要（供evalsha使用）'''
         client=self._get_client(for_write=True)
@@ -305,8 +307,8 @@ class RedisCache:
         if not client:
             raise RuntimeError("Redis client not initialized")
         return client.evalsha(sha,numkeys,*keys_and_args)
-    
-    
+
+
 redis_cache=RedisCache()
 
 def cache(key_prefix:str,expire:int=300):
@@ -326,7 +328,7 @@ def cache(key_prefix:str,expire:int=300):
             result=f(*args,**kwargs)
             if result:
                 redis_cache.set(cache_key,result,expire)
-            return result 
+            return result
         return decorated_function
     return decorator
 

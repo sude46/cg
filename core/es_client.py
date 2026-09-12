@@ -1,9 +1,10 @@
 import logging
 from typing import Optional
-from elasticsearch import Elasticsearch
-from elasticsearch.exceptions import NotFoundError,ConnectionError
-from config import get_config
 
+from elasticsearch.exceptions import ConnectionError
+
+from config import get_config
+from elasticsearch import Elasticsearch
 
 logger=logging.getLogger(__name__)
 
@@ -31,7 +32,7 @@ class ESClient:
             hosts=app_config.get('ELASTICSEARCH_HOST') or app_config.get('ELASTICSEARCH_HOSTS','http://localhost:9200')
             es_hosts=hosts if isinstance(hosts,list) else [h.strip() for h in hosts.split(",") if h.strip()]
             es_timeout=app_config.get('ELASTICSEARCH_TIMEOUT',30)
-        
+
         if not es_enabled:
             logger.info('ES已经禁用，跳过连接')
             return False
@@ -49,7 +50,7 @@ class ESClient:
             logger.error(f'ES连接异常:{e}')
             self._es=None
             return False
-    
+
     @property
     def client(self):
         '''获取原始客户端'''

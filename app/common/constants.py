@@ -1,8 +1,8 @@
-from enum import Enum
+from enum import StrEnum
 
 # ==================== 枚举类型（业务概念）====================
 
-class NotificationType(str, Enum):
+class NotificationType(StrEnum):
     """通知类型"""
     LIKE = "like"
     COMMENT = "comment"
@@ -10,14 +10,14 @@ class NotificationType(str, Enum):
     SYSTEM = "system"
     REPLY = "reply"
 
-class ResourceType(str, Enum):
+class ResourceType(StrEnum):
     """资源类型"""
     POST = "post"
     COMMENT = "comment"
     USER = "user"
     REPLY = "reply"
 
-class UserRole(str, Enum):
+class UserRole(StrEnum):
     """用户角色"""
     USER = "user"
     ADMIN = "admin"
@@ -60,7 +60,7 @@ class BizCode:
     NOT_FOUND = 404
     CONFLICT = 409
     SERVER_ERROR = 500
-    
+
     # 业务自定义码（10000+）
     USER_EXISTS = 10001
     EMAIL_EXISTS = 10002

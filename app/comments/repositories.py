@@ -1,13 +1,12 @@
-from typing import Optional, Dict, Any
-from sqlalchemy.orm import joinedload
-from core import db
-from app.comments.models import Comment
-from app.common.database import pagination_utils, get_read_session
-from sqlalchemy import case, update
-from datetime import datetime,timezone
-from app.common.database import utcnow
-from core.metrics import monitor_db
+from typing import Any
 
+from sqlalchemy import case, update
+from sqlalchemy.orm import joinedload
+
+from app.comments.models import Comment
+from app.common.database import get_read_session, pagination_utils, utcnow
+from core import db
+from core.metrics import monitor_db
 
 
 class CommentRepository:
@@ -15,11 +14,11 @@ class CommentRepository:
     @staticmethod
     def _read_session():
         return get_read_session()
-    
+
 
     @staticmethod
     @monitor_db("select", "comments")
-    def get_by_id(comment_id: int,force_master:bool=False) -> Optional[Comment]:
+    def get_by_id(comment_id: int,force_master:bool=False) -> Comment | None:
         """根据 ID 获取评论（包含已删除）。"""
         session=db.session if force_master else CommentRepository._read_session()
 
@@ -30,7 +29,7 @@ class CommentRepository:
 
     @staticmethod
     @monitor_db("select", "comments")
-    def get_active_by_id(comment_id: int) -> Optional[Comment]:
+    def get_active_by_id(comment_id: int) -> Comment | None:
         """根据 ID 获取未删除的评论。"""
         return Comment.query.options(joinedload(Comment.author)).filter_by(id=comment_id).filter(Comment.deleted_at.is_(None)).first()
 
@@ -41,11 +40,11 @@ class CommentRepository:
 
         comment = Comment(post_id=post_id, user_id=user_id, content=content)
         db.session.add(comment)
-        return comment 
-    
+        return comment
+
     @staticmethod
     @monitor_db("select", "comments")
-    def list_by_post(post_id: int, page: int = 1, per_page: int = 20) -> Dict[str, Any]:
+    def list_by_post(post_id: int, page: int = 1, per_page: int = 20) -> dict[str, Any]:
         """按帖子分页查询评论列表（只返回未删除评论）。"""
         session=CommentRepository._read_session()
         query=session.query(Comment).options(
@@ -59,7 +58,7 @@ class CommentRepository:
             'items':result['items'],
             'pagination':result['pagination']
         }
-         
+
     @staticmethod
     @monitor_db("update", "comments")
     def soft_delete(comment: Comment) -> None:

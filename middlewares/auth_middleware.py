@@ -1,24 +1,23 @@
 import logging
-import time
 import threading
+import time
 from collections import OrderedDict
-from flask import request,g,current_app
-from flask_jwt_extended import (
-    verify_jwt_in_request  as original_verify_jwt,
-    get_jwt,
-    get_jwt_identity
-)
+
+from flask import g, request
+from flask_jwt_extended import get_jwt, get_jwt_identity
+from flask_jwt_extended import verify_jwt_in_request as original_verify_jwt
 from flask_jwt_extended.exceptions import (
     JWTExtendedException,
     NoAuthorizationError,
-    RevokedTokenError
+    RevokedTokenError,
 )
 from redis.exceptions import RedisError
 from sqlalchemy.exc import SQLAlchemyError
-from app.common.exceptions import AuthenticationError,DatabaseError
-from app.users.models import User
+
+from app.common.exceptions import AuthenticationError, DatabaseError
 from core.database import db
 from core.extensions import jwt
+from utils.redis_util import RedisClient
 
 logger=logging.getLogger(__name__)
 
@@ -72,12 +71,12 @@ def is_public_route(path:str,method:str=None):
     #处理CORS预检
     if method=='OPTIONS':
         return True
-    
+
     #规范化路径：统一小写并去除多余斜杠
     path=path.lower().rstrip('/')
     if not path:
         path='/'
-    
+
     #swagger文档和Json
     if path.endswith('/swagger.json') or path.endswith('/swagger-ui'):
         return True
@@ -91,7 +90,7 @@ def is_public_route(path:str,method:str=None):
     }
     if path in public_exact:
         return True
-    
+
     #前缀匹配
     public_prefixes=['/auth','api/auth','health']
     for prefix in public_prefixes:
@@ -102,7 +101,7 @@ def is_public_route(path:str,method:str=None):
 def init_auth_middleware(app):
     '''初始化认证中间件:JWT黑名单+请求前认证校验+用户注入'''
     #从配置读取Redis客户端
-    redis_client=app.config.get('REDIS_CLIENT')
+    redis_client=RedisClient.get_conn(for_write=True)
     #使用配置中的key,或默认值
     BLACKLIST_KEY=app.config.get('JWT_BLACKLIST_KEY','jwt:blacklist')
     #默认Token有效期（用于黑名单过期时间)
@@ -133,7 +132,7 @@ def init_auth_middleware(app):
         with _revoked_lock:
             revoked_set=getattr(app,'revoked_tokens',set())
             return jti in revoked_set
-        
+
     @jwt.token_in_blocklist_loader
     def check_is_token_revoked(jwt_header,jwt_payload):
         '''JWT解码时自动调用'''
@@ -143,7 +142,7 @@ def init_auth_middleware(app):
     def pre_auth_check():
         '''请求亲认证检查（带资源清理）'''
         if is_public_route(request.path,request.method):
-            return 
+            return
         try:
             #强制校验
             original_verify_jwt(optional=False)
@@ -155,6 +154,7 @@ def init_auth_middleware(app):
                 raise AuthenticationError('Token中用户表示无效')
             #数据库查询带上下问管理确保连接释放
             user=None
+            from app.users.models import User
             try:
                 user=db.session.query(User).filter(
                     User.id==user_id,
@@ -186,7 +186,7 @@ def init_auth_middleware(app):
         except Exception as e:
             logger.error(f'认证校验失败: {e}', exc_info=True)
             raise AuthenticationError('认证服务异常，请稍后重试') from e
-        
+
     def revoke_token(jti:str,expires_seconds:int=None):
         '''将Token加入黑名单（同步更新 LRU 缓存）'''
         if not jti:
@@ -208,7 +208,7 @@ def init_auth_middleware(app):
             app.revoked_tokens.add(jti)
             logger.warning(f'Token已加入内存黑名单:{jti}')
             return True
-    
+
     #挂载到app对象，方便外部调用
     app.revoke_token=revoke_token
     app.is_token_revoked=_is_token_revoked

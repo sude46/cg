@@ -1,4 +1,5 @@
-from marshmallow import Schema,fields,validate,ValidationError
+from marshmallow import Schema, fields, validate
+
 
 class NotificationCreateSchema(Schema):
     '''创建通知的请求'''

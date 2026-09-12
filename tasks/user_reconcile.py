@@ -1,9 +1,11 @@
+import logging
+import random
+
 from celery import shared_task
+
 from app.users.cache import UserCache
 from app.users.repositories import user_repository
 from core.redis_cache import redis_cache
-import logging
-import random
 
 logger = logging.getLogger(__name__)
 

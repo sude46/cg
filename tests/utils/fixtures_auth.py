@@ -3,7 +3,9 @@
 认证辅助 Fixture，从 conftest 拆出来，避免核心文件膨胀。
 """
 import uuid
+
 import pytest
+
 
 @pytest.fixture
 def auth_headers(app,db_session):
@@ -15,10 +17,11 @@ def auth_headers(app,db_session):
     '''
     try:
         from flask_jwt_extended import create_access_token
+
         from app.users.models import User
     except ImportError:
         yield lambda **kwargs:{}
-        return 
+        return
     def _make_headers(user_id=None,username="testuser",email="test@test.com"):
         if user_id is None:
             user=User(username=username,email=email)
@@ -46,11 +49,13 @@ def authenticated_client(client,auth_headers):
         def __init__(self,c,headers):
             self.c=c
             self.headers=headers
-        def _merge(self,c,headers):
-            h=kwargs.pop('headers'.{})
-            h.update(self.headers)
-            kwargs['headers']=h
+
+        def _merge(self,kwargs):
+            headers=kwargs.pop('headers',{})
+            headers.update(self.headers)
+            kwargs['headers']=headers
             return kwargs
+
         def get(self,url,**kw):
             return self.c.get(url,**self._merge(kw))
         def post(self,url,**kw):
@@ -61,9 +66,11 @@ def authenticated_client(client,auth_headers):
             return self.c.delete(url,**self._merge(kw))
         def patch(self,url,**kw):
             return self.c.patch(url,**self._merge(kw))
-        def _factory(user_id=None,**kw):
-            return _AC(client,auth_headers(user_id=user_id,**kw))
-        yield _factory
+
+    def _factory(user_id=None,**kw):
+        return AC(client,auth_headers(user_id=user_id,**kw))
+
+    return _factory
 
 
 @pytest.fixture
@@ -73,7 +80,7 @@ def test_user(db_session):
     user=User(username="testuser",email="test@test.com")
     user.password_hash="fake_hash"
     db_session.add(user)
-    db.session.commit()
+    db_session.commit()
     return user
 
 @pytest.fixture
@@ -84,7 +91,7 @@ def test_user_factory(db_session):
     def _factory(username=None,emial=None,**kwargs):
         suffix=str(uuid.uuid4())[:8]
         username=username or f"user_{suffix}"
-        email=eamil or f"{username}@test.com"
+        email=emial or f"{username}@test.com"
         user=User(username=username,email=email,**kwargs)
         user.password_hash="fake_hash"
         db_session.add(user)

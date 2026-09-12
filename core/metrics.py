@@ -1,8 +1,7 @@
-from prometheus_client import (
-    Counter, Histogram, Gauge, generate_latest, CONTENT_TYPE_LATEST
-)
-from functools import wraps
 import time
+from functools import wraps
+
+from prometheus_client import Counter, Gauge, Histogram
 
 #----------HTTP层----------------
 HTTP_REQUESTS = Counter(
@@ -50,11 +49,6 @@ CELERY_TASK_LATENCY = Histogram(
     'Celery task execution latency',
     ['task_name'],
     buckets=[0.01, 0.05, 0.1, 0.5, 1.0, 5.0, 10.0, 30.0, 60.0]
-)
-CELERY_QUEUE_DEPTH = Gauge(
-    'weibo_celery_queue_depth',
-    'Current Celery queue depth',
-    ['queue_name']  # high_priority, default, low_priority
 )
 
 #=========================业务层========================

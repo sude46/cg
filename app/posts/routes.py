@@ -1,28 +1,16 @@
-from flask import request, jsonify, g,current_app
-from flask_jwt_extended import jwt_required,get_jwt_identity
-from flask_restx import Api,Resource,fields,Namespace
-from . import posts_bp
-from .services import PostService
+from flask import g, request
+from flask_jwt_extended import get_jwt_identity, jwt_required
+from flask_restx import Api, Namespace, Resource, fields
+
 from app.likes.services import LikeService
-from .schemas import (
-	CreatePostSchema,
-	UpdatePostSchema,
-	post_schema,
-	posts_schema
-)
-from utils.decorators import validate_json, ownership_required
-from app.common.exceptions import (
-    ResourceNotFoundError,
-    ConflictError,
-    PermissionError,
-	ValidationError,
-	DatabaseError
-)
-
-from utils.response import success_response,fail_response,ResponseCode,pagination_response
-from utils.pagination import get_pagination_params
 from middlewares import route_limit
+from utils.decorators import ownership_required, validate_json
+from utils.pagination import get_pagination_params
+from utils.response import ResponseCode, fail_response, success_response
 
+from . import posts_bp
+from .schemas import CreatePostSchema, UpdatePostSchema, post_schema, posts_schema
+from .services import PostService
 
 authorizations = {
     'Bearer': {
@@ -35,7 +23,7 @@ authorizations = {
 
 api_restx=Api(
 	posts_bp,
-	version='1.0',	
+	version='1.0',
 	title='帖子API',
 	description='提供帖子相关的API接口',
 	authorizations=authorizations,
@@ -76,7 +64,7 @@ class PostList(Resource):
 		user_id = request.args.get('user_id', type=int)
 		current_user_id = get_jwt_identity()
 
-		
+
 		result = PostService.get_posts(
 				page=page,
 				per_page=per_page,
@@ -104,7 +92,7 @@ class PostList(Resource):
 		'''创建新帖子'''
 		data = getattr(g, 'validated_json', request.get_json())
 		current_user_id = get_jwt_identity()
-		
+
 		post = PostService.create_post(
 				user_id=current_user_id,
 				content=data['content'],
@@ -126,7 +114,7 @@ class PostDetail(Resource):
 	@jwt_required(optional=True)
 	def get(self,post_id):
 		current_user_id = get_jwt_identity()
-		
+
 		result = PostService.get_post(
 				post_id=post_id,
 				current_user_id=current_user_id,
@@ -152,7 +140,7 @@ class PostDetail(Resource):
 	def put(self,post_id):
 		data = getattr(g, 'validated_json', request.get_json())
 		current_user_id = get_jwt_identity()
-		
+
 		post = PostService.update_post(
 				post_id=post_id,
 				user_id=current_user_id,
@@ -174,7 +162,7 @@ class PostDetail(Resource):
 	def delete(self,post_id):
 		'''删除帖子'''
 		current_user_id = get_jwt_identity()
-		
+
 		PostService.delete_post(
 				post_id=post_id,
 				user_id=current_user_id,
@@ -184,49 +172,6 @@ class PostDetail(Resource):
 				message='删除帖子成功'
 			), 200
 
-@api.route('/<int:post_id>/likes')
-class PostLike(Resource):
-	@api.doc(
-		description='点赞帖子',
-		params={'post_id':'帖子'},
-		security='Bearer'
-		)
-	@api.response(201,'点赞成功')
-	@jwt_required()
-	@route_limit("10 per minute")
-	def post(self,post_id):
-		current_user_id = get_jwt_identity()
-		
-		LikeService.create_like(
-			user_id=current_user_id,
-			post_id=post_id,
-			)
-		return success_response(
-				data=None,
-				message='点赞帖子成功'
-			), 201
-		
-@api.route('/<int:post_id>/likes/<int:like_id>')
-class PostUnlike(Resource):
-	@api.doc(
-		description='取消点赞',
-		params={'post_id':'帖子ID','like_id':'点赞记录ID'},
-		security='Bearer'
-		)
-	@api.response(200,'取消成功')
-	@jwt_required()
-	def delete(self,post_id, like_id):
-		'''取消点赞'''
-		current_user_id = get_jwt_identity()
-		
-		LikeService.delete_like(
-			user_id=current_user_id,
-			post_id=post_id,
-			)
-		return success_response(
-				data=None,
-				message='取消点赞成功'
-			), 200
 @api.route('/search')
 class PostSearch(Resource):
 	@api.doc(
@@ -247,13 +192,13 @@ class PostSearch(Resource):
 		page, per_page = get_pagination_params()
 		sort_by = request.args.get('sort', 'relevance')
 		current_user_id = get_jwt_identity()
-		
+
 		if not query:
 			return fail_response(ResponseCode.PARAM_ERROR, '搜索关键词不能为空'), 400
-		
+
 		if sort_by not in ['relevance', 'time', 'hot']:
 			sort_by = 'relevance'
-		
+
 		result = PostService.search_posts(
 				query=query,
 				page=page,
@@ -261,14 +206,14 @@ class PostSearch(Resource):
 				current_user_id=current_user_id,
 				sort_by=sort_by
 			)
-		
+
 		# ES 搜索返回的已经是格式化数据，不需要再序列化
 		if result.get('is_es_search'):
 			posts_data = result['items']
 		else:
 			# 降级到数据库搜索，需要序列化
 			posts_data = posts_schema.dump(result['items'])
-		
+
 		return success_response(
 				data={
 					'posts': posts_data,
@@ -291,10 +236,10 @@ class HotSearches(Resource):
 		'''获取热搜榜'''
 		size = request.args.get('size', 10, type=int)
 		size = min(50, max(1, size))
-		
-		from  services.search import PostSearchService
+
+		from services.search import PostSearchService
 		hot_searches = PostSearchService.get_hot_searches(size=size)
-		
+
 		return success_response(
 			data={'hot_searches': hot_searches},
 			message='获取热搜榜成功'
@@ -315,17 +260,17 @@ class SearchSuggestions(Resource):
 		'''获取搜索建议'''
 		keyword = request.args.get('q', '').strip()
 		size = request.args.get('size', 10, type=int)
-		
+
 		if not keyword or len(keyword) < 1:
 			return success_response(data={'suggestions': []}, message='获取成功'), 200
-		
+
 		from services.search import PostSearchService
 		suggestions = PostSearchService.get_search_suggestions(keyword, size)
-		
+
 		return success_response(
 			data={'suggestions': suggestions},
 			message='获取搜索建议成功'
 		), 200
 
 api_restx.add_namespace(api)
-		
+

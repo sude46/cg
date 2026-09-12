@@ -1,8 +1,14 @@
 import pytest
-from app.likes.services import LikeService
+
+from app.common.exceptions import (
+    ConflictError,
+    ResourceNotFoundError,
+    ValidationError,
+)
 from app.likes.models import Like
-from app.common.exceptions import DatabaseError, ResourceNotFoundError, ValidationError, ConflictError
-from tests.unit.factories import UserFactory, PostFactory, CommentFactory
+from app.likes.services import LikeService
+from tests.unit.factories import CommentFactory, PostFactory, UserFactory
+
 
 class TestLikeService:
     """点赞模块单元测试"""

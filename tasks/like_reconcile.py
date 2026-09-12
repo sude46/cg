@@ -1,13 +1,14 @@
+import logging
+
 from celery import shared_task
+
+from app.comments.repositories import comment_repository
 from app.likes.cache import LikeCache
 from app.likes.repositories import like_repository
 from app.posts.repositories import post_repository
-from app.comments.repositories import comment_repository
-from core.redis_cache import redis_cache
 from core import db
 from core.metrics import RECONCILE_DIFF_COUNT
-import logging
-from core.metrics import RECONCILE_DIFF_COUNT
+from core.redis_cache import redis_cache
 
 logger=logging.getLogger(__name__)
 
@@ -26,8 +27,8 @@ def reconcile_like_counts(target_type_filter='post', batch_size=500):
         dirty_members=redis_cache.smembers(DIRTY_LIKES_KEY)
         if not dirty_members:
             logger.info("[Reconcile] dirty:likes为空，无需对账")
-            return 
-        
+            return
+
         #解析过滤器
         targets=[]
         for m in dirty_members:

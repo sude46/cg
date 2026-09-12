@@ -1,6 +1,7 @@
 # tests/performance/locustfile.py
 import random
-from locust import HttpUser, task, between, tag
+
+from locust import HttpUser, between, tag, task
 from locust.stats import RequestStats
 
 # 设定SLA阈值（可根据业务调整）
@@ -92,7 +93,7 @@ def check_sla(environment, **kwargs):
     # 3. 验证错误率
     error_rate = stats.total_failures / (stats.total_requests or 1)
 
-    print(f"\n===== SLA验证结果 =====")
+    print("\n===== SLA验证结果 =====")
     print(f"p95响应时间: {p95_latency:.2f}ms (阈值: {SLA_P95_LATENCY}ms)")
     print(f"吞吐量: {throughput:.2f} QPS (阈值: {SLA_THROUGHPUT} QPS)")
     print(f"错误率: {error_rate:.4f} (阈值: {SLA_ERROR_RATE})")
@@ -106,4 +107,5 @@ def check_sla(environment, **kwargs):
 
 # 注册SLA检查钩子
 from locust import events
+
 events.test_stop.add_listener(check_sla)

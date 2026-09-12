@@ -1,25 +1,24 @@
-from sqlalchemy.exc import IntegrityError
-from core import db
-from .models import Comment
-from app.posts.repositories import post_repository
-from app.users.repositories import user_repository
-from app.users.cache import UserCache
-from app.common.exceptions import (
-    ResourceNotFoundError,
-    PermissionError,
-    ValidationError,
-    DatabaseError,
-)
-from app.comments.repositories import comment_repository
-from app.common.events import event_bus
-from datetime import datetime, timezone
-from app.common.database import utcnow
 import logging
-from .schemas import comment_schema,comments_schema
-from .cache import CommentCache
+
+from sqlalchemy.exc import IntegrityError
+
+from app.comments.repositories import comment_repository
+from app.common.database import utcnow
+from app.common.events import event_bus
+from app.common.exceptions import (
+    DatabaseError,
+    PermissionError,
+    ResourceNotFoundError,
+    ValidationError,
+)
+from app.posts.repositories import post_repository
+from app.users.cache import UserCache
+from app.users.repositories import user_repository
+from core import db
 from core.metrics import COMMENT_OPERATIONS
 
-
+from .cache import CommentCache
+from .schemas import comment_schema
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +81,7 @@ class CommentService:
                 raise
             COMMENT_OPERATIONS.labels(action='create', result='error').inc()
             raise DatabaseError(f'创建评论失败: {e}')
-        
+
 
     #==================查询单条(Cache-Aside)==============
 
@@ -96,13 +95,13 @@ class CommentService:
         comment=comment_repository.get_by_id(comment_id,force_master=False)
         if not comment or comment.deleted_at:
             raise ResourceNotFoundError(f'评论(ID:{comment_id}不存在)')
-        
+
         #回填缓存（主库）
         comment_dict=comment_schema.dump(comment)
         CommentCache.set(comment_id,comment_dict)
         COMMENT_OPERATIONS.labels(action='get', result='success').inc()
         return comment_dict
-    
+
 
     #===============查询列表（不走缓存，查从库）============
     @staticmethod
@@ -134,7 +133,7 @@ class CommentService:
             user = user_repository.get_by_id(user_id)
             if comment.user_id != user_id and not (user and getattr(user, 'is_admin', False)):
                 raise PermissionError('没有权限更新此评论')
-            
+
             content = (data.get('content') or '').strip()
             if not content or len(content) > 500:
                 raise ValidationError('评论内容格式无效')
@@ -142,7 +141,7 @@ class CommentService:
             comment.content = content
             comment.updated_at = utcnow()
             db.session.commit()
-            
+
             #延迟双删：请评论详情缓存
             CommentCache.invalidate(comment_id)
             try:
@@ -165,7 +164,7 @@ class CommentService:
                 raise
             COMMENT_OPERATIONS.labels(action='update', result='error').inc()
             raise DatabaseError(f'更新评论失败: {e}')
-        
+
 
 
     #=========================删除（延迟双删+评论数减1）========================
@@ -223,8 +222,8 @@ class CommentService:
                 raise
             COMMENT_OPERATIONS.labels(action='delete', result='error').inc()
             raise DatabaseError(f'删除评论失败: {e}')
-        
-    
+
+
     @staticmethod
     def get_hot_comments_by_post_id(post_id:int,page:int=1,per_page:int=20):
         '''获取帖子下的热评(按点赞数排序)'''
@@ -246,5 +245,5 @@ class CommentService:
         COMMENT_OPERATIONS.labels(action='hot', result='success').inc()
         return {'items': comments, 'pagination': {'page': page, 'per_page': per_page, 'total': total}}
 
-            
+
 

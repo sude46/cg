@@ -1,10 +1,10 @@
-from typing import List,Optional
 from sqlalchemy.orm import joinedload
-from core import db
-from app.posts.models import Post
-from app.follows.models import Follow
+
 from app.common.database import get_read_session
+from app.follows.models import Follow
+from app.posts.models import Post
 from core.metrics import monitor_db
+
 
 class FeedRepository:
     '''
@@ -13,7 +13,7 @@ class FeedRepository:
     @staticmethod
     def _read_session():
         return get_read_session()
-    
+
     #===========关注关系查询================
     @staticmethod
     @monitor_db("select","feeds")
@@ -22,9 +22,9 @@ class FeedRepository:
         session=FeedRepository._read_session()
         return session.query(Follow).filter(
             Follow.followed_id==followed_id,
-            Follow.deleted_at.is_(None) 
+            Follow.deleted_at.is_(None)
         ).all()
-    
+
     @staticmethod
     @monitor_db("select","feeds")
     def get_following_ids(follower_id:int):
@@ -35,7 +35,7 @@ class FeedRepository:
             Follow.deleted_at.is_(None)
         ).all()
         return [r[0] for r in rows]
-    
+
     #帖子查询
     @staticmethod
     @monitor_db("select","feeds")
@@ -64,7 +64,7 @@ class FeedRepository:
 
     @staticmethod
     @monitor_db("select","feeds")
-    def get_posts_by_ids(post_ids:List[int]):
+    def get_posts_by_ids(post_ids:list[int]):
         '''批量查询帖子(用于缓存命中后补全)'''
         if not post_ids:
             return []

@@ -2,7 +2,9 @@
 Celery应用实例配置
 '''
 from celery import Celery
+
 from config import get_config
+
 
 def make_celery(app_name='weibo'):
 
@@ -64,7 +66,7 @@ def make_celery(app_name='weibo'):
             'args': (500,),
             },
 
-        }            
+        }
     )
     return celery
 celery_app=make_celery()

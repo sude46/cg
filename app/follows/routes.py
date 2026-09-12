@@ -1,8 +1,15 @@
-from flask import request,jsonify,current_app
-from flask_jwt_extended import jwt_required,get_jwt_identity
-from flask_restx import Api,Resource,fields,Namespace
+from flask import request
+from flask_jwt_extended import get_jwt_identity, jwt_required
+from flask_restx import Api, Namespace, Resource, fields
+
 from middlewares import route_limit
+from utils.decorators import validate_json
+from utils.pagination import get_pagination_params
+from utils.response import success_response
+
 from . import follows_bp
+from .schemas import FollowCreateSchema
+from .services import FollowService
 
 authorizations = {
     'Bearer': {
@@ -12,12 +19,6 @@ authorizations = {
         'description': 'JWT Token (Bearer token)'
     }
 }
-from .services import FollowService
-from .schemas import FollowCreateSchema
-from utils.decorators import validate_json ,inject_current_user
-from app.common.exceptions import ResourceNotFoundError, ConflictError, PermissionError ,ValidationError # 导入异常
-from utils.response import success_response,fail_response,ResponseCode
-from utils.pagination import get_pagination_params
 
 api_restx=Api(
         follows_bp,
@@ -47,10 +48,10 @@ class FollowOperation(Resource):
     @api.response(201,'关注成功')
     @jwt_required()
     @validate_json(FollowCreateSchema)
-    @route_limit("30")
+    @route_limit("30 per minute")
     def post(self):
         '''创建关注关系'''
-       
+
         data=request.get_json()
         current_user_id=get_jwt_identity()
         result=FollowService.follow_user(
@@ -71,7 +72,7 @@ class UnfollowOperation(Resource):
     @api.response(200,'取消成功' )
     @jwt_required()
     def delete(self,followed_id):
-       
+
         current_user_id=get_jwt_identity()
         result=FollowService.unfollow_user(
                     follower_id=current_user_id,
@@ -94,7 +95,7 @@ class Following(Resource):
     @jwt_required()
     def get(self):
         '''查询当前用户的关注列表'''
-        
+
         # 修正：request.arg.get -> request.args.get
         page,per_page=get_pagination_params()
         current_user_id=get_jwt_identity()
@@ -117,7 +118,7 @@ class FollowerList(Resource):
     @api.response(200,'获取成功')
     @jwt_required()
     def get(self):
-        
+
         page,per_page=get_pagination_params()
         current_user_id=get_jwt_identity()
         result=FollowService.get_followers(
@@ -140,7 +141,7 @@ class MutualFollowList(Resource):
     @jwt_required()
     def get(self):
         '''获取当前用户的互相关注用户列表'''
-        
+
         page,per_page=get_pagination_params()
         current_user_id=get_jwt_identity()
         result=FollowService.get_mutual_follows(

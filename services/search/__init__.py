@@ -8,7 +8,7 @@ from services.search.repositories import PostSearchRepository
 from services.search.services import PostSearchService
 
 __all__=[
-    'es_client',    
+    'es_client',
     'PostDocument',
     'PostSearchRepository',
     'PostSearchService'

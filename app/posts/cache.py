@@ -1,9 +1,9 @@
 import logging
-import time
-import threading
 import math
-from datetime import datetime,timezone
-from typing import Optional, Dict, Any,List,Tuple
+import threading
+import time
+from datetime import UTC, datetime
+from typing import Any
 
 from core.redis_cache import redis_cache
 
@@ -22,14 +22,14 @@ class PostCache:
     @classmethod
     def _detail_key(cls, post_id: int) -> str:
         return f'post:detail:{post_id}'
-    
+
     @classmethod
     def _recent_key(cls,post_id:int):
         return f'post:recent_modify:{post_id}'
 
 
     @classmethod
-    def get(cls, post_id: int) -> Optional[Dict[str, Any]]:
+    def get(cls, post_id: int) -> dict[str, Any] | None:
         """读帖子详情（从库）"""
         try:
             return redis_cache.get(cls._detail_key(post_id), for_write=False)
@@ -38,7 +38,7 @@ class PostCache:
             return None
 
     @classmethod
-    def set(cls, post_id: int, post_data: Dict[str, Any]) -> bool:
+    def set(cls, post_id: int, post_data: dict[str, Any]) -> bool:
         """写帖子详情（主库）"""
         try:
             return redis_cache.set(
@@ -79,11 +79,11 @@ class PostCache:
         ttl=ttl or cls.RECENT_MODIFY_TTL
         key=cls._recent_key(post_id)
         try:
-            return redis_cache.set(key,"1",expire=ttl,for_write=True) 
+            return redis_cache.set(key,"1",expire=ttl,for_write=True)
         except Exception as e:
             logger.error(f'标记帖子{post_id}最近修改失败:{e}')
             return False
-        
+
     @classmethod
     def is_recently_modified(cls,post_id:int):
         """检查帖子是否在强一致窗口内"""
@@ -93,7 +93,7 @@ class PostCache:
         except Exception as e:
             logger.error(f'检查帖子{post_id}最近修改失败:{e}')
             return False
-    
+
     #================热帖===================
     HOT_DAILY_KEY='hot:posts:daily'
     HOT_TTL=86400*2
@@ -105,14 +105,14 @@ class PostCache:
         热度分计算(整数版，避免Redis Zset double 精度问题)
         公式:(likes*2+comments*3)/(hours+2)^1.5*1_000_000
         '''
-        hours=max(0,(datetime.now(timezone.utc)-created_at).total_seconds()/3600)
+        hours=max(0,(datetime.now(UTC)-created_at).total_seconds()/3600)
         interaction=like_count*2+comment_count*3
         score_float=interaction/math.pow(hours+2,1.5)
         return int(score_float*cls.HOT_SCORE_MULTIPLIER)
-    
+
 
     @classmethod
-    def update_hot_posts(cls,posts_data:List[dict],period:str='daily'):
+    def update_hot_posts(cls,posts_data:list[dict],period:str='daily'):
         '''
         批量更新热帖榜（定时任务调用）
         posts_data:[{'post_id':1,'score':12345556},......]
@@ -134,10 +134,10 @@ class PostCache:
 
             logger.info(f'[HotPosts]更新{period}榜，共{len(posts_data)}条')
             return True
-        except Exception as e:
-            logger.error(f'[HotPost]更新失败')
+        except Exception:
+            logger.error('[HotPost]更新失败')
             return False
-        
+
     @classmethod
     def get_hot_posts(cls,page:int=1,per_page:int=20,period:str='daily'):
         try:
@@ -155,8 +155,7 @@ class PostCache:
         except Exception as e:
             logger.error(f'[HotPosts]获取失败：{e}')
             return [],0
-        
 
 
 
-    
+

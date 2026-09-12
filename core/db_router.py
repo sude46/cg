@@ -1,7 +1,8 @@
-import random
 import logging
+import random
+
 from sqlalchemy import create_engine
-from sqlalchemy.orm import scoped_session,sessionmaker
+from sqlalchemy.orm import sessionmaker
 
 logger=logging.getLogger(__name__)
 
@@ -15,7 +16,7 @@ class MasterSlaveRouter:
             cls._instance.replica_engines=[]
             cls._instance._replica_idx=0
         return cls._instance
-    
+
     def init_app(self,app):
         #主库
         self.master_engine=app.extensions['sqlalchemy'].db.engine
@@ -66,6 +67,5 @@ class MasterSlaveRouter:
         else:
             logger.warning('没有可用的从库，使用主库')
             return self.master_engine
-        
+
 db_router=MasterSlaveRouter()
-        

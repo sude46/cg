@@ -1,13 +1,11 @@
-import pytest
-from unittest.mock import MagicMock, patch
 
 
 class TestPostTasks:
     """帖子相关Celery任务单元测试"""
 
     def test_delayed_invalidate_post(self, app, mock_redis):
-        from tasks.post_tasks import delayed_invalidate
         from app.posts.cache import PostCache
+        from tasks.post_tasks import delayed_invalidate
         with app.app_context():
             PostCache.set(1, {"id": 1})
             result = delayed_invalidate(1)
@@ -15,8 +13,8 @@ class TestPostTasks:
             assert PostCache.get(1) is None
 
     def test_delayed_invalidate_comment(self, app, mock_redis):
-        from tasks.post_tasks import delayed_invalidate_comment
         from app.comments.cache import CommentCache
+        from tasks.post_tasks import delayed_invalidate_comment
         with app.app_context():
             CommentCache.set(1, {"id": 1})
             result = delayed_invalidate_comment(1)
@@ -28,8 +26,8 @@ class TestUserTasks:
     """用户相关Celery任务单元测试"""
 
     def test_delayed_invalidate_user_cache(self, app, mock_redis):
-        from tasks.user_tasks import delayed_invalidate
         from app.users.cache import UserCache
+        from tasks.user_tasks import delayed_invalidate
         with app.app_context():
             UserCache.set_profile(1, {"id": 1, "username": "test"})
             UserCache.set_by_username("test", 1)
@@ -43,8 +41,8 @@ class TestFeedTasks:
     """Feed流相关Celery任务单元测试"""
 
     def test_async_invalidate_user_feed(self, app, mock_redis):
-        from tasks.feed_tasks import async_invalidate_user_feed
         from app.feeds.cache import FeedCache
+        from tasks.feed_tasks import async_invalidate_user_feed
         with app.app_context():
             FeedCache.add_post_to_feed(1, "100", 1719820800)
             result = async_invalidate_user_feed(1)
@@ -52,6 +50,7 @@ class TestFeedTasks:
             assert FeedCache.pull_feed(1, 1, 10) is None
 
     def test_async_remove_post_from_followers(self, app, mock_redis):
+        from app.feeds.cache import FeedCache
         from tasks.feed_tasks import async_remove_post_from_followers
         with app.app_context():
             FeedCache.add_post_to_feed(1, "100", 1719820800)
@@ -64,7 +63,7 @@ class TestLikeTasks:
 
     def test_async_like_create(self, app, db_session, mock_redis):
         from tasks.like_tasks import async_like_to_do
-        from tests.unit.factories import UserFactory, PostFactory
+        from tests.unit.factories import PostFactory, UserFactory
         with app.app_context():
             user = UserFactory()
             post = PostFactory()
@@ -72,9 +71,9 @@ class TestLikeTasks:
             assert result["status"] == "success"
 
     def test_async_like_delete(self, app, db_session, mock_redis):
-        from tasks.like_tasks import async_like_to_do
-        from tests.unit.factories import UserFactory, PostFactory
         from app.likes.repositories import like_repository
+        from tasks.like_tasks import async_like_to_do
+        from tests.unit.factories import PostFactory, UserFactory
         with app.app_context():
             user = UserFactory()
             post = PostFactory()

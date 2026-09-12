@@ -1,8 +1,9 @@
 import os
-from .base import BaseConfig
 from datetime import timedelta
+
 from dotenv import load_dotenv
 
+from .base import BaseConfig
 
 load_dotenv()
 
@@ -23,13 +24,13 @@ class ProductionConfig(BaseConfig):
 			return int(os.getenv("REDIS_PORT"))
 		except (TypeError, ValueError):
 			raise ValueError("生产环境 REDIS_PORT 必须是有效整数")
-		
+
 	@property
 	def REDIS_PASSWORD(self):
 		pwd = os.getenv("REDIS_PASSWORD")
 		if not pwd:
 			raise ValueError("生产环境必须配置 REDIS_PASSWORD 环境变量")
-		return pwd	
+		return pwd
 
 	#生产环境必须强制要求安全密钥
 	@property
@@ -49,7 +50,7 @@ class ProductionConfig(BaseConfig):
 		if 'jwt-dev-key' in jwt_secret:
 			raise ValueError("生产环境不能使用开发JWT密钥")
 		return jwt_secret
-	
+
 	# 生产环境JWT过期时间可缩短（比如30分钟）
 	JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=30)
 
@@ -75,7 +76,7 @@ class ProductionConfig(BaseConfig):
 	BCRYPT_LOG_ROUNDS = 13  # 生产环境推荐值（需压测后微调）
 	# 生产环境登录极限配置（更严格）
 	LOGIN_MAX_ATTEMPTS = 3  # 生产环境登录失败次数更严格
-	LOGIN_LOCK_DURATION = 600  # 锁定时长延长至 10 分钟	
+	LOGIN_LOCK_DURATION = 600  # 锁定时长延长至 10 分钟
 
 	@classmethod
 	def init_app(cls,app):
@@ -99,7 +100,7 @@ class ProductionConfig(BaseConfig):
 				'%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'))
 		app.logger.addHandler(file_handler)
 		app.logger.setLevel(logging.INFO)
-		
+
 		#安全头中间件
 		@app.after_request
 		def set_security_headers(response):

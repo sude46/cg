@@ -1,6 +1,7 @@
-from core import db
-from datetime import datetime, timezone
+
 from app.common.database import utcnow
+from core import db
+
 
 class Follow(db.Model):
 	__tablename__ = 'follows'

@@ -1,7 +1,7 @@
-import pytest
 import uuid
+
 from core.security import security_manager
-from app.common.exceptions import AuthenticationError
+
 
 class TestSecurityManager:
     """安全管理单元测试"""
@@ -38,21 +38,23 @@ class TestSecurityManager:
 
     def test_password_reuse_policy(self, app, db_session):
         """测试密码历史重用检测"""
+        from app.users.repositories import user_repository
         from app.users.services import AuthService
         from app.users.services.password_service import password_service
         with app.app_context():
             username = f"reuse_{uuid.uuid4().hex[:8]}"
             email = f"{username}@example.com"
-            password = "Original123!"
+            password = "Orig1nal!"
             user = AuthService.register_user(username, email, password)["user"]
+            user_entity = user_repository.get_by_id(user["id"])
 
             password_service.update_password(
-                AuthService.get_user_entity(user["id"]), "NewPass123!"
+                user_entity, "NewPass123!"
             )
             db_session.commit()
 
             assert password_service.is_password_reused(
-                AuthService.get_user_entity(user["id"]), password
+                user_entity, password
             ) is True
 
     def test_jwt_expired_token(self, app):
@@ -63,15 +65,14 @@ class TestSecurityManager:
                 token_type="access",
                 expires_in=-1
             )
-            with pytest.raises(AuthenticationError):
-                security_manager.verify_jwt_token(token)
+            assert security_manager.verify_jwt_token(token) is None
 
     def test_password_validator_complexity(self, app):
         """测试密码复杂度校验规则"""
         from core.security import password_validator
         weak = password_validator.validate("123")
         assert weak["is_valid"] is False
-        strong = password_validator.validate("StrongPass123!")
+        strong = password_validator.validate("Str0ngPass!")
         assert strong["is_valid"] is True
 
     def test_email_validation(self, app):

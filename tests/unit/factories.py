@@ -1,14 +1,16 @@
+
 import factory
 from factory.alchemy import SQLAlchemyModelFactory
-from datetime import datetime
-from app.common.database import utcnow
-from app.users.models import User
-from app.posts.models import Post
+
 from app.comments.models import Comment  # 先导入 Comment
-from app.likes.models import Like
+from app.common.database import utcnow
 from app.follows.models import Follow
+from app.likes.models import Like
 from app.notifications.models import Notification  # 修正导入
+from app.posts.models import Post
+from app.users.models import User
 from utils.snowflake_util import Snowflake
+
 
 class BaseFactory(SQLAlchemyModelFactory):
     class Meta:

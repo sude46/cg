@@ -1,7 +1,8 @@
-from marshmallow import Schema, fields, validate, validates_schema, ValidationError
-from utils.validators import validate_content_length, validate_image_url
-from datetime  import datetime
+from datetime import datetime
 
+from marshmallow import Schema, ValidationError, fields, validate, validates_schema
+
+from utils.validators import validate_content_length, validate_image_url
 
 
 class IsoDateTime(fields.DateTime):
@@ -25,7 +26,7 @@ class CreatePostSchema(Schema):
 	@validates_schema
 	def validate_fields(self, data, **kwargs):
 		content = (data.get("content") or "").strip()
-		image_url = data.get("image_url")
+		data.get("image_url")
 		if not content:
 			raise ValidationError("帖子内容不能为空")
 		if not validate_content_length(content, max_length=1000):

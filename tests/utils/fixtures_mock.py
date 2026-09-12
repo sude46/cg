@@ -3,8 +3,9 @@
 外部依赖 Mock Fixture（ES、EventBus、Celery、Mail）。
 独立文件，按需使用。
 """
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
 
 
 @pytest.fixture

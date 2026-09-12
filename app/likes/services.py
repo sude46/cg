@@ -1,19 +1,22 @@
-from core import db
-import time
-from datetime import datetime,timezone
-from typing import Optional, Dict, Any
-from sqlalchemy.exc import IntegrityError
-from app.common.exceptions import ValidationError, ResourceNotFoundError, DatabaseError, ConflictError, PermissionError
-from app.users.repositories import user_repository
-from app.comments.repositories import comment_repository
-from app.likes.repositories import like_repository
-from app.posts.repositories import post_repository
-from app.likes.cache import LikeCache
-from services.search import PostSearchService
 import logging
-from .schemas import like_schema, likes_schema
+import time
+from datetime import UTC, datetime
+
+from app.comments.repositories import comment_repository
 from app.common import event_bus
-from core.metrics import (LIKE_OPERATIONS,REDIS_HIT_RATE,CELERY_TASKS)
+from app.common.exceptions import (
+    ConflictError,
+    DatabaseError,
+    PermissionError,
+    ResourceNotFoundError,
+    ValidationError,
+)
+from app.likes.cache import LikeCache
+from app.likes.repositories import like_repository
+from app.users.repositories import user_repository
+from core.metrics import CELERY_TASKS, LIKE_OPERATIONS, REDIS_HIT_RATE
+
+from .schemas import like_schema, likes_schema
 
 logger = logging.getLogger(__name__)
 
@@ -30,11 +33,11 @@ class LikeService:
         #分布式锁防并发重复点赞(10秒TTL)
         if not LikeCache.acquire_lock(user_id,target_id,target_type):
             raise ConflictError('操作过于频繁，请稍后重试')
-        
+
         try:
             #先查redis
             cached_liked=LikeCache.is_liked(user_id,target_id,target_type)
-            
+
             #记录缓存命中率(1=命中，0=miss/故障)
             REDIS_HIT_RATE.labels(cache_type="like").set(
                     1 if cached_liked is not None else 0
@@ -42,7 +45,7 @@ class LikeService:
             if cached_liked is True:
                 LIKE_OPERATIONS.labels(action='create',result='duplicate').inc()
                 raise ConflictError('您已点赞过了')
-            
+
             #Redis故障或miss,降级查DB
             if cached_liked is None:
                 if post_id:
@@ -54,13 +57,13 @@ class LikeService:
                     LikeCache.add_like(user_id,target_id,target_type)
                     LIKE_OPERATIONS.labels(action='create',result='duplicate').inc()
                     raise ConflictError('您已点赞过了')
-                
-                
+
+
             #核心：先写redis
             if not LikeCache.add_like(user_id,target_id,target_type):
                 LIKE_OPERATIONS.labels(action='create',result='error').inc()
                 raise DatabaseError('点赞操作失败，请稍后重试')
-            
+
             #异步刷DB(Celery任务，pending_id幂等去重)
             pending_id=f'like:{user_id}:{target_type}:{target_id}:{int(time.time()*1000)}'
             try:
@@ -73,7 +76,7 @@ class LikeService:
                         task_name='async_like_to_do',status='publish_failed').inc()
                 #Celery投递失败不阻塞用户，靠服务端对账兜底
                 logger.error(f'[LikeService] Celery投递失败pending_id: {pending_id}, error: {e}')
-            
+
             #热评实时更新
             if target_type=='comment':
                 from comments.cache import CommentCache
@@ -92,13 +95,13 @@ class LikeService:
                 LIKE_OPERATIONS.labels(action='create',result='success').inc()
                 logger.info(f'[LikeService]用户{user_id}点赞成功(redis秒返回),pending_id: {pending_id}')
             return like_schema.dump({
-                'user_id': user_id, 
+                'user_id': user_id,
                 'post_id': post_id,
                 'comment_id': comment_id,
-                'created_at': datetime.now(timezone.utc)
+                'created_at': datetime.now(UTC)
             })
         except ConflictError:
-            raise 
+            raise
         except Exception:
             LIKE_OPERATIONS.labels(action='create',result='error').inc()
             raise
@@ -107,7 +110,7 @@ class LikeService:
             # 确保锁释放（无论成功失败）
             LikeCache.release_lock(user_id, target_id, target_type)
 
-         
+
     @staticmethod
     def delete_like(user_id: int, post_id: int = None, comment_id: int = None):
         """取消点赞，返回 True/False"""
@@ -159,7 +162,7 @@ class LikeService:
                         task_name='async_like_to_do',status='publish_failed'
                         ).inc()
                 logger.error(f'[LikeService] Celery投递失败pending_id: {pending_id}, error: {e}')
-            
+
             #热评移除
             if target_type == 'comment':
                 from app.comments.cache import CommentCache
@@ -168,7 +171,7 @@ class LikeService:
                     new_count = LikeCache.get_like_count(target_id, 'comment') or 0
                     # like_count 为 0 时从热评榜移除
                     CommentCache.update_hot_comment(comment.post_id, target_id, new_count)
-            
+
             #异步更新ES（用redis实时计数，不阻塞主流程)
             if post_id:
                 like_count=LikeCache.get_like_count(post_id,'post') or 0
@@ -191,7 +194,7 @@ class LikeService:
         except Exception:
             LIKE_OPERATIONS.labels(action='delete', result='error').inc()
             raise
-        
+
         finally:
             LikeCache.release_lock(user_id,target_id,target_type)
 
@@ -219,4 +222,4 @@ class LikeService:
             'items': likes_data,
             'pagination': result['pagination']
         }
-    
+

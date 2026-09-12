@@ -1,7 +1,7 @@
-import logging 
-import time
+import logging
 import threading
-from typing import Optional,Dict,Any
+import time
+from typing import Any
 
 from core.redis_cache import redis_cache
 
@@ -12,16 +12,16 @@ class CommentCache:
     评论缓存管理
     -评论详情：comment:detail:{id}{String/JSON}---Cache-Aside+延迟双删
     -帖子评论计数：post:{id}:comment_count(String)-原子Invr/Decr
-    
+
     注意：
     - 点赞状态归 likes/ 管
     - 帖子详情归 posts/ 管，posts/ 只读本计数器
-    
+
     '''
     DETAIL_TTL=300  #5分钟
     COUNT_TTL=3600  #1小时
 
-    
+
 
     #LUA：原子递减，保底不小于0
     DECR_LUA="""
@@ -36,12 +36,12 @@ class CommentCache:
     @classmethod
     def _detail_key(cla,comment_id:int):
         return f"comment:detail:{comment_id}"
-    
+
     @classmethod
     def _count_key(cls,post_id:int):
         '''帖子评论数Key(被posts/services.py读取)'''
         return f'post:{post_id}:comment_count'
-    
+
 
 
     #========评论详情缓存（主从分离）=============
@@ -51,12 +51,12 @@ class CommentCache:
         '''读评论详情(Redis从库)'''
         try:
             return  redis_cache.get(cls._detail_key(comment_id),for_write=False)
-        except Exception as e:
+        except Exception:
             logger.error(f'读评论{comment_id}详情失败')
             return None
-    
+
     @classmethod
-    def set(cls,comment_id:int,comment_data:Dict[str,Any]):
+    def set(cls,comment_id:int,comment_data:dict[str,Any]):
         '''写评论详情(Redis主库)'''
         try:
             return redis_cache.set(
@@ -67,7 +67,7 @@ class CommentCache:
         except Exception as e:
             logger.error(f'设置评论{comment_id}缓存失败:{e}')
             return False
-        
+
 
     @classmethod
     def invalidate(cls,comment_id:int):
@@ -77,7 +77,7 @@ class CommentCache:
         except Exception as e:
             logger.error(f'删除评论{comment_id}缓存失败:{e}')
             return False
-    
+
     @classmethod
     def double_invalidate(cls,comment_id:int):
         '''延迟双删：立即删+1.5秒后二次删'''
@@ -98,7 +98,7 @@ class CommentCache:
         except Exception as e:
             logger.error(f'获取帖子{post_id}评论数失败:{e}')
             return False
-        
+
 
     @classmethod
     def set_count(cls,post_id:int,count:int):
@@ -111,7 +111,7 @@ class CommentCache:
         except Exception as e:
             logger.error(f'设置帖子{post_id}评论数失败:{e}')
             return False
-        
+
     @classmethod
     def increment_count(cls,post_id):
         try:
@@ -119,7 +119,7 @@ class CommentCache:
         except Exception as e:
             logger.error(f'递增帖子{post_id}评论失败:{e}')
             return 0
-        
+
     @classmethod
     def decrement_count(cls,post_id):
         try:
@@ -128,15 +128,15 @@ class CommentCache:
         except Exception as e:
             logger.error(f'递减帖子{post_id}评论数失败:{e}')
             return  0
-        
+
     #=============热评榜Zet=======
     HOT_COMMENTS_PRE_POST=100
     HOT_COMMENTS_TTL=86400*3
-    
+
     @classmethod
     def _hot_key(cls,post_id:int):
         return f'post:{post_id}:hot_comments'
-    
+
     @classmethod
     def update_hot_comment(cls,post_id:int,comment_id:int,like_count:int):
         '''
@@ -148,7 +148,7 @@ class CommentCache:
             if like_count<=0:
                 redis_cache.zrem(key,str(comment_id))
                 return True
-            
+
             pipe=redis_cache.pipeline(transaction=False,for_write=True)
             pipe.zadd(key,{str(comment_id):like_count})
             pipe.zremrangebyrank(key,0,-(cls.HOT_COMMENTS_PRE_POST+1))
@@ -158,7 +158,7 @@ class CommentCache:
         except Exception as e:
             logger.error(f'[HotComments] 更新热评失败 post={post_id} comment={comment_id}: {e}')
             return False
-    
+
     @classmethod
     def get_hot_comments(cls,post_id:int,page:int=1,per_page:int=20):
         '''
@@ -175,13 +175,13 @@ class CommentCache:
 
             if not results:
                 return [] ,0
-            
+
             comment_ids=[int(r.decode() if isinstance(r,bytes) else r) for r in results]
             return comment_ids,total
         except Exception as e:
             logger.error(f'[HotComments]获取热评失败post={post_id}:{e}')
             return [],0
-    
+
     @classmethod
     def rebuild_hot_comments(cls,post_id:int,comments_data):
         '''
@@ -205,12 +205,11 @@ class CommentCache:
         except Exception as e:
             logger.error(f'[HotComments]重建热评失败post={post_id}:{e}')
             return False
-        
-
-
-            
 
 
 
 
-    
+
+
+
+

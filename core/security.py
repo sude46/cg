@@ -1,11 +1,11 @@
-import os
-import secrets
 import hashlib
+import os
 import re
-from typing import Optional, Tuple, Union
+import secrets
 from datetime import datetime, timedelta
-import jwt
+
 import bcrypt  # 新增：引入bcrypt库（如需使用bcrypt加密）
+import jwt
 from flask import current_app
 
 # 配置项：抽离安全参数，便于生产环境调整
@@ -129,7 +129,7 @@ class SecurityManager:
         return secrets.token_hex(32)
 
     @staticmethod
-    def hash_password_bcrypt(password: str) -> Tuple[str, str]:
+    def hash_password_bcrypt(password: str) -> tuple[str, str]:
         '''使用bcrypt哈希密码（指定rounds，修复原逻辑错误）'''
         password_bytes = password.encode('utf-8')
         # 指定rounds=14，替代默认12，提升加密强度
@@ -139,7 +139,7 @@ class SecurityManager:
         return password_hash, salt.decode('utf-8')
 
     @staticmethod
-    def hash_password_pbkdf2(password: str, salt: Optional[str] = None) -> Tuple[str, str]:
+    def hash_password_pbkdf2(password: str, salt: str | None = None) -> tuple[str, str]:
         '''使用PBKDF2哈希密码（提升迭代次数，增强强度）'''
         if salt is None:
             salt = secrets.token_hex(16)
@@ -161,7 +161,7 @@ class SecurityManager:
     def verify_password(
             password: str,
             password_hash: str,
-            salt: Optional[str] = None,
+            salt: str | None = None,
             hash_type: str = "pbkdf2"  # 支持bcrypt/pbkdf2两种验证
     ) -> bool:
         '''
@@ -205,7 +205,7 @@ class SecurityManager:
     def generate_jwt_token(
             user_id: int,
             token_type: str = "access",  # access/refresh/reset 区分令牌类型
-            expires_in: Optional[int] = None
+            expires_in: int | None = None
     ) -> str:
         '''
         生成JWT令牌（修复逻辑错误：区分access/refresh token过期时间）
@@ -245,7 +245,7 @@ class SecurityManager:
             raise RuntimeError("令牌生成失败") from e
 
     @staticmethod
-    def verify_jwt_token(token: str, token_type: Optional[str] = None) -> Union[int, None]:
+    def verify_jwt_token(token: str, token_type: str | None = None) -> int | None:
         '''
         验证JWT令牌（支持校验令牌类型）
         :param token: JWT令牌

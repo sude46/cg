@@ -1,9 +1,9 @@
-from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
 import logging
-from sqlalchemy import event
-from sqlalchemy.orm import Query
+
+from flask_migrate import Migrate
+from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Query
 
 #配置日志
 logging.basicConfig(level=logging.INFO)
@@ -21,8 +21,8 @@ class SoftDeleteQuery(Query):
             entity = self.column_descriptions[0]["entity"]
             # 仅对包含 is_deleted 字段的模型生效
             if hasattr(entity, "is_deleted"):
-                return self.filter(entity.is_deleted == False)
-        return self          
+                return self.filter(not entity.is_deleted)
+        return self
 # 创建数据库实例
 db = SQLAlchemy(query_class=SoftDeleteQuery)
 migrate = Migrate()
@@ -33,7 +33,7 @@ class BaseModel(db.Model):
     __abstract__=True
     #软删除字段，默认未删除
     is_deleted=db.Column(db.Boolean,default=False,nullable=False,index=True)
-    
+
     #重写查询方法
     @classmethod
     def query(cls):
@@ -70,7 +70,7 @@ class DatabaseManager:
             except Exception as e:
                 logger.error(f"数据库表创建未知错误: {str(e)}")
                 print("数据库表创建失败：服务内部错误")
-        
+
         @app.cli.command('drop-db')
         def drop_db_command():
             """删除所有数据库表"""
@@ -85,7 +85,7 @@ class DatabaseManager:
             except Exception as e:
                 logger.error(f"数据库表删除未知错误: {str(e)}")
                 print("数据库表删除失败：服务内部错误")
-        
+
         @app.cli.command('reset-db')
         def reset_db_command():
             """重置数据库"""
@@ -101,15 +101,15 @@ class DatabaseManager:
             except Exception as e:
                 logger.error(f"数据库重置未知错误: {str(e)}")
                 print("数据库重置失败：服务内部错误")
-        
+
         # 请求结束时关闭会话（多线程安全）
         @app.teardown_appcontext
         def shutdown_session(exception=None):
             try:
-                db.session.remove()  
+                db.session.remove()
             except Exception as e:
                 logger.error(f"关闭数据库会话失败: {str(e)}")
-        
+
     @staticmethod
     def test_connection():
         """测试数据库连接（统一异常处理）"""
@@ -125,6 +125,6 @@ class DatabaseManager:
         except Exception as e:
             logger.error(f"数据库连接未知错误: {str(e)}")
             return False, "数据库连接失败：服务内部错误"
-        
+
 # 创建数据库管理器实例
 db_manager = DatabaseManager()

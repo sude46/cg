@@ -1,7 +1,7 @@
-import time
 from datetime import datetime, timedelta
-from flask import current_app
+
 import jwt as pyjwt
+from flask import current_app
 
 
 class PermissionService:

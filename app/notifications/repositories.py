@@ -1,9 +1,8 @@
-from typing import Optional, Dict, Any
-from datetime import datetime, timezone
-from app.common.database import utcnow
-from core import db
+from typing import Any
+
+from app.common.database import get_read_session, pagination_utils, utcnow
 from app.notifications.models import Notification
-from app.common.database import pagination_utils, get_read_session
+from core import db
 from core.metrics import monitor_db
 
 
@@ -15,14 +14,14 @@ class NotificationRepository:
 
     @staticmethod
     @monitor_db("insert", "notifications")
-    def create_notification(data: Dict[str, Any]) -> Notification:
+    def create_notification(data: dict[str, Any]) -> Notification:
         notif = Notification(**data)
         db.session.add(notif)
         return notif
 
     @staticmethod
     @monitor_db("select", "notifications")
-    def get_by_id(notification_id: int, user_id: int, force_master: bool = False) -> Optional[Notification]:
+    def get_by_id(notification_id: int, user_id: int, force_master: bool = False) -> Notification | None:
         session = db.session if force_master else NotificationRepository._read_session()
         return session.query(Notification).filter(
             Notification.user_id == user_id,

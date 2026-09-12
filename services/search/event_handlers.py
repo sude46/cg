@@ -2,9 +2,10 @@
 搜索模块事件监听器
 职责：监听业务实践，同步更新ES索引
 '''
-import logging 
+import logging
+
 from app.common.events import event_bus
-from services.search import PostSearchService,es_client
+from services.search import PostSearchService, es_client
 
 logger=logging.getLogger(__name__)
 

@@ -1,15 +1,15 @@
 import pytest
-from app.users.services import AuthService
-from app.posts.services import PostService
-from app.likes.services import LikeService
-from app.comments.services import CommentService
-from app.posts.models import Post
-from app.comments.models import Comment
-from app.likes.models import Like
 
-from app.follows.services import FollowService
-from app.notifications.services import NotificationService
+from app.comments.models import Comment
+from app.comments.services import CommentService
 from app.feeds.services import FeedService
+from app.follows.services import FollowService
+from app.likes.models import Like
+from app.likes.services import LikeService
+from app.posts.models import Post
+from app.posts.services import PostService
+from app.users.services import AuthService
+
 
 class TestCoreBusinessFlow:
     """核心业务流集成测试"""
@@ -93,7 +93,7 @@ class TestNotificationFlow:
             LikeService.create_like(user_id=liker["id"], post_id=post.id)
 
             from app.notifications.models import Notification
-            notif = Notification.query.filter_by(
+            Notification.query.filter_by(
                 user_id=author["id"], type="like"
             ).first()
 
@@ -149,7 +149,7 @@ class TestJWTAuthFlow:
             )["user"]
             login = AuthService.authenticate_user("jwt_user", "Pass@w0rd!")
             access_token = login["access_token"]
-            refresh_token = login["refresh_token"]
+            login["refresh_token"]
             assert access_token is not None
 
             refresh = AuthService.refresh_token(user["id"])

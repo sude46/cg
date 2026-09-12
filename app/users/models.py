@@ -1,12 +1,7 @@
-from datetime import datetime,timezone
+
+
 from app.common.database import utcnow
-from time import time
-from typing import Optional
-from flask import current_app
-import pyotp
 from core.database import db
-from core.extensions import bcrypt
-import jwt
 
 
 class PasswordHistory(db.Model):
@@ -64,6 +59,6 @@ class User(db.Model):
 		foreign_keys='Follow.follower_id',
 		back_populates='follower',
 		lazy='dynamic'
- 		)
+		)
 
 

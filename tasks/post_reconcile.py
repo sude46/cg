@@ -1,9 +1,11 @@
+import logging
+import random
+
 from celery import shared_task
+from core .redis_cache import redis_cache
+
 from app.posts.cache import PostCache
 from app.posts.repositories import post_repository
-from core .redis_cache import redis_cache
-import logging 
-import random
 from core.metrics import RECONCILE_DIFF_COUNT  # 新增
 
 logger=logging.getLogger(__name__)
@@ -83,9 +85,9 @@ def reconcile_post_cache(sample_size:int=500):
         RECONCILE_DIFF_COUNT.labels(resource_type='post').set(total_diff)
         logger.error(f'[Reconcile] 对账任务异常: {e}')
         return {'status': 'failed', 'error': str(e)}
-    
 
-                
-                
+
+
+
 
 

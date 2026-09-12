@@ -4,8 +4,8 @@ Redis 内存模拟，支持 String/Set/ZSet/Hash/List/分布式锁/Pipeline。
 与 pytest 无关的纯工具类，单独维护。
 """
 
-import time
 import fnmatch
+import time
 
 
 class FakeRedisClient:
@@ -85,7 +85,8 @@ class FakeRedisClient:
         return val
 
     incr = incrby
-    decr = lambda self, key, amount=1: self.incrby(key, -amount)
+    def decr(self, key, amount=1):
+        return self.incrby(key, -amount)
 
     def keys(self, pattern="*"):
         return [k for k in self.store.keys() if fnmatch.fnmatch(k, pattern)]

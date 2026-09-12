@@ -1,4 +1,5 @@
-from marshmallow import Schema, fields, validate, validates_schema, ValidationError
+from marshmallow import Schema, fields, validate
+
 
 #用户基础信息子Schema（进返回关注列表所需字段）
 class UserSimpleSchema(Schema):

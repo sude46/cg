@@ -88,6 +88,13 @@ target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "W", "UP"]
+# W191(tab缩进) / E501(超长行) 为历史遗留，待统一缩进与清理超长行后移除
+ignore = ["W191", "E501"]
+
+[tool.ruff.lint.per-file-ignores]
+# conftest.py 需先 sys.path.insert 才能 import core；wsgi.py 同理，属故意为之
+"tests/**" = ["E402"]
+"wsgi.py" = ["E402"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

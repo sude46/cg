@@ -1,11 +1,10 @@
-from celery import shared_task
-from app.posts.cache import PostCache
-from app.comments.cache import CommentCache
-from app.posts.repositories import post_repository
-from app.comments.repositories import comment_repository
-from core.redis_cache import redis_cache
 import logging
-import random
+
+from celery import shared_task
+
+from app.comments.cache import CommentCache
+from app.comments.repositories import comment_repository
+from app.posts.cache import PostCache
 
 logger = logging.getLogger(__name__)
 

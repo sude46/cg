@@ -1,7 +1,7 @@
-from typing import Set, Optional
-from core.redis_cache import redis_cache
 import logging
 import time
+
+from core.redis_cache import redis_cache
 
 logger = logging.getLogger(__name__)
 
@@ -92,7 +92,7 @@ class LikeCache:
     # ========== 读操作（走从库，故障返回 None 降级） ==========
 
     @classmethod
-    def is_liked(cls, user_id: int, target_id: int, target_type: str = 'post') -> Optional[bool]:
+    def is_liked(cls, user_id: int, target_id: int, target_type: str = 'post') -> bool | None:
         """
         检查是否已点赞
         返回 True/False，或 None（Redis 故障，需 Service 层降级查 DB）
@@ -108,7 +108,7 @@ class LikeCache:
             return None
 
     @classmethod
-    def get_like_count(cls, target_id: int, target_type: str = 'post') -> Optional[int]:
+    def get_like_count(cls, target_id: int, target_type: str = 'post') -> int | None:
         """
         获取点赞数量（优先读 String 计数器，O(1)）
         如果 Counter 键不存在，降级读 SCARD
@@ -129,7 +129,7 @@ class LikeCache:
             return None
 
     @classmethod
-    def get_liked_ids(cls, user_id: int, target_type: str = 'post') -> Set[int]:
+    def get_liked_ids(cls, user_id: int, target_type: str = 'post') -> set[int]:
         """
         获取用户已点赞的所有 ID（批量查询优化）
         返回空 set（无数据或异常），Service 层无需处理 None
@@ -319,5 +319,5 @@ class LikeCache:
             return False
 
 
-        
+
 

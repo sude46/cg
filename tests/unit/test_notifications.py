@@ -1,8 +1,9 @@
 import pytest
-from app.notifications.services import NotificationService
+
+from app.common.exceptions import ResourceNotFoundError, ValidationError
 from app.notifications.models import Notification
-from app.common.exceptions import ResourceNotFoundError, ValidationError, DatabaseError
-from tests.unit.factories import UserFactory, NotificationFactory
+from app.notifications.services import NotificationService
+from tests.unit.factories import NotificationFactory, UserFactory
 
 
 class TestNotificationService:
@@ -208,7 +209,7 @@ class TestNotificationCache:
         from app.notifications.cache import NotificationCache
         with app.app_context():
             NotificationCache.increment_unread(1)
-            assert NotificationCache.get_unread_count(1) == 1 
+            assert NotificationCache.get_unread_count(1) == 1
 
     def test_unread_count_decrement(self, app, mock_redis):
         """未读计数 -1"""
@@ -288,7 +289,6 @@ class TestNotificationEventHandlers:
     def test_register_notification_event_handlers(self, app, mock_redis):
         """测试注册通知事件处理器"""
         from app.notifications.services import register_notification_event_handlers
-        from app.common.events import event_bus
         with app.app_context():
             register_notification_event_handlers()
 

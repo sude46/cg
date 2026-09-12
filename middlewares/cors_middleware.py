@@ -1,14 +1,10 @@
-from flask_cors import CORS   
+from flask_cors import CORS
 
 
 def init_cors(app):
     """统一初始化CORS：生产环境严格限制源，精细配置"""
     # 从配置读取允许的源（生产环境必须指定，禁止*）
-    allowed_origins = app.config.get(
-        'CORS_ALLOWED_ORIGINS',
-        ['http://localhost:3000', 'https://your-domain.com']
-    )
-
+    allowed_origins = app.config.get('CORS_ALLOWED_ORIGINS', [])
     CORS(
         app,
         origins=allowed_origins,  # 严格限制源

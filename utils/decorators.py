@@ -1,16 +1,14 @@
-from functools import wraps
-import time
 import logging
+from functools import wraps
 
-from flask import request, current_app, g
-from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request, jwt_required
-
+from flask import g, request
+from flask_jwt_extended import get_jwt_identity, jwt_required
 from marshmallow import ValidationError as MarshmallowValidationError
+
 from app.common.exceptions import (
     ValidationError,
-    RateLimitError,
 )
-from utils.response import fail_response, ResponseCode
+from utils.response import ResponseCode, fail_response
 
 logger = logging.getLogger(__name__)
 
@@ -99,8 +97,9 @@ def handle_errors(default_error_msg="操作失败", default_code=500):
             try:
                 return f(*args, **kwargs)
             except Exception as e:
-                from utils.response import fail_response, ResponseCode
                 from flask import current_app
+
+                from utils.response import ResponseCode, fail_response
                 current_app.logger.error(f"Unhandled error: {str(e)}", exc_info=True)
                 return fail_response(ResponseCode.INTERNAL_ERROR, default_error_msg), default_code
         return wrapper
@@ -115,8 +114,8 @@ def ownership_required(model_class, resource_id_param):
     def decorator(f):
         @wraps(f)
         def wrapper(*args, **kwargs):
-            from flask import g, request
             from flask_jwt_extended import get_jwt_identity
+
             from app.common.exceptions import PermissionError
             from core.database import db
 

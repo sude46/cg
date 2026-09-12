@@ -1,12 +1,12 @@
-from utils.validators import validate_username, validate_password, validate_email
-from marshmallow import validate
-from marshmallow import Schema, fields, validates_schema, post_dump, ValidationError
+from marshmallow import Schema, ValidationError, fields, post_dump, validate, validates_schema
 from password_strength import PasswordPolicy
+
+from utils.validators import validate_email, validate_password, validate_username
+
 # 使用默认密码策略，或根据项目需求自定义
 # password_strength 库的 PasswordPolicy 不接受初始化参数
 # 使用 PasswordStats 来检查具体密码
 try:
-    from password_strength import PasswordStats
     password_policy = PasswordPolicy()
 except ImportError:
     password_policy = None
@@ -94,7 +94,7 @@ class UserSchema(Schema):
 	@post_dump
 	def clean_null_values(self,data,**kawargs):
 		return {k:v for k,v in data.items() if v is not None}
-	
+
 class UserListSchema(Schema):
 	"""分页用户列表的序列化规则"""
 	items = fields.Nested(UserSchema, many=True)  # 列表项用 UserSchema 序列化

@@ -1,9 +1,10 @@
-from app.comments.models import Comment
 import pytest
+
+from app.comments.models import Comment
 from app.comments.services import CommentService
-from app.posts.models import Post
-from app.common.exceptions import ResourceNotFoundError, PermissionError, ValidationError
-from tests.unit.factories import UserFactory, PostFactory, CommentFactory
+from app.common.exceptions import PermissionError, ResourceNotFoundError, ValidationError
+from tests.unit.factories import CommentFactory, PostFactory, UserFactory
+
 
 class TestCommentService:
     """评论模块单元测试"""

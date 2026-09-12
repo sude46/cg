@@ -1,6 +1,6 @@
-from core import db
-from datetime import datetime, timezone
+
 from app.common.database import utcnow
+from core import db
 
 
 class Like(db.Model):
@@ -11,7 +11,7 @@ class Like(db.Model):
     post_id = db.Column(db.Integer, db.ForeignKey('posts.id', ondelete='CASCADE'), nullable=True, index=True)
     comment_id = db.Column(db.Integer, db.ForeignKey('comments.id', ondelete='CASCADE'), nullable=True, index=True)
     created_at = db.Column(db.DateTime, default=utcnow, nullable=False)
-    
+
     deleted_at=db.Column(db.DateTime,nullable=True,index=True)
     # 关系定义
     user = db.relationship('User', backref=db.backref('user_likes', lazy='dynamic', overlaps='likes'))

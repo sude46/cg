@@ -1,6 +1,8 @@
-from celery import shared_task
-from app.users.cache import UserCache
 import logging
+
+from celery import shared_task
+
+from app.users.cache import UserCache
 
 logger = logging.getLogger(__name__)
 

@@ -1,15 +1,18 @@
-from flask import Flask, jsonify, g
 import logging
 import time
+
+from flask import Flask, g, jsonify
+
 from app.common.exceptions import (
-    BaseError,
-    ValidationError,
-    ResourceNotFoundError,
-    PermissionError,
     AuthenticationError,
+    BaseError,
     DatabaseError,
-    RateLimitError
+    PermissionError,
+    RateLimitError,
+    ResourceNotFoundError,
+    ValidationError,
 )
+
 
 def _get_log_extra():
     """封装日志上下文获取逻辑，避免重复代码"""
@@ -29,7 +32,7 @@ def handle_base_error(e: BaseError):
         f"[CUSTOM ERROR] request_id={log_extra['request_id']}, error_code={e.error_code}, msg={e.message}",
         extra=log_extra
     )
-    
+
     response = jsonify(e.to_dict())
     response.status_code = e.status_code
     return response
@@ -53,14 +56,14 @@ def handle_global_exception(e: Exception):
     """统一处理所有未预期的全局异常（整合原有两套逻辑）"""
     log_extra = _get_log_extra()
     logger = logging.getLogger("flask.app")
-    
+
     # 记录完整异常日志（含堆栈）
     logger.error(
         f"[UNEXPECTED EXCEPTION] request_id={log_extra['request_id']}, error={str(e)}",
         exc_info=True,  # 必须保留，否则看不到堆栈信息
         extra=log_extra
     )
-    
+
     # 区分环境返回错误信息（开发环境显示详情，生产环境隐藏）
     if logger.level == logging.DEBUG:  # 开发/测试环境
         msg = str(e)
@@ -68,7 +71,7 @@ def handle_global_exception(e: Exception):
     else:  # 生产环境
         msg = "Internal Server Error"
         error_code = 5000
-    
+
     # 统一返回自定义格式（和BaseError保持一致）
     return jsonify({
         "code": error_code,
@@ -87,14 +90,14 @@ def register_error_handlers(app: Flask):
     app.errorhandler(AuthenticationError)(handle_base_error)
     app.errorhandler(DatabaseError)(handle_base_error)
     app.errorhandler(RateLimitError)(handle_base_error)
-    
+
     # 2. 注册HTTP标准异常
     app.errorhandler(404)(handle_404_error)
     app.errorhandler(405)(handle_405_error)
-    
+
     # 3. 注册全局未预期异常（核心：覆盖视图+中间件所有场景）
     app.errorhandler(Exception)(handle_global_exception)
     # 关键补充：覆盖error_handler_spec，确保捕获所有异常
     app.error_handler_spec[None][Exception] = handle_global_exception
-    
+
     app.logger.info(" 所有异常处理器注册完成")

@@ -1,12 +1,13 @@
-from .security import SecurityManager,PasswordValidator
-from .database import db, migrate, db_manager
+from .database import db, db_manager, migrate
 from .extensions import bcrypt, jwt, mail
+from .security import PasswordValidator, SecurityManager
+
 __all__=[
 	'db',
-	'migrate', 
+	'migrate',
 	'db_manager',
 	'bcrypt',
-	'jwt', 
+	'jwt',
 	'mail',
 	'SecurityManager',
 	'PasswordValidator'

@@ -1,22 +1,6 @@
-from markupsafe import escape
 from flask import current_app
-import base64
-import os
+from markupsafe import escape
 
-def html_escape(content):
-    """
-    HTML转义（防止XSS）
-    :param content: 待转义内容（字符串/字典/列表）
-    :return: 转义后的内容
-    """
-    if isinstance(content, str):
-        return escape(content)
-    elif isinstance(content, dict):
-        return {k: html_escape(v) for k, v in content.items()}
-    elif isinstance(content, list):
-        return [html_escape(item) for item in content]
-    else:
-        return content
 
 
 def _get_fernet():

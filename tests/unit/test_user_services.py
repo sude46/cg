@@ -1,5 +1,3 @@
-import pytest
-from app.common.exceptions import ValidationError
 
 
 class TestAccountLockService:

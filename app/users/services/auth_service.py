@@ -1,17 +1,19 @@
-from core import db
-from core.security import security_manager
 import logging
+
 from flask_jwt_extended import create_access_token, create_refresh_token
-from ..models import User
-from app.users.repositories import user_repository
-from app.users.cache import UserCache
-from app.common.exceptions import ValidationError, AuthenticationError
+
 from app.common.database import utcnow
-from ..schemas import UserSchema
-from .password_service import password_service
-from .account_service import AccountLockService
-from .token_service import TokenService
+from app.common.exceptions import AuthenticationError, ValidationError
+from app.users.cache import UserCache
+from app.users.repositories import user_repository
+from core import db
 from core.metrics import USER_OPERATIONS
+from core.security import security_manager
+
+from ..schemas import UserSchema
+from .account_service import AccountLockService
+from .password_service import password_service
+from .token_service import TokenService
 
 logger = logging.getLogger(__name__)
 

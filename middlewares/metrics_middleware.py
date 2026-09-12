@@ -1,6 +1,9 @@
 import time
-from flask import request,g
-from core.metrics import HTTP_REQUESTS,HTTP_LATENCY
+
+from flask import g, request
+
+from core.metrics import HTTP_LATENCY, HTTP_REQUESTS
+
 
 def init_metrics_middleware(app):
     '''

@@ -3,7 +3,7 @@
 职责：业务规则过滤：与数据Repository对齐
 '''
 import logging
-from typing import List,Dict,Any,Optional,Tuple
+
 from services.search.document import PostDocument
 
 logger=logging.getLogger(__name__)
@@ -36,7 +36,7 @@ class PostSearchRepository:
             sort_by='time'
         )
     @classmethod
-    def search(cls,query:str="",page:int=1,per_page:int=20,user_id:Optional[int]=None,sort_by:str='relevance'):
+    def search(cls,query:str="",page:int=1,per_page:int=20,user_id:int | None=None,sort_by:str='relevance'):
         filters={'user_id':user_id} if user_id else None
         return PostDocument.search(
             query=query,

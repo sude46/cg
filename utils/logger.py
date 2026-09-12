@@ -1,6 +1,6 @@
 import logging
-from logging.handlers import RotatingFileHandler
 import os
+from logging.handlers import RotatingFileHandler
 
 
 def setup_logger(app):
@@ -18,14 +18,14 @@ def setup_logger(app):
 	file_handler.setFormatter(logging.Formatter(
 		'%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
 	))
-	
+
 	#设置日志文减级别为INFO
 	file_handler.setLevel(logging.INFO)
 	#将处理器添加到Flask应用的日志器
 	app.logger.addHandler(file_handler)
 	app.logger.setLevel(logging.INFO)
-	
-	
+
+
 	#记录应用启动日志（首次调用时触发，证明日志配置生效）
 	app.logger.info('Weibo startup')
 

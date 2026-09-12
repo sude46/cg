@@ -1,5 +1,6 @@
 import logging
-from utils.security_utils import encrypt_mfa_secret, decrypt_mfa_secret
+
+from utils.security_utils import decrypt_mfa_secret, encrypt_mfa_secret
 
 logger = logging.getLogger(__name__)
 

@@ -1,12 +1,10 @@
-from typing import Optional
-from datetime import datetime, timezone
-from app.common.database import utcnow
 import logging
-from core.database import db
+
+from sqlalchemy import func, update
+
+from app.common.database import get_read_session, pagination_utils, utcnow
 from app.users.models import User
-from app.common.database import pagination_utils, get_read_session
-from .schemas import UserListSchema
-from sqlalchemy import update, func
+from core.database import db
 from core.metrics import monitor_db
 
 logger = logging.getLogger(__name__)
@@ -21,7 +19,7 @@ class UserRepository:
 
     @staticmethod
     @monitor_db("select", "users")
-    def get_by_id(user_id: int, force_master: bool = False) -> Optional[User]:
+    def get_by_id(user_id: int, force_master: bool = False) -> User | None:
         """根据 ID 获取未删除的用户"""
         session = db.session if force_master else UserRepository._read_session()
         return session.query(User).filter(
@@ -31,7 +29,7 @@ class UserRepository:
 
     @staticmethod
     @monitor_db("select", "users")
-    def get_by_username(username: str, force_master: bool = False) -> Optional[User]:
+    def get_by_username(username: str, force_master: bool = False) -> User | None:
         """根据用户名获取未删除的用户"""
         session = db.session if force_master else UserRepository._read_session()
         return session.query(User).filter(
@@ -41,7 +39,7 @@ class UserRepository:
 
     @staticmethod
     @monitor_db("select", "users")
-    def get_by_email(email: str, force_master: bool = False) -> Optional[User]:
+    def get_by_email(email: str, force_master: bool = False) -> User | None:
         """根据邮箱获取未删除的用户"""
         session = db.session if force_master else UserRepository._read_session()
         return session.query(User).filter(
@@ -91,7 +89,7 @@ class UserRepository:
             'items': result['items'],
             'pagination': result['pagination']
         }
-    
+
     @staticmethod
     @monitor_db("update", "users")
     def increment_following_count(user_id: int) -> None:

@@ -1,12 +1,13 @@
-from .cache import FeedCache
+import logging
+
 from app.follows.cache import FollowCache
 from app.follows.repositories import follow_repository
 from app.posts.schemas import posts_schema
-import logging
-from typing import List,Optional 
+from core.metrics import FEED_OPERATIONS, REDIS_HIT_RATE
 from tasks.feed_tasks import async_remove_post_from_followers
+
+from .cache import FeedCache
 from .repository import FeedRepository
-from core.metrics import REDIS_HIT_RATE,FEED_OPERATIONS
 
 logger=logging.getLogger(__name__)
 
@@ -79,16 +80,16 @@ class FeedService:
 
             FEED_OPERATIONS.labels(action='timeline', result='success').inc()
             return result
-        except Exception as e:
+        except Exception:
             FEED_OPERATIONS.labels(action='timeline', result='failed').inc()
             raise
 
-        
+
 
 
 
     @classmethod
-    def _get_posts_by_ids(cls,post_ids:List[str]):
+    def _get_posts_by_ids(cls,post_ids:list[str]):
         '''
          根据Id列表批量查询帖子，并保持传入的顺序
         '''
@@ -107,21 +108,21 @@ class FeedService:
                 post=post_map.get(pid)
                 if post:
                     ordered_posts.append(post)
-            
+
              #如果顺序重组后发现数量不一致，说明有帖子被删除但缓存未清理
             if len(ordered_posts)!=len(post_ids):
-                missing=set(post_ids)-set(post_map.keys()) 
+                missing=set(post_ids)-set(post_map.keys())
                 logger.warning(
                       f'缓存中有{len(missing)}个帖子载数据库中不存在或已删除,'
-                      f'IDs:{missing},建议清理缓存' 
+                      f'IDs:{missing},建议清理缓存'
                   )
             FEED_OPERATIONS.labels(action='get', result='success').inc()
             return ordered_posts
-        except Exception as e:
+        except Exception:
             FEED_OPERATIONS.labels(action='get', result='failed').inc()
             raise
 
-    
+
     @classmethod
     def _pull_from_database(cls,user_id:int,page:int,per_page:int=20):
         '''
@@ -173,7 +174,7 @@ class FeedService:
 
         # 先查缓存
         follower_ids = FollowCache.get_follower_ids(author_id)
-        
+
         if follower_ids is None:
             # Cache miss：查 DB 从库 → 回填
             follower_ids = follow_repository.get_follower_ids(author_id)
@@ -205,7 +206,7 @@ class FeedService:
             follower_ids=follower_ids,
             follower_count=follower_count
         )
-        
+
         return {
             'post_id': post_id,
             'mode': 'push',
@@ -217,7 +218,7 @@ class FeedService:
         '''
          删除帖子后的Feed流清理
 
-        **注意**：粉丝缓存清理是异步操作，可能有几秒延迟         
+        **注意**：粉丝缓存清理是异步操作，可能有几秒延迟
         '''
         #从做着自己的时间线移除
         FeedCache.remove_posts(author_id,post_id)
@@ -254,69 +255,65 @@ class FeedService:
     def follow_user(cls, follower_id: int, followed_id: int) -> bool:
         '''
         用户关注某人后的处理
-        
+
         需要清空关注者的时间线缓存（因为时间线内容变了）
-        
+
         Args:
             follower_id: 关注者ID（执行关注操作的人）
             followed_id: 被关注者ID
-        
+
         Returns:
             bool: 是否成功
         '''
         # 清空关注者的时间线缓存（下次读时会重新从数据库拉取，包含新关注的人的帖子）
         FeedCache.invalidate_feed(follower_id)
-        
+
         logger.info(f'用户{follower_id}关注用户{followed_id}，时间线缓存已清空')
         return True
     @classmethod
     def unfollow_user(cls, follower_id: int, followed_id: int) -> bool:
         '''
         用户取关某人后的处理
-        
+
         需要清空取关者的时间线缓存
-        
+
         Args:
             follower_id: 取关者ID
             followed_id: 被取关者ID
-        
+
         Returns:
             bool: 是否成功
         '''
         # 清空取关者的时间线缓存
         FeedCache.invalidate_feed(follower_id)
-        
+
         logger.info(f'用户{follower_id}取关用户{followed_id}，时间线缓存已清空')
         return True
     @classmethod
     def refresh_user_feed(cls, user_id: int) -> dict:
         '''
         手动刷新用户时间线（用于后台管理或用户主动刷新）
-        
+
         强制清空缓存并从数据库重新加载
-        
+
         Args:
             user_id: 用户ID
-        
+
         Returns:
             dict: 刷新结果
         '''
         # 清空缓存
         FeedCache.invalidate_feed(user_id)
-        
+
         # 重新加载第一页
         result = cls.get_timeline(user_id, page=1, per_page=cls.DEFAULT_PER_PAGE)
-        
+
         return {
             'user_id': user_id,
             'refreshed': True,
             'loaded_posts': len(result['items']),
             'source': result['source']
         }
-    
-    
-        
-             
 
 
 
@@ -324,4 +321,8 @@ class FeedService:
 
 
 
-        
+
+
+
+
+

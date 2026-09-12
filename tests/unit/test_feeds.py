@@ -1,9 +1,8 @@
-import pytest
-from app.feeds.services import FeedService
 from app.feeds.cache import FeedCache
-from tests.unit.factories import UserFactory, PostFactory
-from app.follows.models import Follow
+from app.feeds.services import FeedService
 from app.follows.services import FollowService
+from tests.unit.factories import PostFactory, UserFactory
+
 
 class TestFeedService:
     """Feed流服务单元测试"""
@@ -33,7 +32,7 @@ class TestFeedService:
         with app.app_context():
             user = UserFactory()
             author = UserFactory()
-            post = PostFactory(author=author)
+            PostFactory(author=author)
             FollowService.follow_user(user.id, author.id)
             result = FeedService.get_timeline(user.id, page=0, per_page=10)
             assert result["source"] == "db"

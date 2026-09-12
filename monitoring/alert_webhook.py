@@ -1,11 +1,10 @@
-import json
 import logging
 import os
 import sys
 from datetime import datetime
-from flask import Flask,request
-import requests
 
+import requests
+from flask import Flask, request
 
 app=Flask(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -71,16 +70,16 @@ def format_alert(alert:dict):
 
     lines=[
             f"###{status_emoji} {labels.get('alertname','Unknown')}",
-            f"",
+            "",
         f"- **级别**: {severity.upper()}",
         f"- **服务**: {labels.get('job', 'unknown')}",
         f"- **实例**: {labels.get('instance', 'unknown')}",
         f"- **时间**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
-        f"",
+        "",
         f"**摘要**: {annotations.get('summary', 'N/A')}",
-        f"",
+        "",
         f"**详情**: {annotations.get('description', 'N/A')}",
-        f"---"
+        "---"
     ]
     return "\n".join(lines)
 
@@ -121,4 +120,4 @@ if __name__=="__main__":
     app.run(host="0.0.0.0",port=5001,debug=False)
 
 
-                
+
