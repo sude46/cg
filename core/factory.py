@@ -11,6 +11,7 @@ from app.notifications.services import register_notification_event_handlers
 # 导入所有模型，确保 db.create_all() 创建完整表结构
 from config import get_config
 from core.blueprint_registry import register_all_blueprints
+from core.celery_app import celery_app as _celery_app  # noqa: F401  确保 shared_task 绑定到项目 Celery 实例
 from core.database import db, migrate
 from core.extensions import bcrypt, jwt, mail
 from core.logging_config import init_structured_logger

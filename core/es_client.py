@@ -23,7 +23,9 @@ class ESClient:
     def connect(self,app_config:dict=None):
         '''建立连接'''
         if app_config is None:
-            config=get_config()
+            config_cls=get_config()
+            # get_config() 返回的是配置类，ES_HOST_LIST 是 @property，必须先实例化
+            config=config_cls() if isinstance(config_cls,type) else config_cls
             es_enabled=config.ELASTICSEARCH_ENABLED
             es_hosts=config.ES_HOST_LIST
             es_timeout=config.ELASTICSEARCH_TIMEOUT

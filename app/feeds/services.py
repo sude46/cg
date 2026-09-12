@@ -4,7 +4,6 @@ from app.follows.cache import FollowCache
 from app.follows.repositories import follow_repository
 from app.posts.schemas import posts_schema
 from core.metrics import FEED_OPERATIONS, REDIS_HIT_RATE
-from tasks.feed_tasks import async_remove_post_from_followers
 
 from .cache import FeedCache
 from .repository import FeedRepository
@@ -236,6 +235,9 @@ class FeedService:
             )
         else:
             try:
+                # 延迟导入：tasks.feed_tasks 顶层会 import app.feeds.cache，
+                # 若此处放顶层 import 会与 app.feeds 形成循环，导致 Celery worker 启动失败。
+                from tasks.feed_tasks import async_remove_post_from_followers
                 async_remove_post_from_followers.delay(post_id,follower_ids)
                 result={'removed_from':'async_queued','total_followers':len(follower_ids)}
             except ImportError:

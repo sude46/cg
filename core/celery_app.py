@@ -4,6 +4,7 @@ Celery应用实例配置
 from celery import Celery
 
 from config import get_config
+from tasks.base_task import MonitoredTask
 
 
 def make_celery(app_name='weibo'):
@@ -14,6 +15,7 @@ def make_celery(app_name='weibo'):
         app_name,
         broker=config.CELERY_BROKER_URL,             #redis作为消息队列
         backend=config.CELERY_RESULT_BACKEND,           #redis存储结果
+        task_cls=MonitoredTask,                         #注入app context+埋点
         include=[
             'tasks.like_tasks',
             'tasks.like_reconcile',
@@ -25,6 +27,7 @@ def make_celery(app_name='weibo'):
             'tasks.notification_tasks',
             'tasks.comment_reconcile',
             'tasks.data_tasks',
+            'tasks.search_tasks',
         ]
     )
     celery.conf.update(
@@ -70,3 +73,6 @@ def make_celery(app_name='weibo'):
     )
     return celery
 celery_app=make_celery()
+# 让 shared_task 在 Web 进程中解析到本应用；否则 .delay() 会落到 Celery 默认队列 "celery"，
+# 而 worker 监听的是 task_default_queue="default"，任务永远不会被执行。
+celery_app.set_default()
