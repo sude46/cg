@@ -2,7 +2,6 @@ from flask import g, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from flask_restx import Api, Namespace, Resource, fields
 
-from app.likes.services import LikeService
 from middlewares import route_limit
 from utils.decorators import ownership_required, validate_json
 from utils.pagination import get_pagination_params

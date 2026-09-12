@@ -77,7 +77,7 @@ class PostService:
                 })
             except Exception as e:
                 logger.warning(f'ES 索引失败（不影响主流程）: {e}')
-            POST_OPERATIONS.labels(action='create', result='success').inc()
+            
             return post
         except Exception:
             POST_OPERATIONS.labels(action='create', result='error').inc()
@@ -248,8 +248,8 @@ class PostService:
                     'image_url':post.image_url,
                     'deleted_at': post.deleted_at.isoformat() if post.deleted_at else None,
                 })
-            except Exception:
-                logging.warning('发布帖子更新事件失败，不影响主进程：{e}')
+            except Exception as e:
+                logger.warning(f'发布帖子更新事件失败，不影响主进程：{e}')
             POST_OPERATIONS.labels(action='update', result='success').inc()
             logger.info('用户%d更新了帖子%d', user_id, post_id)
             return post
@@ -344,20 +344,16 @@ class PostService:
 
             posts = result.get('items', [])
 
-            # 获取点赞状态（如果 ES 返回的是 ID 列表）
+            # 获取点赞状态（ES 返回 dict，DB 降级返回 ORM 对象）
             liked_ids = set()
-            if current_user_id and posts and not result.get('fallback'):
-                # ES 搜索结果需要从数据库查点赞状态
-                post_ids = [p['id'] for p in posts]
+            if current_user_id and posts:
+                post_ids = [
+                    p['id'] if isinstance(p, dict) else p.id
+                    for p in posts
+                ]
                 liked_ids = like_repository.get_liked_post_ids(
                     user_id=current_user_id,
                     post_ids=post_ids
-                )
-            elif current_user_id and posts:
-                # 降级到数据库搜索时
-                liked_ids = like_repository.get_liked_post_ids(
-                    user_id=current_user_id,
-                    post_ids=[p['id'] for p in posts]
                 )
             POST_OPERATIONS.labels(action='search', result='success').inc()
             return {

@@ -79,21 +79,80 @@ class PostRepository:
         }
 
     @staticmethod
+    def _escape_like(value: str) -> str:
+        """转义 LIKE 通配符：顺序必须是先反斜杠、再 % 和 _"""
+        return (value or '').replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_')
+
+    @staticmethod
     @monitor_db("select", "posts")
     def search_posts(query_str: str, page: int = 1, per_page: int = 20):
         session = PostRepository._read_session()
+        escaped = PostRepository._escape_like(query_str)
         query = session.query(Post).options(
             joinedload(Post.author)
         ).filter(
             Post.deleted_at.is_(None),
             Post.is_published.is_(True),
-            Post.content.ilike(f'%{query_str}%')
+            Post.content.ilike(f'%{escaped}%', escape='\\')
         ).order_by(Post.created_at.desc())
         result = pagination_utils.paginate(query, page=page, per_page=per_page)
         return {
             'items': result['items'],
             'pagination': result['pagination']
         }
+
+    @staticmethod
+    @monitor_db("select", "posts")
+    def search_post_ids(query_str: str, page: int = 1, per_page: int = 20):
+        """降级搜索：只取 ID + 总数，便于短 TTL 缓存，避免重复全表 LIKE"""
+        session = PostRepository._read_session()
+        escaped = PostRepository._escape_like(query_str)
+        query = session.query(Post.id).filter(
+            Post.deleted_at.is_(None),
+            Post.is_published.is_(True),
+            Post.content.ilike(f'%{escaped}%', escape='\\')
+        ).order_by(Post.created_at.desc())
+        total = query.count()
+        rows = query.limit(per_page).offset((page - 1) * per_page).all()
+        return [row[0] for row in rows], total
+
+    @staticmethod
+    @monitor_db("select", "posts")
+    def get_by_ids(post_ids):
+        """按 ID 批量取帖子（含作者），保持传入顺序并过滤已删除"""
+        if not post_ids:
+            return []
+        session = PostRepository._read_session()
+        rows = session.query(Post).options(
+            joinedload(Post.author)
+        ).filter(
+            Post.id.in_(post_ids),
+            Post.deleted_at.is_(None)
+        ).all()
+        by_id = {p.id: p for p in rows}
+        return [by_id[i] for i in post_ids if i in by_id]
+
+    @staticmethod
+    @monitor_db("select", "posts")
+    def get_posts_updated_since(since, limit: int = 5000):
+        """取某时间点后被创建/更新/软删的帖子（含已删），用于 ES 降级恢复后补索引"""
+        session = PostRepository._read_session()
+        return session.query(Post).options(
+            joinedload(Post.author)
+        ).filter(
+            Post.updated_at >= since
+        ).order_by(Post.updated_at.asc()).limit(limit).all()
+
+    @staticmethod
+    @monitor_db("select", "posts")
+    def list_posts_for_reindex(offset: int = 0, limit: int = 100):
+        """按 id 顺序分页取未删除帖子（ES 全量重建索引用）"""
+        session = PostRepository._read_session()
+        return session.query(Post).options(
+            joinedload(Post.author)
+        ).filter(
+            Post.deleted_at.is_(None)
+        ).order_by(Post.id.asc()).limit(limit).offset(offset).all()
 
     @staticmethod
     @monitor_db("update", "posts")

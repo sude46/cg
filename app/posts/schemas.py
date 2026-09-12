@@ -1,17 +1,9 @@
-from datetime import datetime
-
 from marshmallow import Schema, ValidationError, fields, validate, validates_schema
 
 from utils.validators import validate_content_length, validate_image_url
 
 
-class IsoDateTime(fields.DateTime):
-	def _serialize(self,value,attr,obj,**kwargs):
-		if value is None:
-			return None
-		if not isinstance(value,datetime):
-			raise ValidationError('Invalid datetime object')
-		return value.isoformat()
+
 class CreatePostSchema(Schema):
 	"""创建帖子请求模式"""
 	content = fields.Str(

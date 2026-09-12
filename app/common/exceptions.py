@@ -69,6 +69,12 @@ class ConflictError(BaseError):
     error_code=10007
     message='资源冲突，操作无法完成'
 
+class ServiceUnavailableError(BaseError):
+    '''服务暂时不可用（如 ES 熔断且配置为直接拒绝）'''
+    status_code=503
+    error_code=10008
+    message='服务暂时不可用，请稍后再试'
+
 class BusinessException(Exception):
     """业务逻辑异常（如参数错误、权限不足等）"""
     def __init__(self, message, code=400):
@@ -84,5 +90,6 @@ __all__ = [
     "ResourceNotFoundError",
     "DatabaseError",
     "RateLimitError",
-    "ConflictError"
+    "ConflictError",
+    "ServiceUnavailableError"
 ]

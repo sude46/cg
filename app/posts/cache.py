@@ -89,7 +89,7 @@ class PostCache:
         """检查帖子是否在强一致窗口内"""
         key=cls._recent_key(post_id)
         try:
-            return redis_cache.exists(key)>0
+            return redis_cache.exists(key, for_write=True)>0
         except Exception as e:
             logger.error(f'检查帖子{post_id}最近修改失败:{e}')
             return False
@@ -105,6 +105,8 @@ class PostCache:
         热度分计算(整数版，避免Redis Zset double 精度问题)
         公式:(likes*2+comments*3)/(hours+2)^1.5*1_000_000
         '''
+        if created_at.tzinfo is None:
+            created_at = created_at.replace(tzinfo=UTC)
         hours=max(0,(datetime.now(UTC)-created_at).total_seconds()/3600)
         interaction=like_count*2+comment_count*3
         score_float=interaction/math.pow(hours+2,1.5)
@@ -145,8 +147,8 @@ class PostCache:
             start=(page-1)*per_page
             end=start+per_page-1
 
-            results=redis_cache.zrevrange(key,start,end,withscores=False,for_write=False)
-            total=redis_cache.zcard(key,for_write=False) or 0
+            results=redis_cache.zrevrange(key,start,end,withscores=False)
+            total=redis_cache.zcard(key) or 0
 
             if not results:
                 return [],0

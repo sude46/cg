@@ -14,6 +14,14 @@ class SearchConfig:
             'number_of_shards':1,
             'number_of_replicas':0,
             'analysis':{
+                'filter':{
+                    # 自动补全用：对 IK 分出的词再切 edge n-gram
+                    'edge_ngram_filter':{
+                        'type':'edge_ngram',
+                        'min_gram':1,
+                        'max_gram':10
+                    }
+                },
                 'analyzer':{
                     'ik_smart':{
                         'type':'custom',
@@ -22,6 +30,12 @@ class SearchConfig:
                     'ik_max_word':{
                         'type':'custom',
                         'tokenizer':'ik_max_word'
+                    },
+                    # 建索引（补全字段）用：IK max_word + 小写 + 前缀 n-gram
+                    'ik_edge_ngram':{
+                        'type':'custom',
+                        'tokenizer':'ik_max_word',
+                        'filter':['lowercase','edge_ngram_filter']
                     }
 
                 }

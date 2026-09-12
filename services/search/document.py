@@ -7,10 +7,18 @@ from datetime import datetime
 from typing import Any
 
 from core.es_client import es_client
+from elastic_transport import ConnectionError as ESConnectionError
+from elastic_transport import ConnectionTimeout as ESConnectionTimeout
+from elastic_transport import TransportError as ESTransportError
 from elasticsearch import NotFoundError
+from elasticsearch.exceptions import ApiError as ESApiError
 from services.search.config import SearchConfig
 
 logger=logging.getLogger(__name__)
+
+
+class SearchBackendError(Exception):
+    """Elasticsearch 后端不可用或调用失败（供上层熔断降级）"""
 
 class PostDocument:
     '''
@@ -34,6 +42,12 @@ class PostDocument:
             'content':{
                 'type':'text',
                 'analyzer':'ik_max_word',
+                'search_analyzer':'ik_smart'
+            },
+            # 自动补全专用字段：IK + edge_ngram 建索引，ik_smart 查询
+            'suggest':{
+                'type':'text',
+                'analyzer':'ik_edge_ngram',
                 'search_analyzer':'ik_smart'
             },
             'image_url':{'type':'keyword'},
@@ -100,6 +114,9 @@ class PostDocument:
             doc = document.copy()
             if isinstance(doc.get('created_at'), datetime):
                 doc['created_at'] = doc['created_at'].isoformat()
+            # 补全字段：与正文同源，调用方无需感知
+            if doc.get('content'):
+                doc['suggest'] = doc['content']
 
             es_client.client.index(
                 index=cls.get_index_name(),
@@ -134,6 +151,9 @@ class PostDocument:
             return False
 
         try:
+            # 正文变更时同步维护补全字段
+            if document.get('content'):
+                document = {**document, 'suggest': document['content']}
             es_client.client.update(
                 index=cls.get_index_name(),
                 id=doc_id,
@@ -154,6 +174,50 @@ class PostDocument:
         物理删除用 delete_by_id，但我们推荐标记删除
         """
         return cls.update(doc_id, {"is_deleted": True})
+
+    @classmethod
+    def suggest(cls, prefix: str, size: int = 10) -> list[str]:
+        """前缀补全建议：查询专用 suggest 字段（edge_ngram 建索引，ik_smart 查询）。
+
+        ES 不可用/索引未就绪时优雅返回空，不抛错。
+        """
+        prefix = (prefix or '').strip()
+        if not prefix:
+            return []
+        client = es_client.client
+        if client is None:
+            return []
+        try:
+            body = {
+                "size": max(1, min(50, size)),
+                "_source": ["content"],
+                "query": {
+                    "bool": {
+                        "filter": [
+                            {"term": {"is_deleted": False}},
+                            {"term": {"is_published": True}}
+                        ],
+                        "must": [
+                            {"match": {"suggest": {"query": prefix}}}
+                        ]
+                    }
+                }
+            }
+            result = client.search(
+                index=cls.get_index_name(),
+                body=body
+            )
+            suggestions = []
+            seen = set()
+            for hit in result["hits"]["hits"]:
+                content = ((hit.get("_source") or {}).get("content") or "").strip()
+                if content and content not in seen:
+                    seen.add(content)
+                    suggestions.append(content[:50])
+            return suggestions
+        except Exception as e:
+            logger.error(f"搜索建议失败: {e}")
+            return []
 
     @classmethod
     def search(
@@ -177,8 +241,9 @@ class PostDocument:
         Returns:
             (结果列表, 总数)
         """
-        if not es_client.is_available():
-            return [], 0
+        client = es_client.client
+        if client is None:
+            raise SearchBackendError("Elasticsearch 客户端不可用")
 
         try:
             # 构建查询
@@ -198,7 +263,7 @@ class PostDocument:
                 must_conditions.append({
                     "multi_match": {
                         "query": query,
-                        "fields": ["content^3", "username"],  # content权重更高
+                        "fields": ["content^3", "user_name"],  # content权重更高
                         "type": "best_fields",
                         "fuzziness": "AUTO"
                     }
@@ -224,7 +289,7 @@ class PostDocument:
                 "size": per_page
             }
 
-            result = es_client.client.search(
+            result = client.search(
                 index=cls.get_index_name(),
                 body=search_body
             )
@@ -236,6 +301,6 @@ class PostDocument:
             posts = [hit["_source"] for hit in hits]
             return posts, total
 
-        except Exception as e:
+        except (ESConnectionError, ESConnectionTimeout, ESTransportError, ESApiError) as e:
             logger.error(f"搜索失败: {e}")
-            return [], 0
+            raise SearchBackendError(f"Elasticsearch 查询失败: {e}") from e

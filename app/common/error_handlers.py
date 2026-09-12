@@ -10,17 +10,19 @@ from app.common.exceptions import (
     PermissionError,
     RateLimitError,
     ResourceNotFoundError,
+    ServiceUnavailableError,
     ValidationError,
 )
 
 
 def _get_log_extra():
     """封装日志上下文获取逻辑，避免重复代码"""
-    elapsed_time = round(time.time() - g.get("request_start_time", time.time()), 3)
+    elapsed_time = round(time.time() - g.get("start_time", time.time()), 3)
+    current_user = g.get("current_user", None)
     return {
         "elapsed_time": elapsed_time,
         "request_id": g.get("request_id", "N/A"),
-        "user_id": g.get("user_id", "N/A")
+        "user_id": getattr(current_user, "id", "N/A")
     }
 
 def handle_base_error(e: BaseError):
@@ -90,6 +92,7 @@ def register_error_handlers(app: Flask):
     app.errorhandler(AuthenticationError)(handle_base_error)
     app.errorhandler(DatabaseError)(handle_base_error)
     app.errorhandler(RateLimitError)(handle_base_error)
+    app.errorhandler(ServiceUnavailableError)(handle_base_error)
 
     # 2. 注册HTTP标准异常
     app.errorhandler(404)(handle_404_error)

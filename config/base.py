@@ -125,10 +125,22 @@ class BaseConfig:
     CORS_SUPPORTS_CREDENTIALS = True
     CORS_ALLOWED_ORIGINS=[
             o.strip() for o in os.getenv(
-                'CORE_ALLOWED_ORIGINS',
+                'CORS_ALLOWED_ORIGINS',
                 'http://localhost:5173'
                 ).split(',') if o.strip()
             ]
+
+    # ==================== 搜索降级（熔断） ====================
+    # 降级模式：fallback=带护栏的 DB LIKE；unavailable=直接 503
+    SEARCH_DEGRADE_MODE = os.getenv('SEARCH_DEGRADE_MODE', 'fallback')
+    # ES 故障后的熔断窗口（秒），窗口内不再探测 ES
+    SEARCH_DEGRADE_TTL = int(os.getenv('SEARCH_DEGRADE_TTL', '30'))
+    # 降级 LIKE 的最短关键词长度（单个 CJK 字符放行）
+    SEARCH_FALLBACK_MIN_LEN = int(os.getenv('SEARCH_FALLBACK_MIN_LEN', '2'))
+    # 降级 LIKE 的每页上限
+    SEARCH_FALLBACK_MAX_PER_PAGE = int(os.getenv('SEARCH_FALLBACK_MAX_PER_PAGE', '20'))
+    # 降级结果（ID+总数）短 TTL 缓存（秒）
+    SEARCH_FALLBACK_CACHE_TTL = int(os.getenv('SEARCH_FALLBACK_CACHE_TTL', '10'))
 
     # ==================== 日志配置 ====================
     LOG_DIR = os.path.join(PROJECT_ROOT, "logs")

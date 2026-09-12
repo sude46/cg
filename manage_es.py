@@ -74,16 +74,16 @@ def check_status():
     print(f"活跃分片: {health['active_primary_shards']}")
 
     # 索引信息
-    if client.indices.exists(index=PostDocument.INDEX_NAME):
+    if client.indices.exists(index=PostDocument.get_index_name()):
         stats = client.indices.stats(index=PostDocument.get_index_name())
-        doc_count = stats['indices'][PostDocument.INDEX_NAME]['total']['docs']['count']
-        store_size = stats['indices'][PostDocument.INDEX_NAME]['total']['store']['size_in_bytes']
+        doc_count = stats['indices'][PostDocument.get_index_name()]['total']['docs']['count']
+        store_size = stats['indices'][PostDocument.get_index_name()]['total']['store']['size_in_bytes']
 
-        print(f"\n索引: {PostDocument.INDEX_NAME}")
+        print(f"\n索引: {PostDocument.get_index_name()}")
         print(f"文档数: {doc_count}")
         print(f"存储大小: {store_size / 1024 / 1024:.2f} MB")
     else:
-        print(f"\n索引 {PostDocument.INDEX_NAME} 不存在")
+        print(f"\n索引 {PostDocument.get_index_name()} 不存在")
 
 
 def test_search():
@@ -119,7 +119,7 @@ def delete_index():
         return
 
     # 双重确认
-    print(f"  即将删除索引: {PostDocument.INDEX_NAME}")
+    print(f"  即将删除索引: {PostDocument.get_index_name()}")
     confirm1 = input("确认删除? [yes/no]: ")
     if confirm1 != 'yes':
         print("操作已取消")
