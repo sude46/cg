@@ -32,14 +32,13 @@ class DevelopmentConfig(BaseConfig):
 
 		missing_configs=[]
 		if not mysql_user:
-			if not mysql_user:
-				missing_configs.append('MYSQL_USER')
-			if not mysql_db:
-				missing_configs.append('MYSQL_DB')
-			if missing_configs:
-				raise OSError(
-					f"开发环境数据库配置缺失：{', '.join(missing_configs)}，请通过环境变量设置"
-				)
+			missing_configs.append('MYSQL_USER')
+		if not mysql_db:
+			missing_configs.append('MYSQL_DB')
+		if missing_configs:
+			raise OSError(
+				f"开发环境数据库配置缺失：{', '.join(missing_configs)}，请通过环境变量设置"
+			)
 
 		mysql_password=self._validate_dev_password(mysql_password)
 

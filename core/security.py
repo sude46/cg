@@ -192,7 +192,7 @@ class SecurityManager:
             else:
                 current_app.logger.error(f"不支持的哈希类型: {hash_type}")
                 return False
-        except (ValueError, TypeError, UnicodeEncodeError, bcrypt.InvalidHashError) as e:
+        except (ValueError, TypeError, UnicodeEncodeError) as e:
             # 捕获所有可能的异常：无效哈希、编码错误、参数错误等
             current_app.logger.error(f"验证密码失败（无效哈希/参数）: {str(e)}")
             return False  # 返回False而非抛异常，保证接口稳定性

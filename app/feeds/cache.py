@@ -4,11 +4,16 @@ Feed流Redis缓存
 拉模式：普通用户打开首页时，实时拉去关注对象的最新贴子
 '''
 import logging
-from datetime import datetime
+from datetime import datetime,UTC
 
 from core.redis_cache import redis_cache
 
 logger=logging.getLogger(__name__)
+
+def _to_timestamp(dt: datetime) -> float:
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=UTC)
+    return dt.timestamp()
 
 class FeedCache:
     '''
@@ -54,8 +59,7 @@ class FeedCache:
         '''
         #统一时间戳格式
         if isinstance(created_at,datetime):
-            created_at=created_at.timestamp()
-
+            created_at=_to_timestamp(created_at)
         #大v判断：粉丝过多时不推，避免写入爆炸
         actual_count=follower_count if follower_count is not None else len(follower_ids)
 
@@ -138,8 +142,7 @@ class FeedCache:
     def add_post_to_feed(cls,user_id:int,post_id:int,created_at:float):
         '''用户自己发帖也加入自己时间线'''
         if isinstance(created_at,datetime):
-            created_at=created_at.timestamp()
-
+            created_at=_to_timestamp(created_at)
         try:
             key = cls._feed_key(user_id)
             pipe = redis_cache.pipeline(transaction=False,for_write=True)
@@ -251,9 +254,7 @@ class FeedCache:
             mapping = {}
             for post in posts:
                 pid = str(post["id"])
-                ts = post["created_at"]
-                if isinstance(ts, datetime):
-                    ts = ts.timestamp()
+                ts = _to_timestamp(post["created_at"])
                 mapping[pid] = ts
 
             # 用 Pipeline 保证原子性

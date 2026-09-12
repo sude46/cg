@@ -59,12 +59,12 @@ def init_logging_middleware(app):
         }
 
 
-        # 安全记录请求题，避免阻塞和内存溢出
-        if request.method in ['POST', 'PUT', 'PATCH'] and not request.is_json:
+        # 安全记录请求体，避免阻塞和内存溢出
+        if request.method in ['POST', 'PUT', 'PATCH'] and request.is_json:
             try:
                 #限制请求体大小（防止json阻塞）
                 if request.content_length and request.content_length<10*1024:
-                    body=request.get_json(slient=True) or {}
+                    body=request.get_json(silent=True) or {}
                     log_data['request_body']=filter_sensitive_data(body)
                 else:
                     log_data['request_body']='[too large]'

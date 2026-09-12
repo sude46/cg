@@ -7,7 +7,8 @@ class TokenService:
         '''生成密码重置令牌'''
         return security_manager.generate_jwt_token(
             user_id=user_id,
-            token_type='reset'
+            token_type='reset',
+            expires_in=expires_in
         )
 
     @staticmethod

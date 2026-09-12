@@ -10,7 +10,7 @@ from .services import FeedService
 
 authorizations={
     'Bearer':{
-        'type':'apikey',
+        'type':'apiKey',
         'in':'header',
         'name':'Authorization',
         'description':'JWT TOKEN(Bearer token)'
@@ -50,7 +50,7 @@ class TimelineResource(Resource):
         '''获取当前用户的时间线（分页）'''
         current_user_id=get_jwt_identity()
         feed_parser.parse_args()
-        page,per_page=get_pagination_params()
+        page,per_page=get_pagination_params(default_per_page=20)
         current_app.logger.info(
             f'用户{current_user_id}获取时间线，页码:{page},每页数量:{per_page}'
         )

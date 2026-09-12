@@ -41,7 +41,7 @@ class User(db.Model):
 	#账号锁定时间（达到失败阈值后，记录锁定截止时间）
 	lock_until=db.Column(db.DateTime,nullable=True)
 	#MFA相关字段
-	mfa_secret=db.Column(db.String(20),nullable=True) #MFA密钥
+	mfa_secret=db.Column(db.String(255),nullable=True) #MFA密钥（Fernet密文约120字符）
 	mfa_enabled=db.Column(db.Boolean,default=False,nullable=False) #是否启用MFA
 
 	posts=db.relationship('Post',back_populates='author',lazy='dynamic')

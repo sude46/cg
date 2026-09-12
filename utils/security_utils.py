@@ -1,5 +1,4 @@
 from flask import current_app
-from markupsafe import escape
 
 
 

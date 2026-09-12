@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import datetime,UTC
 from app.common.events import event_bus
 from app.feeds.services import FeedService
 
@@ -10,10 +10,13 @@ _registered=False
 def on_post_created(payload:dict):
     '''发帖后自动推Feed(推/拉 由FeedService内部按粉丝数决定)'''
     try:
+        dt=datetime.fromisoformat(payload['created_at'])
+        if dt.tzinfo is None:
+            dt=dt.replace(tzinfo=UTC)
         FeedService.publish_post(
                 post_id=payload['id'],
                 author_id=payload['user_id'],
-                created_at=datetime.fromisoformat(payload['created_at']).timestamp(),
+                created_at=dt.timestamp(),
                 )
     except Exception as e:
         logger.error(f'Feed 推送失败 post_id={payload.get("id")}:{e}')

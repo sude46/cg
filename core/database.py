@@ -2,6 +2,7 @@ import logging
 
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Query
 
@@ -14,14 +15,13 @@ logger=logging.getLogger(__name__)
 
 class SoftDeleteQuery(Query):
     def __iter__(self):
-        filtered_query=self._add_soft_delete_filter()
-        return iter(filtered_query)
+        return super().__iter__()
     def _add_soft_delete_filter(self):
         if self.column_descriptions and len(self.column_descriptions)>0:
             entity = self.column_descriptions[0]["entity"]
             # 仅对包含 is_deleted 字段的模型生效
             if hasattr(entity, "is_deleted"):
-                return self.filter(not entity.is_deleted)
+                return self.filter(entity.is_deleted.is_(False))
         return self
 # 创建数据库实例
 db = SQLAlchemy(query_class=SoftDeleteQuery)
@@ -115,7 +115,7 @@ class DatabaseManager:
         """测试数据库连接（统一异常处理）"""
         try:
             with db.session() as session:
-                session.execute('SELECT 1')
+                session.execute(text('SELECT 1'))
             logger.info("数据库连接正常")
             return True, "数据库连接正常"
         except SQLAlchemyError as e:

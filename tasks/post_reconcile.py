@@ -16,6 +16,7 @@ def reconcile_post_cache(sample_size:int=500):
     定时对账：每小时抽样比对 Redis 缓存 vs DB
     不一致则删缓存，下次请求自动回填
     """
+    total_diff = 0  # 用于监控（提前定义，异常路径也可用）
     try:
         pattern='post:detail:*'
         keys=[]
@@ -27,7 +28,6 @@ def reconcile_post_cache(sample_size:int=500):
         if len(keys)>sample_size:
             keys=random.sample(keys,sample_size)
         fixed=0
-        total_diff = 0  # 用于监控
         checked=0
 
         for key in keys:
@@ -78,9 +78,9 @@ def reconcile_post_cache(sample_size:int=500):
                 RECONCILE_DIFF_COUNT.labels(resource_type='post').set(total_diff)
                 logger.error(f'[Reconcile] 对账单条异常 key={key}: {e}')
                 continue
-            RECONCILE_DIFF_COUNT.labels(resource_type='post').set(total_diff)
-            logger.info(f'[Reconcile] 对账完成: 检查{checked}条, 修正{fixed}条')
-            return {'status': 'success', 'checked': checked, 'fixed': fixed}
+        RECONCILE_DIFF_COUNT.labels(resource_type='post').set(total_diff)
+        logger.info(f'[Reconcile] 对账完成: 检查{checked}条, 修正{fixed}条')
+        return {'status': 'success', 'checked': checked, 'fixed': fixed}
     except Exception as e:
         RECONCILE_DIFF_COUNT.labels(resource_type='post').set(total_diff)
         logger.error(f'[Reconcile] 对账任务异常: {e}')

@@ -33,7 +33,7 @@ class AccountLockService:
     @classmethod
     def is_locked(cls, user_id: int) -> bool:
         try:
-            return redis_cache.exists(cls._lock_key(user_id)) > 0
+            return redis_cache.exists(cls._lock_key(user_id), for_write=True) > 0
         except Exception as e:
             logger.error(f'检查锁定状态失败 user_id={user_id}: {e}')
             return False

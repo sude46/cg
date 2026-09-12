@@ -92,7 +92,7 @@ def is_public_route(path:str,method:str=None):
         return True
 
     #前缀匹配
-    public_prefixes=['/auth','api/auth','health']
+    public_prefixes=['/auth','/api/auth','/health']
     for prefix in public_prefixes:
         if path==prefix or path.startswith(prefix+'/'):
             return True
@@ -170,7 +170,7 @@ def init_auth_middleware(app):
             if not user:
                 raise AuthenticationError('用户不存在或已被删除')
             #用户状态校验
-            if getattr(user,'status',None)=='disabled':
+            if not getattr(user,'is_active',True):
                 raise AuthenticationError('用户已被禁用')
             #注入全局对象
             g.current_user=user
@@ -180,7 +180,7 @@ def init_auth_middleware(app):
             raise AuthenticationError('Token 已被撤销，请重新登录')
         except JWTExtendedException as e:
             logger.warning(f"JWT 验证失败: {type(e).__name__} - {e}")
-            raise AuthenticationError('认证失败', code=401)
+            raise AuthenticationError('认证失败')
         except (AuthenticationError, DatabaseError):
             raise  # 自定义异常透传
         except Exception as e:

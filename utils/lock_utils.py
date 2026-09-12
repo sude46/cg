@@ -75,6 +75,8 @@ def pessimistic_get(model_class,*filters,lock_mode='update',**filter_by):
         query=query.filter(f)
     if filter_by:
         query=query.filter_by(**filter_by)
+    if lock_mode=='update':
+        query=query.with_for_update()
     elif lock_mode=='share':
         query=query.with_for_update(read=True)
     else:

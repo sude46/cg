@@ -44,7 +44,7 @@ def reconcile_like_counts(target_type_filter='post', batch_size=500):
 
         for t_type,t_id in targets:
             #Redis计数（有先读Counter,降级SCARD）
-            redis_count=LikeCache.get_like_count(t_id,t_type) or 0
+            redis_count=LikeCache.get_like_count(t_id,t_type)
             if redis_count is None:
                 continue
             # DB 计数（读操作走从库）

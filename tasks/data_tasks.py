@@ -40,7 +40,7 @@ def calculate_hot_posts(periode:str='daily',limit:int=1000):
                 'since':since,
                 'limit':batch_size,
                 'offset':offset
-            })
+            }).fetchall()
 
             if not rows:
                 break

@@ -105,7 +105,7 @@ class UserCache:
     def is_recently_modified(cls,user_id:int):
         '''检查用户是否在强一致窗口内'''
         try:
-            return redis_cache.exists(cls._recent_key(user_id))>0
+            return redis_cache.exists(cls._recent_key(user_id), for_write=True)>0
         except Exception as e:
             logger.error(f'检查用户{user_id}最近修改失败:{e}')
             return False
