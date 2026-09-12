@@ -1,12 +1,11 @@
-from flask import current_app, request
+from flask import current_app
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from flask_restx import Api, Namespace, Resource, fields, reqparse
+from flask_restx.inputs import boolean
 
-from utils.decorators import validate_json
 from utils.response import success_response
 
 from . import notifications_bp
-from .schemas import notification_create_schema
 from .services import NotificationService
 
 authorizations = {
@@ -56,7 +55,7 @@ notifications_list_response_model=api.model('NotificationsListResponse',{
 notifications_parser=reqparse.RequestParser()
 notifications_parser.add_argument('page',type=int,default=1,help='页码(默认1)',location='args')
 notifications_parser.add_argument('per_page',type=int,default=20,help='每页数量(默认20)',location='args')
-notifications_parser.add_argument('unread_only',type=bool,default=False,help='是否只显示未读通知',location='args')
+notifications_parser.add_argument('unread_only',type=boolean,default=False,help='是否只显示未读通知',location='args')
 
 @api.route('')
 class NotificationListResource(Resource):
@@ -79,20 +78,6 @@ class NotificationListResource(Resource):
                     )
         current_app.logger.info(f'用户{current_user_id}获取通知列表成功')
         return success_response(data=notifications, message='获取通知列表成功'), 200
-    @api.doc('create_notification',security='Bearer')
-    @api.expect(notification_create_schema,validate=True)
-    @api.response(201,'通知创建成功',notification_response_model)
-    @jwt_required()
-    @validate_json(notification_create_schema)
-    def post(self):
-        current_user_id=get_jwt_identity()
-        data=request.get_json()
-        current_app.logger.info(f'用户{current_user_id}尝试创建通知:{data}')
-
-        notification=NotificationService.create_notification(data)
-        notification_id = notification.get('id') if isinstance(notification, dict) else getattr(notification, 'id', None)
-        current_app.logger.info(f'用户{current_user_id}成功创建通知,ID:{notification_id}')
-        return success_response(data=notification, message='通知创建成功'), 201
 
 
 @api.route('/<int:notification_id>')

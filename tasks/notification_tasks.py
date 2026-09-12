@@ -13,8 +13,7 @@ def delayed_invalidate_unread(self, user_id: int):
     由 NotificationCache.double_invalidate_unread 调度（countdown=2）
     """
     try:
-        NotificationCache.clear_unread(user_id)
-        NotificationCache.invalidate_empty(user_id)
+        NotificationCache.invalidate_unread(user_id)
         logger.info(f'[celery]延迟双删通知缓存成功 user_id={user_id}')
         return {'status': 'success', 'user_id': user_id}
     except Exception as exc:

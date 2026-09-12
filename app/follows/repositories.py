@@ -26,7 +26,7 @@ class FollowRepository:
         lock=False:走从库
         """
         if lock:
-            query=db.session.query(Follow)
+            query=db.session.query(Follow).with_for_update()
         else:
             query=FollowRepository._read_session().query(Follow)
         return query.filter(

@@ -47,7 +47,12 @@ class CommentService:
             #预热评论详情缓存（主库写Redistribution，失败不影响主流程）
             comment_dict=comment_schema.dump(comment)
             CommentCache.set(comment.id,comment_dict)
-            CommentCache.increment_count(post_id)
+            if CommentCache.get_count(post_id) is None:
+                # Redis 未预热：用主库真实计数（increment_comment_count 已提交）
+                fresh_post=post_repository.get_by_id(post_id,force_master=True)
+                CommentCache.set_count(post_id, fresh_post.comment_count if fresh_post else 0)
+            else:
+                CommentCache.increment_count(post_id)
 
             # 触发通知事件（排除作者自评论）
             if post.user_id != user_id:
@@ -206,7 +211,12 @@ class CommentService:
                 CommentCache.double_invalidate(comment_id)
             #更新Redis评论计数器
             if post_id:
-                CommentCache.decrement_count(post_id)
+                if CommentCache.get_count(post_id) is None:
+                    # Redis 未预热：用主库真实计数（decrement_comment_count 已提交）
+                    fresh_post=post_repository.get_by_id(post_id,force_master=True)
+                    CommentCache.set_count(post_id, fresh_post.comment_count if fresh_post else 0)
+                else:
+                    CommentCache.decrement_count(post_id)
                 current_count=CommentCache.get_count(post_id) or 0
                 event_bus.publish('post.comment_count_changed',{
                     'post_id':post_id,

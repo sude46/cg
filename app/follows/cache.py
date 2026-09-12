@@ -47,10 +47,14 @@ class FollowCache:
     #=============读操作=============
     @classmethod
     def  is_following(cls,follower_id:int,followed_id:int):
-        '''是否已关注(None表示Redis故障，需降级查DB)'''
+        '''是否已关注(None表示缓存miss或Redis故障，需降级查DB)'''
         try:
+            key=cls._following_key(follower_id)
+            # key 不存在无法判定为“未关注”，返回 None 让上层走 DB 兜底
+            if redis_cache.exists(key, for_write=True) == 0:
+                return None
             result=redis_cache.sismember(
-                cls._following_key(follower_id),
+                key,
                 str(followed_id),
                 for_write=False
             )
@@ -103,7 +107,7 @@ class FollowCache:
             pipe=redis_cache.pipeline(transaction=False,for_write=True)
             pipe.sadd(cls._following_key(follower_id),str(followed_id))
             pipe.sadd(cls._followers_key(followed_id),str(follower_id))
-            pipe.expire(cls._following_key(followed_id),cls.TTL_DAYS*86400)
+            pipe.expire(cls._following_key(follower_id),cls.TTL_DAYS*86400)
             pipe.expire(cls._followers_key(followed_id), cls.TTL_DAYS * 86400)
             pipe.execute()
             return True

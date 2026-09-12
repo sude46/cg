@@ -23,11 +23,13 @@ class CommentCache:
 
 
 
-    #LUA：原子递减，保底不小于0
+    #LUA：原子递减，保底不小于0（保留原 key 的 TTL，不制造永久 0）
     DECR_LUA="""
     local current=redis.call('GET', KEYS[1])
-    if current==false or tonumber(current)<=0 then
-        redis.call('SET',KEYS[1],0)
+    if current==false then
+        return 0
+    end
+    if tonumber(current)<=0 then
         return 0
     end
     return redis.call('DECRBY',KEYS[1],1)
@@ -97,7 +99,7 @@ class CommentCache:
             return int(val) if val is not None else None
         except Exception as e:
             logger.error(f'获取帖子{post_id}评论数失败:{e}')
-            return False
+            return None
 
 
     @classmethod
@@ -115,10 +117,14 @@ class CommentCache:
     @classmethod
     def increment_count(cls,post_id):
         try:
-            return redis_cache.increment(cls._count_key(post_id),1)
+            key=cls._count_key(post_id)
+            # 未预热时不自增（否则真实计数会被覆盖成 1），交上层用 DB 预热
+            if redis_cache.exists(key, for_write=True) == 0:
+                return None
+            return redis_cache.increment(key,1)
         except Exception as e:
             logger.error(f'递增帖子{post_id}评论失败:{e}')
-            return 0
+            return None
 
     @classmethod
     def decrement_count(cls,post_id):

@@ -118,12 +118,13 @@ class LikeCache:
             count = redis_cache.get(count_key, for_write=False)
             if count is not None:
                 return int(count)
-            # Counter 不存在，降级读 SCARD
-            count = redis_cache.scard(
-                cls._target_likers_key(target_type, target_id),
-                for_write=False
-            )
-            return int(count) if count is not None else 0
+            # Counter 不存在：likers Set 也不存在说明缓存未预热，返回 None 让上层用 DB 值
+            likers_key = cls._target_likers_key(target_type, target_id)
+            if redis_cache.exists(likers_key, for_write=True) == 0:
+                return None
+            # Set 存在：降级读 SCARD
+            count = redis_cache.scard(likers_key, for_write=False)
+            return int(count) if count is not None else None
         except Exception as e:
             logger.error(f'[Redis] 获取点赞数量失败 {target_type}:{target_id}: {e}')
             return None
@@ -316,6 +317,31 @@ class LikeCache:
             return True
         except Exception as e:
             logger.error(f'重置计数失败 {target_type}:{target_id}: {e}')
+            return False
+
+    @classmethod
+    def set_like_count(cls, target_id: int, count: int, target_type: str = 'post') -> bool:
+        """以 DB 真值设置计数（回填校准用，避免 add_like 重复自增）"""
+        try:
+            count_key = cls._like_count_key(target_type, target_id)
+            redis_cache.set(count_key, count, expire=cls.DEFAULT_EXPIRE, for_write=True)
+            return True
+        except Exception as e:
+            logger.error(f'设置点赞计数失败 {target_type}:{target_id}: {e}')
+            return False
+
+    @classmethod
+    def ensure_liker(cls, user_id: int, target_id: int, target_type: str = 'post') -> bool:
+        """确保目标 likers Set 含该用户（回填关系用，不动计数）"""
+        try:
+            key = cls._target_likers_key(target_type, target_id)
+            pipe = redis_cache.pipeline(transaction=False, for_write=True)
+            pipe.sadd(key, str(user_id))
+            pipe.expire(key, cls.DEFAULT_EXPIRE)
+            pipe.execute()
+            return True
+        except Exception as e:
+            logger.error(f'回填 likers 关系失败 {target_type}:{target_id}: {e}')
             return False
 
 

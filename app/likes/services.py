@@ -53,8 +53,14 @@ class LikeService:
                 else:
                     existing_like=like_repository.get_comment_like(user_id,comment_id)
                 if existing_like:
-                    #DB有单Redis丢了，回填Redis
-                    LikeCache.add_like(user_id,target_id,target_type)
+                    #DB有但Redis丢了：只回填关系，计数以DB真值为准（不能 add_like 再+1）
+                    LikeCache.preload_user_likes(user_id,[target_id],target_type)
+                    LikeCache.ensure_liker(user_id,target_id,target_type)
+                    if target_type=='post':
+                        db_count=like_repository.count_likes_for_post(target_id)
+                    else:
+                        db_count=like_repository.count_likes_for_comment(target_id)
+                    LikeCache.set_like_count(target_id,db_count,target_type)
                     LIKE_OPERATIONS.labels(action='create',result='duplicate').inc()
                     raise ConflictError('您已点赞过了')
 
@@ -79,7 +85,7 @@ class LikeService:
 
             #热评实时更新
             if target_type=='comment':
-                from comments.cache import CommentCache
+                from app.comments.cache import CommentCache
                 comment=comment_repository.get_by_id(target_id,force_master=False)
                 if comment:
                     new_count=LikeCache.get_like_count(target_id,'comment') or 0
@@ -142,8 +148,14 @@ class LikeService:
                 if not like:
                     LIKE_OPERATIONS.labels(action='delete',result='not_found').inc()
                     raise ResourceNotFoundError('点赞记录不存在')
-                #DB有但Redis丢了，回填Redis
-                LikeCache.add_like(user_id,target_id,target_type)
+                #DB有但Redis丢了：只回填关系并用DB真值校准计数，随后 remove_like 正常 -1
+                LikeCache.preload_user_likes(user_id,[target_id],target_type)
+                LikeCache.ensure_liker(user_id,target_id,target_type)
+                if target_type=='post':
+                    db_count=like_repository.count_likes_for_post(target_id)
+                else:
+                    db_count=like_repository.count_likes_for_comment(target_id)
+                LikeCache.set_like_count(target_id,db_count,target_type)
             #cache_liked is True 或者None但已回填，都继续执行删除
             #先删redis(秒返回)
             if not LikeCache.remove_like(user_id,target_id,target_type):

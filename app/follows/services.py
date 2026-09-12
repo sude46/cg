@@ -31,7 +31,7 @@ class FollowService:
         try:
             follower=user_repository.get_by_id(follower_id)
             followed=user_repository.get_by_id(followed_id)
-            if not follower or not getattr(follower,'is_actice',True):
+            if not follower or not getattr(follower,'is_active',True):
                 raise ResourceNotFoundError('关注着用户不存在或已被禁用')
             if not followed or not getattr(followed,'is_active',True):
                 raise ResourceNotFoundError('被关注者用户不存在或已被禁用')
@@ -43,7 +43,7 @@ class FollowService:
             follow = follow_repository.create_follow(follower_id, followed_id)
             db.session.flush()
             user_repository.increment_follower_count(followed_id)
-            user_repository.increment_following_count(followed_id)
+            user_repository.increment_following_count(follower_id)
             db.session.commit()
 
             # 5. 同步更新 Redis（失败不阻塞，清缓存兜底）
@@ -156,9 +156,9 @@ class FollowService:
             page=page,
             per_page=per_page
         )
-        from app.users.schemas import UserListSchema
+        from app.users.schemas import UserSchema
         # Service 只负责序列化
-        users = UserListSchema().dump(result.get('items', []), many=True)
+        users = UserSchema(many=True).dump(result.get('items', []))
         FOLLOW_OPERATIONS.labels(action='mutual', result='success').inc()
         return {'mutual_users': users, 'pagination': result.get('pagination', {})}
 

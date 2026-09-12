@@ -57,7 +57,7 @@ class RedisCache:
             logger.error(f'Redis get error:{e}')
             return None
 
-    def set(self,key:str,value:Any,expire:int=300,for_write:bool=False):
+    def set(self,key:str,value:Any,expire:int=300,for_write:bool=True):
         '''
         设置缓存（自动JSON序列化）
         - value=None时缓存空值标记（防穿透）
@@ -103,11 +103,17 @@ class RedisCache:
 
         try:
             #尝试获取锁
-            acquired=self.setnx(lock_key,lock_value,expire=lock_timeout,for_write=for_write)
-            if not acquired:
-                #为获得锁，等待后递归重试
-                time.sleep(0.1)
-                return self.cache_through(key,loader,expire,for_write,lock_timeout)
+            acquired=self.setnx(lock_key,lock_value,expire=lock_timeout)
+        except Exception as e:
+            logger.error(f'Cache through lock error for key {key}:{e}')
+            return loader()
+
+        #未获得锁：等待后递归重试（不得释放他人的锁）
+        if not acquired:
+            time.sleep(0.1)
+            return self.cache_through(key,loader,expire,for_write,lock_timeout)
+
+        try:
             #获得锁后二次检查（防止等待期间已回填)
             cached=self.get(key,for_write=for_write)
             if cached is not None:
@@ -115,15 +121,15 @@ class RedisCache:
 
             #回源加载
             value=loader()
-            self.set(key,value,expire=expire,for_write=for_write)
+            self.set(key,value,expire=expire)
             return value
         except Exception as e:
             logger.error(f'Cache through error for key {key}:{e}')
             #降级：直接回源。不缓存
             return loader()
         finally:
-            #释放锁
-            self.release_lock(lock_key,lock_value,for_write=for_write)
+            #仅持锁路径释放锁
+            self.release_lock(lock_key,lock_value)
 
 
     def delete(self,key:str):
@@ -169,6 +175,12 @@ class RedisCache:
         if expire:
             client.expire(key,expire)
         return True
+    def zincrby(self,key:str,member:str,amount:int=1):
+        '''Sorted set成员分数自增（热搜统计用）'''
+        client = self._get_client(for_write=True)
+        if not client:
+            return 0
+        return client.zincrby(key,amount,member)
     def zrevrange(self,key:str,start:int,end:int,withscores=False):
         '''Sorted set倒序获取(feed用)'''
         client = self._get_client(for_write=False)
@@ -242,8 +254,8 @@ class RedisCache:
         return client.lpush(key, *values)
 
     def brpop(self, key: str, timeout: int = 5):
-        '''List阻塞右侧弹出'''
-        client = self._get_client(for_write=False)
+        '''List阻塞右侧弹出（BRPOP 会弹出元素，属写命令，必须走主库）'''
+        client = self._get_client(for_write=True)
         if not client:
             return None
         return client.brpop(key, timeout=timeout)
@@ -255,9 +267,9 @@ class RedisCache:
             return False
         return client.expire(key, seconds)
 
-    def exists(self, *keys: str) -> int:
-        """检查 key 是否存在"""
-        client = self._get_client(for_write=False)
+    def exists(self, *keys: str, for_write: bool = False) -> int:
+        """检查 key 是否存在（强一致标记/锁读取请传 for_write=True）"""
+        client = self._get_client(for_write=for_write)
         if not client:
             return 0
         return client.exists(*keys)

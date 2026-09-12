@@ -116,6 +116,18 @@ class NotificationCache:
             return False
 
     @classmethod
+    def invalidate_unread(cls, user_id: int) -> bool:
+        """延迟双删第二步：删除未读计数和空缓存，交由下次读从 DB 重算。
+        不能用 SET 0（会盖掉双删窗口内新到的通知，导致未读数长时间偏小）。"""
+        try:
+            redis_cache.delete(cls._unread_key(user_id))
+            redis_cache.delete(cls._empty_key(user_id))
+            return True
+        except Exception as e:
+            logger.error(f'失效用户{user_id}未读数缓存失败: {e}')
+            return False
+
+    @classmethod
     def set_empty(cls, user_id: int) -> bool:
         """用户确实无通知时，标记空缓存防穿透"""
         try:
@@ -162,7 +174,7 @@ class NotificationCache:
     def is_recently_modified(cls, user_id: int) -> bool:
         """检查用户通知是否在强一致窗口内"""
         try:
-            return redis_cache.exists(cls._recent_key(user_id)) > 0
+            return redis_cache.exists(cls._recent_key(user_id), for_write=True) > 0
         except Exception as e:
             logger.error(f'检查用户{user_id}通知最近修改失败: {e}')
             return False
@@ -196,7 +208,6 @@ class NotificationCache:
         """线程降级：延迟 2 秒后再次删除"""
         def _delayed():
             time.sleep(2)
-            cls.clear_unread(user_id)
-            cls.invalidate_empty(user_id)
+            cls.invalidate_unread(user_id)
         threading.Thread(target=_delayed, daemon=True).start()
 
