@@ -22,6 +22,11 @@ venv/bin/pytest tests/smoke/test_smoke.py -v
 # 单元测试（部分会因宿主连不到 Docker 内 Redis 而失败，属环境问题）
 venv/bin/pytest tests/unit/test_notifications.py -v
 
+# 单测（不依赖外部服务，CI 同款命令）
+ELASTICSEARCH_ENABLED=false REDIS_SENTINEL_HOST= REDIS_HOST=127.0.0.1 \
+  REDIS_URL=redis://127.0.0.1:6379/0 CELERY_BROKER_URL=memory:// \
+  CELERY_RESULT_BACKEND=cache venv/bin/pytest tests/unit -q
+
 # 构建镜像（elasticsearch<9 约束在 pyproject.toml）
 docker compose build app
 ```
@@ -34,6 +39,7 @@ docker compose build app
   venv/bin/python scripts/check_requirements_sync.py
   ```
 - 宿主 venv 与容器依赖不一致时，先对齐再排错（例如宿主曾装成 `elasticsearch 9.3.0`，连不上 8.11 服务端）。
+- `.env` 需配置 `MFA_ENCRYPTION_KEY`（Fernet；用 `utils.security_utils.generate_mfa_encryption_key()` 生成），否则 MFA 加解密不可用。
 
 ## 容器与服务
 
