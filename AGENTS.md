@@ -26,6 +26,15 @@ venv/bin/pytest tests/unit/test_notifications.py -v
 docker compose build app
 ```
 
+## 依赖管理（重要）
+
+- **依赖以 `pyproject.toml` 为准**，`requirements.txt` 由它生成并对齐当前可用 venv 版本。
+- 改依赖只改 `pyproject.toml`，然后同步 `requirements.txt`，再跑校验（CI 用同一命令）：
+  ```bash
+  venv/bin/python scripts/check_requirements_sync.py
+  ```
+- 宿主 venv 与容器依赖不一致时，先对齐再排错（例如宿主曾装成 `elasticsearch 9.3.0`，连不上 8.11 服务端）。
+
 ## 容器与服务
 
 - app：`weibo-app`，MySQL 主库 `weibo-mysql-master:3306/weibo` + 从库 replica-1
