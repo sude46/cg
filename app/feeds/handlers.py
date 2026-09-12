@@ -21,7 +21,7 @@ def on_post_created(payload:dict):
 def on_post_deleted(payload:dict):
     '''删贴后清理Feed时间线(作者+粉丝)'''
     try:
-        FeedServices.delete_post(
+        FeedService.delete_post(
                 post_id=payload['post_id'],
                 author_id=payload['user_id'],
                 )
