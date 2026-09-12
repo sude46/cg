@@ -26,10 +26,12 @@ mysql -uroot -p"$MYSQL_ROOT_PASSWORD" < /tmp/seed.sql
 rm -f /tmp/seed.sql
 
 # 主库的 CREATE USER 事件位于种子位点之前，不会随复制重放，需在从库手动建号
-echo "[Replica Init] 创建应用账号..."
+echo "[Replica Init] 创建应用账号与巡检账号..."
 mysql -uroot -p"$MYSQL_ROOT_PASSWORD" <<-EOSQL
     CREATE USER IF NOT EXISTS '$APP_USER'@'%' IDENTIFIED BY '$APP_PASS';
     GRANT ALL PRIVILEGES ON $APP_DB.* TO '$APP_USER'@'%';
+    CREATE USER IF NOT EXISTS 'monitor'@'%' IDENTIFIED BY 'monitor123';
+    GRANT REPLICATION CLIENT, SLAVE MONITOR ON *.* TO 'monitor'@'%';
     FLUSH PRIVILEGES;
 EOSQL
 

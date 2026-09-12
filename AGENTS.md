@@ -38,10 +38,20 @@ docker compose build app
 ## 容器与服务
 
 - app：`weibo-app`，MySQL 主库 `weibo-mysql-master:3306/weibo` + 从库 replica-1
+- celery worker：`weibo-celery-worker`（`-Q default,like`；like 队列来自 `task_routes`）
 - Redis：master/replica/sentinel-1/2/3（写操作必须 `get_conn(for_write=True)`）
-- ES：`weibo-es`(标准版,9200) + `weibo-es-cn`(**IK 中文分词版,9201**) ← app 连的是这个
+- ES：`weibo-es-cn`(**IK 中文分词版,9201**) ← app 连的是这个（标准版 `weibo-es` 已移除）
 - IK 插件已装进 `elasticsearch/plugins/ik/`（匹配 ES 8.11.0）
 - 测试用户：smoketest1 / `Smoke@2026x`（id 1），smoketest2 / `Smoke@2026y`（id 2）
+
+## 从库复制运维（重要）
+
+- 从库初始化脚本 `docker/mysql/init_replica.sh`：**先全量 seed（带一致 GTID 位点）再启动复制**。
+  不要只手动 `CHANGE MASTER`——主库 binlog 会被 `binlog_expire_logs_seconds` 清理，空 GTID 补不回存量。
+- 坑：**数据卷存在时 mysql entrypoint 会跳过初始化脚本**。遇到"复制没配"先查 `/data/mysql-replica-1` 是否存在，别先查网络。
+- 巡检：`venv/bin/python scripts/check_replica.py`（默认 `127.0.0.1:3307`，账号 monitor/monitor123，
+  依赖 MariaDB 的 `SLAVE MONITOR` 权限），检查 IO/SQL Running + 延迟，异常退出码非 0，可挂 cron。
+- 读路由：Repository 读经 `core/db_router.py`，从库探测失败会回落主库并打点（`weibo_db_replica_failover_total`）。
 
 ## 路由约定（重要）
 
