@@ -1,9 +1,6 @@
 # utils/redis_util.py
 import os
-import redis
-from flask import current_app
 
-import os
 import redis
 from redis.sentinel import Sentinel
 
@@ -106,18 +103,5 @@ class RedisClient:
         if for_write:
             return cls._master_conn
         return cls._slave_conn or cls._master_conn
-
-    def add_blacklist(self, token, expire_seconds):
-        conn = self.__class__.get_conn(for_write=True)
-        if not conn:
-            raise RuntimeError("Redis 未配置")
-        conn.setex(name=f"jwt_blacklist:{token}", time=expire_seconds, value="invalid")
-
-    def is_blacklisted(self, token):
-        conn = self.__class__.get_conn(for_write=False)
-        if not conn:
-            return False
-        return conn.exists(f"jwt_blacklist:{token}") == 1
-
 
 redis_client = RedisClient()
