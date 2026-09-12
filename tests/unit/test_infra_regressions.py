@@ -98,3 +98,23 @@ def test_worker_import_order_no_circular():
     )
     assert result.returncode == 0, result.stderr
     assert "OK" in result.stdout
+
+
+def test_db_router_falls_back_to_master(monkeypatch):
+    """从库探测失败时，读会话必须回落主库并标记从库失败。"""
+    import core.db_router as mod
+    from core import db
+
+    class FakeApp:
+        config = {'SQLALCHEMY_BINDS': {'replica': 'mysql+pymysql://u:p@h/db'}}
+
+    mod.db_router.init_app(FakeApp())
+
+    def boom(*args, **kwargs):
+        raise RuntimeError('replica down')
+
+    monkeypatch.setattr(db, 'get_engine', boom)
+
+    session = mod.db_router.get_read_session()
+    assert session is db.session
+    assert mod.db_router._state['replica']['fail_count'] >= 1

@@ -184,7 +184,7 @@ class TestPostService:
             for i in range(3):
                 post = PostFactory(author=user)
                 from app.posts.cache import PostCache
-                PostCache.update_hot_post(post.id, score=100 - i)
+                PostCache.update_hot_posts([{'post_id': post.id, 'score': 100 - i}], period="daily")
 
             result = PostService.get_hot_posts(page=1, per_page=10, period="daily")
 
