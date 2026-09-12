@@ -3,7 +3,6 @@ from marshmallow import Schema, ValidationError, fields, validate, validates_sch
 from utils.validators import validate_content_length, validate_image_url
 
 
-
 class CreatePostSchema(Schema):
 	"""创建帖子请求模式"""
 	content = fields.Str(

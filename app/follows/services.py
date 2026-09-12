@@ -25,7 +25,7 @@ class FollowService:
     def follow_user(follower_id: int, followed_id: int):
         '''关注用户（分布式锁放并发重复关注+原子计数更新）'''
         if follower_id==followed_id:
-            raise ValidationError
+            raise ValidationError('不能关注自己')
         if not FollowCache.acquire_lock(follower_id,followed_id):
             raise ConflictError('操作过于频繁，请稍后重试')
         try:
@@ -38,7 +38,7 @@ class FollowService:
             #主库+行锁校验是否已关注
             existing=follow_repository.get_relation(follower_id,followed_id,lock=1)
             if existing:
-                raise ConflictError('已关注改用户')
+                raise ConflictError('已关注该用户')
              # 3. 创建关注关系（主库写）
             follow = follow_repository.create_follow(follower_id, followed_id)
             db.session.flush()
@@ -65,7 +65,7 @@ class FollowService:
         except Exception as e:
             db.session.rollback()
             logger.error('关注用户失败: %s', e)
-            if isinstance(e, (ResourceNotFoundError, ValidationError)):
+            if isinstance(e, (ResourceNotFoundError, ValidationError, ConflictError)):
                 raise
             FOLLOW_OPERATIONS.labels(action='follow', result='error').inc()
             raise DatabaseError('关注操作失败,请稍后重试')

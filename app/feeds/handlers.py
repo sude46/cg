@@ -1,5 +1,6 @@
 import logging
-from datetime import datetime,UTC
+from datetime import UTC, datetime
+
 from app.common.events import event_bus
 from app.feeds.services import FeedService
 
@@ -33,7 +34,7 @@ def on_post_deleted(payload:dict):
 def register_feed_handlers():
     global _registered
     if _registered:
-        return 
+        return
     event_bus.subscribe('post.created',on_post_created)
     event_bus.subscribe('post.deleted',on_post_deleted)
     logger.info('Feed模块时间监听器已注册')

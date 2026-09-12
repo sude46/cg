@@ -1,7 +1,7 @@
 import logging
 from datetime import UTC, datetime
 
-from flask import g, request,current_app
+from flask import current_app, g, request
 from flask_jwt_extended import get_jwt, get_jwt_identity, jwt_required
 from flask_restx import Api, Namespace, Resource, fields
 

@@ -22,9 +22,12 @@ class MFAService:
             raise RuntimeError("MFA functionality is disabled (pyotp not available)")
 
     def generate_secret(self):
-        """生成明文 TOTP Secret（调用方自行 encrypt 后存入 DB）"""
+        """生成明文 TOTP Secret（调用方自行 encrypt 后存入 DB）
+
+        TOTP 要求至少 160 bits（base32 32 字符），length=16 会被 pyotp 拒绝。
+        """
         self._check_pyotp()
-        return self.pyotp.random_base32(length=16)
+        return self.pyotp.random_base32(length=32)
 
     def encrypt_secret(self, plain_secret: str) -> str:
         """加密后再存储到 DB"""
@@ -52,6 +55,6 @@ class MFAService:
         self._check_pyotp()
         plain_secret = decrypt_mfa_secret(encrypted_secret)
         return self.pyotp.totp.TOTP(plain_secret).provisioning_uri(
-            username=username,
+            name=username,
             issuer_name=issuer
         )

@@ -6,12 +6,13 @@ import logging
 from datetime import datetime
 from typing import Any
 
-from core.es_client import es_client
 from elastic_transport import ConnectionError as ESConnectionError
 from elastic_transport import ConnectionTimeout as ESConnectionTimeout
 from elastic_transport import TransportError as ESTransportError
-from elasticsearch import NotFoundError
 from elasticsearch.exceptions import ApiError as ESApiError
+
+from core.es_client import es_client
+from elasticsearch import NotFoundError
 from services.search.config import SearchConfig
 
 logger=logging.getLogger(__name__)

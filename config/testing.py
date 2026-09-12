@@ -32,6 +32,8 @@ class TestingConfig(BaseConfig):
 
     # 测试环境安全配置
     SECRET_KEY = os.getenv("SECRET_KEY", "test_secret_key_123456")
+    # 测试用固定 Fernet key（仅用于加密/解密 MFA secret 的单元测试）
+    MFA_ENCRYPTION_KEY = "Hn5Kx-D3nfeBKB8XZSC0S-VJoo6FhzLChdzN-jN6xPw="
 
     # 缩短JWT过期时间（从默认的15分钟改为1分钟），提升测试认证流程效率
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=1)

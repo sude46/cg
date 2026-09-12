@@ -3,6 +3,7 @@ from flask import Flask
 
 from app.common.error_handlers import register_error_handlers
 from app.common.events import event_bus
+from app.feeds.handlers import register_feed_handlers
 
 # 如果有其他模型，继续导入
 # 导入通知模块的事件订阅注册函数
@@ -11,13 +12,15 @@ from app.notifications.services import register_notification_event_handlers
 # 导入所有模型，确保 db.create_all() 创建完整表结构
 from config import get_config
 from core.blueprint_registry import register_all_blueprints
-from core.celery_app import celery_app as _celery_app  # noqa: F401  确保 shared_task 绑定到项目 Celery 实例
+from core.celery_app import (
+    celery_app as _celery_app,  # noqa: F401  确保 shared_task 绑定到项目 Celery 实例
+)
 from core.database import db, migrate
 from core.db_router import db_router
 from core.extensions import bcrypt, jwt, mail
 from core.logging_config import init_structured_logger
 from services.search.event_handlers import register_search_event_handlers
-from app.feeds.handlers import register_feed_handlers
+
 
 def create_app(config_name: str = None) -> Flask:
     app = Flask(__name__)

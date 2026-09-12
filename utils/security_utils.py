@@ -1,7 +1,6 @@
 from flask import current_app
 
 
-
 def _get_fernet():
     """延迟获取 Fernet 实例（避免启动时依赖 app context）"""
     try:

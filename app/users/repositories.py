@@ -1,6 +1,6 @@
 import logging
 
-from sqlalchemy import func, update
+from sqlalchemy import case, update
 
 from app.common.database import get_read_session, pagination_utils, utcnow
 from app.users.models import User
@@ -103,10 +103,10 @@ class UserRepository:
     @staticmethod
     @monitor_db("update", "users")
     def decrement_following_count(user_id: int) -> None:
-        """原子更新关注计数 -1（保底不小于 0）"""
+        """原子更新关注计数 -1（保底不小于 0，用 CASE 兼容 SQLite/MySQL）"""
         db.session.execute(
             update(User).where(User.id == user_id).values(
-                following_count=func.greatest(User.following_count - 1, 0)
+                following_count=case((User.following_count > 0, User.following_count - 1), else_=0)
             )
         )
 
@@ -123,10 +123,10 @@ class UserRepository:
     @staticmethod
     @monitor_db("update", "users")
     def decrement_follower_count(user_id: int) -> None:
-        """原子更新粉丝计数 -1（保底不小于 0）"""
+        """原子更新粉丝计数 -1（保底不小于 0，用 CASE 兼容 SQLite/MySQL）"""
         db.session.execute(
             update(User).where(User.id == user_id).values(
-                follower_count=func.greatest(User.follower_count - 1, 0)
+                follower_count=case((User.follower_count > 0, User.follower_count - 1), else_=0)
             )
         )
 

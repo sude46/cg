@@ -206,7 +206,7 @@ class PostSearchService:
 
     @staticmethod
     def _fallback_cache_key(keyword:str,page:int,per_page:int)->str:
-        raw=f'{keyword}|{page}|{per_page}'.encode('utf-8')
+        raw=f'{keyword}|{page}|{per_page}'.encode()
         return 'search:fallback:ids:'+hashlib.md5(raw).hexdigest()
 
     @staticmethod

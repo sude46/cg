@@ -113,7 +113,7 @@ class UserCache:
 
     #===================用户名/邮箱索引（存在性快速校验）==============
     @classmethod
-    def get_by_user_name(cls,username:str):
+    def get_by_username(cls,username:str):
         '''
         通过用户名反查user_id（非密码场景）
         登录密码校验绝不能走这个缓存

@@ -151,6 +151,15 @@ class NotificationCache:
             logger.error(f'清除用户{user_id}通知空缓存失败: {e}')
             return False
 
+    @classmethod
+    def is_empty(cls, user_id: int) -> bool:
+        """是否命中空缓存标记"""
+        try:
+            return redis_cache.exists(cls._empty_key(user_id), for_write=True) > 0
+        except Exception as e:
+            logger.error(f'检查用户{user_id}通知空缓存失败: {e}')
+            return False
+
     # ========== 强一致标记 ==========
     @classmethod
     def mark_recently_modified(cls, user_id: int, ttl: int = None) -> bool:

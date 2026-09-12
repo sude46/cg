@@ -13,6 +13,7 @@ from app.common.exceptions import (
 )
 from app.likes.cache import LikeCache
 from app.likes.repositories import like_repository
+from app.posts.repositories import post_repository
 from app.users.repositories import user_repository
 from core.metrics import CELERY_TASKS, LIKE_OPERATIONS, REDIS_HIT_RATE
 
@@ -30,6 +31,15 @@ class LikeService:
             raise ValidationError('只能传入 post_id 或 comment_id')
         target_type='post' if post_id else 'comment'
         target_id=post_id or comment_id
+
+        # 校验主体与目标存在（避免给不存在的对象点赞）
+        if not user_repository.get_by_id(user_id):
+            raise ResourceNotFoundError('用户不存在')
+        if post_id and not post_repository.get_by_id(post_id):
+            raise ResourceNotFoundError('帖子不存在')
+        if comment_id and not comment_repository.get_by_id(comment_id):
+            raise ResourceNotFoundError('评论不存在')
+
         #分布式锁防并发重复点赞(10秒TTL)
         if not LikeCache.acquire_lock(user_id,target_id,target_type):
             raise ConflictError('操作过于频繁，请稍后重试')

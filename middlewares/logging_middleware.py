@@ -14,6 +14,10 @@ logger = logging.getLogger(__name__)
 
 def init_logging_middleware(app):
     """初始化结构化日志中间件：request_id + 请求/响应日志 + 敏感信息过滤"""
+    # 幂等：避免在 app 已处理请求后重复注册 before/after/teardown（Flask 会拒绝）
+    if app.extensions.get('logging_middleware'):
+        return
+    app.extensions['logging_middleware'] = True
 
     def filter_sensitive_data(data: dict[str, Any],depth:int=0) -> dict[str, Any]:
         """过滤敏感信息（密码、token等）"""

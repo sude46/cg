@@ -4,16 +4,18 @@ Feed流Redis缓存
 拉模式：普通用户打开首页时，实时拉去关注对象的最新贴子
 '''
 import logging
-from datetime import datetime,UTC
+from datetime import UTC, datetime
 
 from core.redis_cache import redis_cache
 
 logger=logging.getLogger(__name__)
 
-def _to_timestamp(dt: datetime) -> float:
-    if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=UTC)
-    return dt.timestamp()
+def _to_timestamp(value) -> float:
+    if isinstance(value, (int, float)):
+        return float(value)
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=UTC)
+    return value.timestamp()
 
 class FeedCache:
     '''

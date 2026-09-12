@@ -18,11 +18,20 @@ def _get_flask_app():
 
 
 class ContextTask(Task):
-    """为每个任务注入 Flask application context（DB/Redis 单例依赖它）"""
+    """为每个任务注入 Flask application context（DB/Redis 单例依赖它）。
+
+    已有 app context（测试 eager 执行、任务内嵌调用）时直接复用，
+    避免在测试里另建 development app 去连真实 MySQL。
+    """
 
     abstract = True
 
     def __call__(self, *args, **kwargs):
+        from flask import has_app_context
+
+        if has_app_context():
+            return super().__call__(*args, **kwargs)
+
         app = _get_flask_app()
         with app.app_context():
             return super().__call__(*args, **kwargs)

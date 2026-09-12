@@ -77,7 +77,7 @@ class PostService:
                 })
             except Exception as e:
                 logger.warning(f'ES 索引失败（不影响主流程）: {e}')
-            
+
             return post
         except Exception:
             POST_OPERATIONS.labels(action='create', result='error').inc()

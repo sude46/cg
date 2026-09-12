@@ -2,6 +2,10 @@
 
 def init_security_headers(app):
     """添加全局安全响应头：HSTS、CSP、X-Frame-Options 等。"""
+    # 幂等：避免在 app 已处理请求后重复注册 after_request（Flask 会拒绝）
+    if app.extensions.get('security_headers'):
+        return
+    app.extensions['security_headers'] = True
 
     @app.after_request
     def add_security_headers(response):

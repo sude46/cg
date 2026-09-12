@@ -1,6 +1,8 @@
 import logging
 import time
 
+from redis.exceptions import NoScriptError
+
 from core.redis_cache import redis_cache
 
 logger = logging.getLogger(__name__)
@@ -52,6 +54,24 @@ class LikeCache:
             cls._incr_sha = redis_cache.script_load(LIKE_INCR_SCRIPT)
         if cls._decr_sha is None:
             cls._decr_sha = redis_cache.script_load(LIKE_DECR_SCRIPT)
+
+    @classmethod
+    def _eval_incr(cls, target_key, count_key, user_id):
+        """执行点赞 INCR 脚本；Redis 重启/切换导致脚本丢失(NOSCRIPT)时自动重载。"""
+        try:
+            return redis_cache.evalsha(cls._incr_sha, 2, target_key, count_key, str(user_id))
+        except NoScriptError:
+            cls._incr_sha = redis_cache.script_load(LIKE_INCR_SCRIPT)
+            return redis_cache.evalsha(cls._incr_sha, 2, target_key, count_key, str(user_id))
+
+    @classmethod
+    def _eval_decr(cls, target_key, count_key, user_id):
+        """执行取消点赞 DECR 脚本；NOSCRIPT 时自动重载。"""
+        try:
+            return redis_cache.evalsha(cls._decr_sha, 2, target_key, count_key, str(user_id))
+        except NoScriptError:
+            cls._decr_sha = redis_cache.script_load(LIKE_DECR_SCRIPT)
+            return redis_cache.evalsha(cls._decr_sha, 2, target_key, count_key, str(user_id))
 
     # ========== Key 生成 ==========
 
@@ -167,13 +187,7 @@ class LikeCache:
             dirty_key = cls._dirty_key(target_type, target_id)
 
             # 1) Lua 原子更新：Set + Counter
-            result = redis_cache.evalsha(
-                cls._incr_sha,
-                2,
-                target_key,
-                count_key,
-                str(user_id)
-            )
+            result = cls._eval_incr(target_key, count_key, user_id)
             if result == 0:
                 return False  # 已点过赞，幂等返回
 
@@ -201,13 +215,7 @@ class LikeCache:
             count_key = cls._like_count_key(target_type, target_id)
             dirty_key = cls._dirty_key(target_type, target_id)
 
-            result = redis_cache.evalsha(
-                cls._decr_sha,
-                2,
-                target_key,
-                count_key,
-                str(user_id)
-            )
+            result = cls._eval_decr(target_key, count_key, user_id)
             if result == 0:
                 return False  # 本来就没点过
 
