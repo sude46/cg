@@ -92,6 +92,16 @@ RECONCILE_DIFF_COUNT = Gauge(
     'Redis vs DB reconcile diff',
     ['resource_type']  # like, follow, feed, comment
 )
+DB_REPLICA_HEALTHY = Gauge(
+    'weibo_db_replica_healthy',
+    '从库健康状态(1健康/0不健康)',
+    ['bind']
+)
+DB_REPLICA_FAILOVER = Counter(
+    'weibo_db_replica_failover_total',
+    '读操作从从库回落主库的次数',
+    ['bind']
+)
 
 #=================装饰器==================================
 def monitor_db(operation: str, table: str):

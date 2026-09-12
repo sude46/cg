@@ -13,6 +13,7 @@ from config import get_config
 from core.blueprint_registry import register_all_blueprints
 from core.celery_app import celery_app as _celery_app  # noqa: F401  确保 shared_task 绑定到项目 Celery 实例
 from core.database import db, migrate
+from core.db_router import db_router
 from core.extensions import bcrypt, jwt, mail
 from core.logging_config import init_structured_logger
 from services.search.event_handlers import register_search_event_handlers
@@ -46,6 +47,7 @@ def create_app(config_name: str = None) -> Flask:
 
     db.init_app(app)
     migrate.init_app(app, db)
+    db_router.init_app(app)
     bcrypt.init_app(app)
     jwt.init_app(app)
     mail.init_app(app)

@@ -165,12 +165,11 @@ pagination_utils = PaginationUtils()
 def get_read_session():
     """
     获取读操作会话。
-    - 生产环境（MySQL + binds）：走 replica 从库
-    - 测试 / 单库环境：降级为默认 session
+    - 有配置从库：走 db_router（优选健康从库，从库不可用回落主库）
+    - 测试 / 单库环境：db.session
     """
     try:
-        from flask_sqlalchemy.session import Session
-        engine = db.get_engine(bind='replica')
-        return Session(db, bind=engine)
+        from core.db_router import db_router
+        return db_router.get_read_session()
     except Exception:
         return db.session
