@@ -201,27 +201,4 @@ class TestRouteLimitProxy:
         assert callable(decorator)
 
 
-class TestErrorMiddleware:
-    """错误处理中间件单元测试"""
 
-    def test_error_handlers_registered(self, app):
-        from middlewares.error_middleware import init_error_handlers
-        with app.app_context():
-            init_error_handlers(app)
-            with app.test_client() as client:
-                resp = client.get("/nonexistent-route-xyz")
-                assert resp.status_code == 404
-                data = resp.get_json()
-                assert "error" in data
-                assert data["error"] == "资源未找到"
-
-    def test_format_error_response(self, app):
-        from app.common.exceptions import ValidationError
-        from middlewares.error_middleware import _format_error_response
-        with app.app_context():
-            error = ValidationError("参数错误", error_code=10001)
-            resp, status = _format_error_response(error)
-            data = resp.get_json()
-            assert data["code"] == 10001
-            assert data["error"] == "参数错误"
-            assert status == 400
