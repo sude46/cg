@@ -54,7 +54,7 @@ class TestCommentService:
 
         with app.app_context():
             c = db_session.get(Comment, comment_id)
-            assert c.is_deleted is True
+            assert c.deleted_at is not None
 
     def test_delete_comment_not_owner(self, app, db_session, mock_redis):
         with app.app_context():
@@ -232,6 +232,7 @@ class TestCommentCache:
         """评论计数 +1"""
         from app.comments.cache import CommentCache
         with app.app_context():
+            CommentCache.set_count(1, 0)
             CommentCache.increment_count(1)
             assert CommentCache.get_count(1) == 1
 
@@ -239,6 +240,7 @@ class TestCommentCache:
         """评论计数 -1"""
         from app.comments.cache import CommentCache
         with app.app_context():
+            CommentCache.set_count(1, 0)
             CommentCache.increment_count(1)
             CommentCache.increment_count(1)
             CommentCache.decrement_count(1)
@@ -251,4 +253,4 @@ class TestCommentCache:
             CommentCache.update_hot_comment(1, 100, 50)
             CommentCache.update_hot_comment(1, 101, 30)
             ids, total = CommentCache.get_hot_comments(1, 1, 10)
-            assert ids[0] == "100"
+            assert ids[0] == 100

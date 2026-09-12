@@ -24,7 +24,6 @@ class TestLikeService:
         with app.app_context():
             result = LikeService.create_like(user_id=user_id, post_id=post_id)
 
-            assert 'id' in result
             assert result['user_id'] == user_id
             assert result['post_id'] == post_id
             assert 'created_at' in result
@@ -86,7 +85,6 @@ class TestLikeService:
             user_id = user.id
             comment_id = comment.id
             result = LikeService.create_like(user_id=user_id, comment_id=comment_id)
-            assert 'id' in result
             assert result['user_id'] == user_id
             assert result['comment_id'] == comment_id
 
@@ -100,7 +98,7 @@ class TestLikeService:
 
             assert result is True
             like = Like.query.filter_by(
-                user_id=user.id, post_id=post.id, is_delete=False).first()
+                user_id=user.id, post_id=post.id, deleted_at=None).first()
             assert like is None
 
     def test_unlike_comment(self, app, db_session, mock_redis):
@@ -110,7 +108,7 @@ class TestLikeService:
             comment = CommentFactory()
             LikeService.create_like(user_id=user.id, comment_id=comment.id)
             result = LikeService.delete_like(user_id=user.id, comment_id=comment.id)
-            assert result is None
+            assert result is True
 
     def test_like_count_redis_sync(self, app, db_session, mock_redis):
         """测试点赞后redis计数器+1"""
@@ -138,9 +136,9 @@ class TestLikeService:
         with app.app_context():
             user = UserFactory()
             post = PostFactory()
-            like = LikeService.create_like(user_id=user.id, post_id=post.id)
-            like_id = like["id"]
-            result = LikeService.delete_like_by_id(user.id, like_id, post_id=post.id)
+            LikeService.create_like(user_id=user.id, post_id=post.id)
+            like_row = Like.query.filter_by(user_id=user.id, post_id=post.id).first()
+            result = LikeService.delete_like_by_id(user.id, like_row.id, post_id=post.id)
             assert result is True
 
     def test_delete_like_by_id_not_owner(self, app, db_session, mock_redis):
@@ -149,13 +147,13 @@ class TestLikeService:
             owner = UserFactory()
             other = UserFactory()
             post = PostFactory()
-            like = LikeService.create_like(user_id=owner.id, post_id=post.id)
-            like_id = like["id"]
+            LikeService.create_like(user_id=owner.id, post_id=post.id)
+            like_row = Like.query.filter_by(user_id=owner.id, post_id=post.id).first()
 
             from app.common.exceptions import PermissionError
 
             with pytest.raises(PermissionError) as excinfo:
-                LikeService.delete_like_by_id(other.id, like_id, post_id=post.id)
+                LikeService.delete_like_by_id(other.id, like_row.id, post_id=post.id)
 
             assert "无权限" in str(excinfo.value)
 

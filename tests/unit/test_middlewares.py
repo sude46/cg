@@ -77,7 +77,7 @@ class TestRateLimitMiddleware:
 
     def test_get_identifier_with_user(self, app):
         from middlewares.rate_limit_middleware import _get_identifier
-        with app.app_context():
+        with app.test_request_context('/'):
             ident = _get_identifier()
             assert ident is not None
 
@@ -87,9 +87,10 @@ class TestCORSMiddleware:
 
     def test_init_cors(self, app):
         from middlewares.cors_middleware import init_cors
-        with app.app_context():
-            init_cors(app)
-            assert app.extensions.get("flask-cors") is not None
+        init_cors(app)
+        with app.test_client() as client:
+            resp = client.get("/", headers={"Origin": "http://localhost:5173"})
+            assert resp.headers.get("Access-Control-Allow-Origin") == "http://localhost:5173"
 
 
 class TestSecurityMiddleware:

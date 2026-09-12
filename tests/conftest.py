@@ -51,7 +51,10 @@ def app():
     assert app.config['SQLALCHEMY_DATABASE_URI'] == 'sqlite:///:memory:', \
         f"期望内存数据库，实际: {app.config['SQLALCHEMY_DATABASE_URI']}"
 
-    # Celery 同步模式（如果配置了）
+    # Celery 同步模式（测试内联执行任务，不依赖 broker/worker）
+    from core.celery_app import celery_app
+    celery_app.conf.task_always_eager = True
+    celery_app.conf.task_eager_propagates = True
     if 'celery' in app.extensions:
         celery = app.extensions['celery']
         celery.conf.task_always_eager = True

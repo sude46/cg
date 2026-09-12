@@ -7,6 +7,8 @@ Redis 内存模拟，支持 String/Set/ZSet/Hash/List/分布式锁/Pipeline。
 import fnmatch
 import time
 
+from redis.exceptions import NoScriptError
+
 
 class FakeRedisClient:
     def __init__(self):
@@ -25,6 +27,13 @@ class FakeRedisClient:
         return time.time() > self.expiry[key]
 
     # --- String ---
+    @staticmethod
+    def _enc(value):
+        """模拟 redis-py：标量值最终以字符串/字节存储。"""
+        if isinstance(value, (str, bytes)):
+            return value
+        return str(value)
+
     def get(self, key):
         self._evict(key)
         return self.store.get(key)
@@ -34,7 +43,7 @@ class FakeRedisClient:
             return False
         if xx and key not in self.store:
             return False
-        self.store[key] = value
+        self.store[key] = self._enc(value)
         if ex:
             self.expiry[key] = time.time() + ex
         elif px:
@@ -42,7 +51,7 @@ class FakeRedisClient:
         return True
 
     def setex(self, key, expire, value):
-        self.store[key] = value
+        self.store[key] = self._enc(value)
         if expire:
             self.expiry[key] = time.time() + expire
         return True
@@ -155,6 +164,26 @@ class FakeRedisClient:
     def zscore(self, key, member):
         return self.store.get(key, {}).get(member)
 
+    def zincrby(self, key, amount, member):
+        items = self.store.setdefault(key, {})
+        items[member] = float(items.get(member, 0)) + amount
+        return items[member]
+
+    def zremrangebyrank(self, key, start, end):
+        """按排名删除（升序，支持负索引 end=-N 表示倒数第 N 个之前）。"""
+        items = self.store.get(key, {})
+        if not items:
+            return 0
+        ordered = [m for m, _ in sorted(items.items(), key=lambda x: x[1])]
+        total = len(ordered)
+        start = 0 if start is None else (total + start if start < 0 else start)
+        end = total - 1 if end is None else (total + end if end < 0 else end)
+        removed = 0
+        for member in ordered[start:end + 1]:
+            items.pop(member, None)
+            removed += 1
+        return removed
+
     # --- Hash ---
     def hget(self, key, field):
         return self.store.get(key, {}).get(field)
@@ -254,14 +283,43 @@ class FakeRedisClient:
         self.store['__scripts__'][sha] = script
         return sha
 
+    def _run_lua(self, script, numkeys, keys_and_args):
+        """按关键字模拟项目用到的几个 Lua（点赞 INCR/DECR、评论 DECR）。"""
+        keys = list(keys_and_args[:numkeys])
+        args = list(keys_and_args[numkeys:])
+        s = script.lower().replace(' ', '').replace('\n', '')
+        # LIKE INCR: sismember -> 不存在则 sadd + incr
+        if 'sadd' in s and 'sismember' in s:
+            member = args[0]
+            if self.sismember(keys[0], member):
+                return 0
+            self.sadd(keys[0], member)
+            self.incrby(keys[1], 1)
+            return 1
+        # LIKE DECR: sismember -> 存在则 srem + decr
+        if 'srem' in s and 'sismember' in s:
+            member = args[0]
+            if not self.sismember(keys[0], member):
+                return 0
+            self.srem(keys[0], member)
+            self.incrby(keys[1], -1)
+            return 1
+        # 计数 DECR（评论 DECR_LUA / 通知未读 DECR）：get -> <=0 返回 0，否则 -1
+        if 'decr' in s:
+            current = self.get(keys[0])
+            if current is None or int(current) <= 0:
+                return 0
+            return self.incrby(keys[0], -1)
+        return 1
+
     def evalsha(self, sha, numkeys, *keys_and_args):
         scripts = self.store.get('__scripts__', {})
         if sha not in scripts:
-            raise RuntimeError(f"Script not found: {sha}")
-        return 1
+            raise NoScriptError(f"Script not found: {sha}")
+        return self._run_lua(scripts[sha], numkeys, keys_and_args)
 
     def eval(self, script, numkeys, *keys_and_args):
-        return 1
+        return self._run_lua(script, numkeys, keys_and_args)
 
     # --- Pipeline ---
     def pipeline(self, transaction=True):

@@ -10,28 +10,20 @@ class TestPostService:
     """帖子模块单元测试"""
 
     def test_create_post_success(self, app, db_session, mock_redis):
-        """测试创建帖子成功"""
+        """测试创建帖子成功（service 返回 Post ORM）"""
         with app.app_context():
             user = UserFactory()
-            user_id = user.id
             content = "测试创建帖子的有效内容"
 
-        result = PostService.create_post(user_id, content)
+            result = PostService.create_post(user.id, content)
 
-        # 验证返回格式
-        assert result["message"] == "帖子创建成功"
-        post_data = result["post"]
-        assert post_data["content"] == content
-        assert "id" in post_data
-        assert post_data["user_id"] == user_id
-        assert "author" in post_data  # 可能包含作者信息
-        assert "like_count" in post_data
+            assert isinstance(result, Post)
+            assert result.content == content
+            assert result.user_id == user.id
+            assert result.id is not None
 
-        # 验证数据库
-        with app.app_context():
-            post = db_session.get(Post, post_data["id"])
+            post = db_session.get(Post, result.id)
             assert post is not None
-            assert post.user_id == user_id
             assert post.content == content
 
     def test_create_post_empty_content(self, app, db_session, mock_redis):
@@ -56,24 +48,19 @@ class TestPostService:
         assert "不能超过1000个字符" in str(excinfo.value)
 
     def test_get_user_posts(self, app, db_session, mock_redis):
-        """测试查询用户帖子列表"""
+        """测试查询用户帖子列表（service 返回 ORM items + liked_post_ids）"""
         with app.app_context():
             user = UserFactory()
-            user_id = user.id
-            # 创建3个帖子（使用 user 关系）
             PostFactory.create_batch(3, author=user)
 
-            result = PostService.get_posts(page=1, per_page=10, user_id=user_id, current_user_id=user_id)
+            result = PostService.get_posts(page=1, per_page=10, user_id=user.id, current_user_id=user.id)
 
-        # 服务层返回结构：{'posts': [...], 'pagination': {...}}
-        assert "posts" in result
-        posts = result["posts"]
-        assert len(posts) == 3
-        for post in posts:
-            assert post["user_id"] == user_id
-            assert "has_liked" in post
-            # 因为当前用户就是作者，且未点赞，has_liked 应为 False
-            assert post["has_liked"] is False
+            assert "items" in result
+            posts = result["items"]
+            assert len(posts) == 3
+            for post in posts:
+                assert post.user_id == user.id
+            assert "liked_post_ids" in result
 
     def test_get_post_detail(self, app, db_session, mock_redis):
         """测试获取帖子详情"""
@@ -88,26 +75,21 @@ class TestPostService:
         post_data = result["post"]
         assert post_data["id"] == post_id
         assert post_data["user_id"] == user.id
-        assert "has_liked" in post_data
-        assert post_data["has_liked"] is False
+        assert result["has_liked"] is False
 
     def test_update_post_success(self, app, db_session, mock_redis):
-        """测试更新帖子成功"""
+        """测试更新帖子成功（service 返回 Post ORM）"""
         with app.app_context():
             user = UserFactory()
             post = PostFactory(author=user)
-            post_id = post.id
-            user_id = user.id
             new_content = "更新后的内容"
 
-            result = PostService.update_post(post_id, user_id, content=new_content)
+            result = PostService.update_post(post.id, user.id, content=new_content)
 
-        assert result["message"] == "帖子更新成功"
-        post_data = result["post"]
-        assert post_data["content"] == new_content
+            assert isinstance(result, Post)
+            assert result.content == new_content
 
-        with app.app_context():
-            updated = db_session.get(Post, post_id)
+            updated = db_session.get(Post, post.id)
             assert updated.content == new_content
 
     def test_update_post_not_owner(self, app, db_session, mock_redis):
@@ -124,19 +106,15 @@ class TestPostService:
         assert "无权修改" in str(excinfo.value)
 
     def test_delete_post_success(self, app, db_session, mock_redis):
-        """测试删除帖子成功"""
+        """测试删除帖子成功（service 返回 None，软删除生效）"""
         with app.app_context():
             user = UserFactory()
             post = PostFactory(author=user)
-            post_id = post.id
-            user_id = user.id
 
-            result = PostService.delete_post(post_id, user_id)
+            result = PostService.delete_post(post.id, user.id)
 
-        assert result["message"] == "帖子删除成功"
-
-        with app.app_context():
-            deleted = db_session.get(Post, post_id)
+            assert result is None
+            deleted = db_session.get(Post, post.id)
             assert deleted.deleted_at is not None
 
     def test_delete_post_not_owner(self, app, db_session, mock_redis):
@@ -163,18 +141,24 @@ class TestPostService:
         with pytest.raises(ValidationError) as excinfo:
             PostService.update_post(post_id, user_id)  # 不提供 content 和 image_url
         assert "至少提供一个更新内容" in str(excinfo.value)
-    def test_search_posts(self, app, db_session, mock_redis, mock_es):
-        """测试搜索帖子（ES 降级到 DB 搜索）"""
+    def test_search_posts(self, app, db_session, mock_redis, monkeypatch):
+        """ES 故障时降级到 DB LIKE 搜索；0 结果不回退"""
+        from services.search.document import SearchBackendError
         with app.app_context():
             user = UserFactory()
             PostFactory(author=user, content="Python 教程")
             PostFactory(author=user, content="Flask 入门")
 
-            # mock_es 返回空，触发降级到 DB LIKE 搜索
+            def _boom(**kwargs):
+                raise SearchBackendError("es down")
+
+            monkeypatch.setattr(
+                "services.search.services.PostSearchRepository.search", _boom
+            )
+
             result = PostService.search_posts("Python", page=1, per_page=10)
 
             assert "items" in result
-            # ES 降级时 fallback=True
             assert result.get("is_es_search") is False
 
     def test_get_hot_posts(self, app, db_session, mock_redis):
@@ -191,16 +175,22 @@ class TestPostService:
             assert "items" in result
             assert len(result["items"]) <= 10
 
-    def test_delete_post_cascade_events(self, app, db_session, mock_redis, mock_event_bus):
+    def test_delete_post_cascade_events(self, app, db_session, mock_redis, monkeypatch):
         """测试删除帖子时事件发布"""
         with app.app_context():
             user = UserFactory()
             post = PostFactory(author=user)
 
+            published = []
+            import app.posts.services as post_services
+            monkeypatch.setattr(
+                post_services.event_bus, "publish",
+                lambda *a, **k: published.append(a)
+            )
+
             PostService.delete_post(post.id, user.id)
 
-            # 验证事件总线发布了 post.deleted 事件
-            mock_event_bus.publish.assert_called()
+            assert published
 
     def test_concurrent_update_stale_data(self, app, db_session, mock_redis, monkeypatch):
         """测试并发更新检测 StaleDataError"""

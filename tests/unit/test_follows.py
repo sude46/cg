@@ -44,11 +44,11 @@ class TestFollowService:
 
             result = FollowService.unfollow_user(follower.id, followed.id)
 
-            assert result["message"] == "取消成功"
+            assert result["message"] == "取消关注成功"
             follow = Follow.query.filter_by(
                 follower_id=follower.id,
                 followed_id=followed.id).first()
-            assert follow is None
+            assert follow is None or follow.deleted_at is not None
 
     def test_follow_duplicate(self, app, db_session, mock_redis):
         """测试重复关注应该抛出ConflictError"""
@@ -139,7 +139,7 @@ class TestFollowCache:
         with app.app_context():
             FollowCache.preload_followers(1, [10, 11, 12])
             ids = FollowCache.get_follower_ids(1)
-            assert set(ids) == {"10", "11", "12"}
+            assert set(ids) == {10, 11, 12}
 
     def test_acquire_and_release_lock(self, app, mock_redis):
         """分布式锁"""

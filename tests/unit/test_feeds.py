@@ -10,8 +10,10 @@ class TestFeedService:
         """缓存命中时返回缓存数据"""
         with app.app_context():
             user = UserFactory()
-            FeedCache.add_post_to_feed(user.id, "1001", 1719820800)
-            FeedCache.add_post_to_feed(user.id, "1002", 1719820801)
+            p1 = PostFactory()
+            p2 = PostFactory()
+            FeedCache.add_post_to_feed(user.id, str(p1.id), 1719820800)
+            FeedCache.add_post_to_feed(user.id, str(p2.id), 1719820801)
 
             result = FeedService.get_timeline(user.id, page=1, per_page=10)
             assert result["source"] == "cache"

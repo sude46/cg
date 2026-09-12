@@ -14,7 +14,7 @@ class TestAuthService:
         """测试用户注册成功"""
         username = f"testuser_{uuid.uuid4().hex[:8]}"
         email = f"test_{uuid.uuid4().hex}@example.com"
-        password = "pass1234"
+        password = "Str0ng!Pass"
 
         result = AuthService.register_user(username, email, password)
 
@@ -33,19 +33,19 @@ class TestAuthService:
         """测试注册重复用户名（抛出异常）"""
         username = f"dupuser_{uuid.uuid4().hex[:8]}"
         email1 = f"{username}_1@example.com"
-        password = "pass1234"
+        password = "Str0ng!Pass"
         AuthService.register_user(username, email1, password)
 
         email2 = f"{username}_2@example.com"
         with pytest.raises(ValidationError) as excinfo:
-            AuthService.register_user(username, email2, "password123")
+            AuthService.register_user(username, email2, "Str0ng!Pass")
         assert "用户名已存在" in str(excinfo.value)
 
     def test_login_success(self, app, db_session, mock_redis):
         """测试用户登录成功"""
         username = f"testuser_{uuid.uuid4().hex[:8]}"
         email = f"login_{uuid.uuid4().hex}@example.com"
-        password = "pass1234"
+        password = "Str0ng!Pass"
         AuthService.register_user(username, email, password)
 
         result = AuthService.authenticate_user(username, password)
@@ -58,7 +58,7 @@ class TestAuthService:
         """测试登录密码错误（抛出异常）"""
         username = f"testuser_{uuid.uuid4().hex[:8]}"
         email = f"wrong_{uuid.uuid4().hex}@example.com"
-        password = "correct123"
+        password = "Str0ng!Pass"
         AuthService.register_user(username, email, password)
 
         with pytest.raises(AuthenticationError) as excinfo:
@@ -70,10 +70,10 @@ class TestAuthService:
         with app.app_context():
             username = f"user1_{uuid.uuid4().hex[:8]}"
             email = f"dup_{uuid.uuid4().hex}@example.com"
-            AuthService.register_user(username, email, "Pass1234!")
+            AuthService.register_user(username, email, "Str0ng!Pass")
             username2 = f"user2_{uuid.uuid4().hex[:8]}"
             with pytest.raises(ValidationError) as excinfo:
-                AuthService.register_user(username2, email, "Pass1234!")
+                AuthService.register_user(username2, email, "Str0ng!Pass")
             assert "邮箱已存在" in str(excinfo.value)
 
     def test_register_weak_password(self, app, db_session, mock_redis):
@@ -90,7 +90,7 @@ class TestAuthService:
         with app.app_context():
             username = f"lock_{uuid.uuid4().hex[:8]}"
             email = f"{username}@example.com"
-            password = "Correct123!"
+            password = "Str0ng!Pass"
             AuthService.register_user(username, email, password)
 
             for _ in range(5):
@@ -106,7 +106,7 @@ class TestAuthService:
         with app.app_context():
             username = f"refresh_{uuid.uuid4().hex[:8]}"
             email = f'{username}@example.com'
-            user = AuthService.register_user(username, email, "Pass1234!")["user"]
+            user = AuthService.register_user(username, email, "Str0ng!Pass")["user"]
             result = AuthService.refresh_token(user["id"])
             assert "access_token" in result
             assert result["token_type"] == "bearer"
@@ -117,7 +117,7 @@ class TestAuthService:
         with app.app_context():
             username = f"current_{uuid.uuid4().hex[:8]}"
             email = f"{username}@example.com"
-            user = AuthService.register_user(username, email, "Pass1234!")["user"]
+            user = AuthService.register_user(username, email, "Str0ng!Pass")["user"]
 
             result = AuthService.get_current_user(user["id"])
 
@@ -172,10 +172,12 @@ class TestUserCache:
             assert UserCache.get_profile(1) is None
 
     def test_preload_profiles(self, app, mock_redis):
-        """批量预热"""
+        """批量读取已缓存的用户资料"""
         from app.users.cache import UserCache
         with app.app_context():
-            profiles = {1: {"id": 1}, 2: {"id": 2}}
-            UserCache.preload_profiles([1, 2], profiles)
-            assert UserCache.get_profile(1) == {"id": 1}
-            assert UserCache.get_profile(2) == {"id": 2}
+            UserCache.set_profile(1, {"id": 1})
+            UserCache.set_profile(2, {"id": 2})
+            profiles = UserCache.preload_profiles([1, 2, 3])
+            assert profiles[1] == {"id": 1}
+            assert profiles[2] == {"id": 2}
+            assert 3 not in profiles

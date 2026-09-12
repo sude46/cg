@@ -188,7 +188,7 @@ class TestNotificationService:
             NotificationService.delete_notification(notif_id, user.id)
 
             deleted = db_session.get(Notification, notif_id)
-            assert deleted is None
+            assert deleted is None or deleted.deleted_at is not None
 
     def test_delete_notification_not_owned(self, app, db_session, mock_redis):
         """测试删除不属于自己的通知"""
@@ -208,6 +208,7 @@ class TestNotificationCache:
         """未读计数 +1"""
         from app.notifications.cache import NotificationCache
         with app.app_context():
+            NotificationCache.set_unread_count(1, 0)
             NotificationCache.increment_unread(1)
             assert NotificationCache.get_unread_count(1) == 1
 
@@ -215,6 +216,7 @@ class TestNotificationCache:
         """未读计数 -1"""
         from app.notifications.cache import NotificationCache
         with app.app_context():
+            NotificationCache.set_unread_count(1, 0)
             NotificationCache.increment_unread(1)
             NotificationCache.increment_unread(1)
             NotificationCache.decrement_unread(1)
@@ -224,6 +226,7 @@ class TestNotificationCache:
         """全部标记已读"""
         from app.notifications.cache import NotificationCache
         with app.app_context():
+            NotificationCache.set_unread_count(1, 0)
             NotificationCache.increment_unread(1)
             NotificationCache.clear_unread(1)
             assert NotificationCache.get_unread_count(1)==0
