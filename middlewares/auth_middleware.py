@@ -86,7 +86,8 @@ def is_public_route(path:str,method:str=None):
     #精确匹配
     public_exact={
         '/','/favicon.ico','/ping','/register',
-        '/users/register','/users/login','/metrics'
+        '/users/register','/users/login','/metrics',
+        '/api/users/register','/api/users/login','/api/users/refresh'
     }
     if path in public_exact:
         return True

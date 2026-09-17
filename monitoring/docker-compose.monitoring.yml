@@ -59,7 +59,7 @@ services:
       - DINGTALK_SECRET=${DINGTALK_SECRET:-}
       - AT_CRITICAL_MOBILES=${AT_CRITICAL_MOBILES:-}
     ports:
-      - "5001:5001"
+      - "5011:5001"
     networks:
       - monitoring
     restart: unless-stopped
@@ -149,8 +149,7 @@ networks:
     driver: bridge
   weibo-network:
     external: true
-    name: weibo-platform_weibo-network  # 与 docker-compose.yml 实际创建的网络名一致
-
+    name: weibo-platform_weibo-network  
 volumes:
   prometheus_data:
   grafana_data:
