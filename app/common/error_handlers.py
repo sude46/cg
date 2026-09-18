@@ -85,7 +85,6 @@ def handle_global_exception(e: Exception):
         "code": error_code,
         "message": msg,
         "request_id": log_extra["request_id"],
-        "details": None
     }), 500
 
 def register_error_handlers(app: Flask):
