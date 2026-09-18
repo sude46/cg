@@ -17,6 +17,15 @@ info:
     - 403: 权限不足
     - 404: 资源不存在
     - 500: 服务器内部错误
+
+    ## 统一响应约定
+    - 成功：`{ "code": 200, "data": { ... }, "message": "操作成功" }`
+    - 失败：`{ "code": <业务错误码>, "message": "...", "request_id": "...", "details": {...}? }`
+      （字段级校验错误才带 `details`；429 额外带 `retry_after`）
+    - `data` 永远是对象：无业务数据时为 `{}`（不是 `null`，不是数组）
+    - 列表/分页数据统一放在 `data.items`，分页信息在 `data.pagination`：
+      `{ "page", "per_page", "total", "pages", "has_next", "has_prev" }`
+    - 时间字段统一为带时区的 ISO8601 UTC：`2026-09-11T07:30:00+00:00`
     
   version: "1.0.0"
   termsOfService: ""
@@ -44,3 +53,9 @@ responses:
     description: "资源不存在"
   InternalError:
     description: "服务器内部错误"
+
+# 数据模型定义
+definitions:
+  EmptyData:
+    type: object
+    description: "无业务数据时为 {}；列表接口请使用 items + pagination 结构"
