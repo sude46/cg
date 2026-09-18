@@ -53,7 +53,7 @@ def success_response(data=None, message="操作成功"):
 
     return response_data
 
-def fail_response(code, error_msg):
+def fail_response(code, error_msg,details=None,request_id=None):
     """
     失败响应（统一格式）
     :param code: 业务错误码（参考 ResponseCode）
@@ -61,36 +61,45 @@ def fail_response(code, error_msg):
     :return: 格式化后的失败响应体
     """
     # 获取全局请求ID（若未生成，自动生成一个）
-    request_id = getattr(g, "request_id", generate_request_id())
+    request_id = request_id or getattr(g, "request_id", generate_request_id())
 
     response_data = {
         "code": code,
-        "error": error_msg,
+        "message": error_msg,
         "request_id": request_id
     }
-
+    if details:
+        response_data["details"]=details
     # 日志记录（错误级别，便于问题追踪）
     current_app.logger.error(f"[FAIL] request_id={request_id}, response={response_data}")
 
     return response_data
 
-def pagination_response(data_list, page, size, total):
-    """
-    分页响应（统一格式，需嵌套在 success_response 的 data 中返回）
-    :param data_list: 当前页的数据列表
-    :param page: 当前页码（从1开始）
-    :param size: 每页条数
-    :param total: 数据总条数
-    :return: 格式化后的分页数据体
-    """
-    # 校验分页参数合法性，避免返回异常数据
-    page = max(1, page)  # 页码最小为1
-    size = max(1, size)  # 每页条数最小为1
-    total = max(0, total)  # 总条数最小为0
 
+def build_pagination(page,per_page,total):
+    """单一分页真源，结构固定"""
+    page=max(1,int(page or 1))
+    per_page=max(1,int(per_page or 20))
+    total=max(0,int(total or 0))
+    pages=(total+per_page-1)//per_page if total else 0
     return {
-        "list": data_list or [],
-        "page": page,
-        "size": size,
-        "total": total
-    }
+            "page":page,
+            "per_page":per_page,
+            "total":total,
+            "pages":pages,
+            "has_next":page<pages,
+            "has_prev":page>1,
+            }
+
+def paginated_response(items,pagination,extra=None,message="操作成功"):
+    """
+    统一分页响应。
+    -items:当前页对象列表
+    -pagination:build_pagination/PaginationUtils.paginate的产物
+    -extra:模块级元数据（如likeed_post_ids/unread_count/search_engine)
+    """
+    data={'items':items or [],"pagination":pagination or build_pagination(1,20,0)}
+    if extra:
+        data.update(extra)
+    return success_response(data=data,message=message)
+

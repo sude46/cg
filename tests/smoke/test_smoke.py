@@ -114,6 +114,6 @@ def test_full_core_chain():
     # 9. 搜索（ES 可用时走 elasticsearch 引擎）
     q = urllib.parse.quote('smoke')
     code, data = _expect('GET', f'/posts/search?q={q}', token=t1)
-    assert data['data'].get('posts') is not None, '搜索返回缺少 posts 字段'
+    assert data['data'].get('items') is not None, '搜索返回缺少 items 字段'
 
     print(f'SMOKE OK: 全链路通过 (user1={uid1}, user2={uid2}, post={pid})')

@@ -34,8 +34,14 @@ def handle_base_error(e: BaseError):
         f"[CUSTOM ERROR] request_id={log_extra['request_id']}, error_code={e.error_code}, msg={e.message}",
         extra=log_extra
     )
-
-    response = jsonify(e.to_dict())
+    body = {
+        "code": e.error_code,
+        "message": e.message,
+        "request_id": log_extra["request_id"],
+        }
+    if e.details:
+        body["details"]=e.details
+    response=jsonify(body)
     response.status_code = e.status_code
     return response
 
@@ -77,7 +83,7 @@ def handle_global_exception(e: Exception):
     # 统一返回自定义格式（和BaseError保持一致）
     return jsonify({
         "code": error_code,
-        "msg": msg,
+        "message": msg,
         "request_id": log_extra["request_id"],
         "details": None
     }), 500

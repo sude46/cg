@@ -25,7 +25,7 @@ class BaseError(Exception):
     def to_dict(self)->dict:
         '''将一场转换为字典，方便接口返回json'''
         return{
-                'error_code':self.error_code,
+                'code':self.error_code,
                 'message':self.message,
                 'details':self.details
                 }
@@ -75,12 +75,7 @@ class ServiceUnavailableError(BaseError):
     error_code=10008
     message='服务暂时不可用，请稍后再试'
 
-class BusinessException(Exception):
-    """业务逻辑异常（如参数错误、权限不足等）"""
-    def __init__(self, message, code=400):
-        self.message = message
-        self.code = code
-        super().__init__(self.message)
+
 
 __all__ = [
     "BaseError",

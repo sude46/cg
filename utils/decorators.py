@@ -45,7 +45,6 @@ def validate_json(schema_class):
                 validated_data = schema.load(json_data)
                 g.validated_json = validated_data
                 logger.debug(f"入参校验成功: {validated_data}")
-                return f(*args,**kwargs)
             except MarshmallowValidationError as e:
                 error_detail = e.messages
                 return fail_response(ResponseCode.PARAM_ERROR, f"参数校验失败:{error_detail}"), 400
@@ -54,6 +53,7 @@ def validate_json(schema_class):
             except Exception as e:
                 logger.error(f"参数校验内部错误: {str(e)}", exc_info=True)
                 return fail_response(ResponseCode.PARAM_ERROR, "服务器内部错误"), 500
+            return f(*args,**kwargs)
         return wrapper
     return decorator
 

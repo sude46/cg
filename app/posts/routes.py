@@ -5,9 +5,10 @@ from flask_restx import Api, Namespace, Resource, fields
 from middlewares import route_limit
 from utils.decorators import ownership_required, validate_json
 from utils.pagination import get_pagination_params
-from utils.response import ResponseCode, fail_response, success_response
+from utils.response import ResponseCode, fail_response, paginated_response, success_response
 
 from . import posts_bp
+from .models import Post
 from .schemas import CreatePostSchema, UpdatePostSchema, post_schema, posts_schema
 from .services import PostService
 
@@ -72,12 +73,10 @@ class PostList(Resource):
 			)
 		# 序列化帖子列表
 		posts_data = posts_schema.dump(result['items'])
-		return success_response(
-				data={
-					'posts': posts_data,
-					'pagination': result['pagination'],
-					'liked_post_ids': list(result.get('liked_post_ids', []))
-				},
+		return paginated_response(
+				posts_data,
+				result['pagination'],
+				extra={'liked_post_ids': list(result.get('liked_post_ids', []))},
 				message='获取帖子列表成功'
 			), 200
 
@@ -135,7 +134,7 @@ class PostDetail(Resource):
 	@api.response(200,'更新成功')
 	@jwt_required()
 	@validate_json(UpdatePostSchema)
-	@ownership_required('Post','post_id')
+	@ownership_required(Post,'post_id')
 	def put(self,post_id):
 		data = getattr(g, 'validated_json', request.get_json())
 		current_user_id = get_jwt_identity()
@@ -157,7 +156,7 @@ class PostDetail(Resource):
 		)
 	@api.response(200,'删除成功')
 	@jwt_required()
-	@ownership_required('Post','post_id')
+	@ownership_required(Post,'post_id')
 	def delete(self,post_id):
 		'''删除帖子'''
 		current_user_id = get_jwt_identity()
@@ -212,16 +211,15 @@ class PostSearch(Resource):
 		else:
 			# 降级到数据库搜索，需要序列化
 			posts_data = posts_schema.dump(result['items'])
-
-		return success_response(
-				data={
-					'posts': posts_data,
-					'pagination': result['pagination'],
-					'liked_post_ids': list(result.get('liked_post_ids', [])),
-					'search_engine': 'elasticsearch' if result.get('is_es_search') else 'database'
-				},
-				message='搜索帖子成功'
-			), 200
+		return paginated_response(
+			posts_data,
+			result['pagination'],
+			extra={
+				'liked_post_ids': list(result.get('liked_post_ids', [])),
+				'search_engine': 'elasticsearch' if result.get('is_es_search') else 'database'
+			},
+			message='搜索帖子成功'
+		), 200
 
 
 @api.route('/hot-searches')

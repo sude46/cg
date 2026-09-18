@@ -4,7 +4,7 @@
 """
 import logging
 
-from flask import current_app
+from flask import current_app, g
 from flask_limiter import Limiter
 from flask_limiter.errors import RateLimitExceeded
 from flask_limiter.util import get_remote_address
@@ -48,7 +48,8 @@ def init_rate_limit_middleware(app):
         retry_after = getattr(e, 'retry_after', 60)
         return {
             "code": 429,
-            "error": "请求过于频繁，请稍后重试",
+            "message": "请求过于频繁，请稍后重试",
+            "request_id": g.get("request_id", "N/A"),
             "retry_after": retry_after
         }, 429
 

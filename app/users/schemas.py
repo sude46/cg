@@ -81,3 +81,22 @@ class UserListSchema(Schema):
     page = fields.Integer()   # 当前页
     size = fields.Integer()   # 每页条数
     pages = fields.Integer()  # 总页数
+
+
+class PublicUserSchema(Schema):
+    """用户公开资料（不含email等隐私字段)"""
+    id=fields.Int(dump_only=True)
+    username=fields.Str(dump_only=True)
+    avatar_url=fields.Str(dump_only=True,allow_none=True)
+    bio=fields.Str(dump_only=True,allow_none=True)
+    following_count=fields.Int(dump_only=True)
+    created_at=fields.DateTime(dump_only=True)
+
+class UpdateProfileSchema(Schema):
+    bio=fields.Str(required=False,validate=validate.Length(max=200))
+    avatar_url=fields.Str(required=False,validate=validate.Length(max=500))
+
+
+update_profile_schema=UpdateProfileSchema()
+public_user_schema=PublicUserSchema()
+

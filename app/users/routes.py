@@ -11,7 +11,7 @@ from utils.formatters import desensitize_data, desensitize_token
 from utils.response import success_response
 
 from . import users_bp
-from .schemas import LoginSchema, RegisterSchema
+from .schemas import ChangePasswordSchema, LoginSchema, RegisterSchema
 from .services.auth_service import AuthService
 
 authorizations = {
@@ -46,6 +46,16 @@ login_model = api.model('LoginRequest', {
     'username': fields.String(required=True, description='用户名'),
     'password': fields.String(required=True, description='密码')
 })
+
+update_profile_model=api.model('UpdateProfileRequest',{
+    'bio':fields.String(required=False,description='个人简介(最长200字符)'),
+    'avatar_url':fields.String(required=False,description='头像URL')
+    })
+change_password_model=api.model('ChangePasswordRequest',{
+    'old_password':fields.String(required=True,description='原密码'),
+    'new_password':fields.String(required=True,description='新密码(8-20字符)')
+    })
+
 
 @api.route('/register')
 class Register(Resource):
@@ -133,6 +143,13 @@ class CurrentUser(Resource):
         result=AuthService.get_current_user(current_user_id)
         return success_response(data=result),200
 
+@api.route('/<int:user_id>')
+class UserProfile(Resource):
+    def get(self,user_id):
+        """获取用户公开资料"""
+        data=AuthService.get_public_profile(user_id)
+        return {'code':0,'message':'success','data':data}
+
 @api.route('/logout')
 class Logout(Resource):
     @api.doc(description='用户登出')
@@ -149,15 +166,21 @@ class Logout(Resource):
         # 2. 计算Token剩余有效期（秒）：避免黑名单永久存储，节省Redis空间
         now = datetime.now(UTC).timestamp()
         remain_seconds = max(0, int(exp - now))
-
         current_app.revoke_token(jti,remain_seconds)
-
-
             # 4. 返回统一响应
         return success_response(
                 data=None,
                 message=f"{token_type}令牌已失效，登出成功"
             ), 200
+
+@api.route('/me/password')
+class ChangePassword(Resource):
+    @validate_json(ChangePasswordSchema)
+    def put(self):
+        """修改密码"""
+        d = g.validated_json
+        AuthService.change_password(g.current_user_id, d['old_password'], d['new_password'])
+        return {'code': 0, 'message': '密码修改成功', 'data': None}
 
 
 

@@ -3,7 +3,7 @@ import logging
 from flask_jwt_extended import create_access_token, create_refresh_token
 
 from app.common.database import utcnow
-from app.common.exceptions import AuthenticationError, ValidationError
+from app.common.exceptions import AuthenticationError, ResourceNotFoundError, ValidationError
 from app.users.cache import UserCache
 from app.users.repositories import user_repository
 from core import db
@@ -137,3 +137,53 @@ class AuthService:
         serialized_user = user_schema.dump(user)
         UserCache.set_profile(user_id, serialized_user)
         return {'user': serialized_user}
+
+    @staticmethod
+    def get_public_profile(self,user_id:int):
+        """按id获取用户公开资料"""
+        from ..schemas import public_user_schema
+        user=user_repository.get_by_id(user_id)
+        if not user or user.is_deleted:
+           raise ResourceNotFoundError("用户不存在")
+        return {'user':public_user_schema.dump(user)}
+
+    @staticmethod
+    def update_profile(self,user_id:int,data:dict):
+        """更新当前用户资料"""
+        from app.common.exceptions import DatabaseError
+        user=user_repository.get_by_id(user_id,force_master=True)
+        if not user:
+            raise ResourceNotFoundError("用户不存在")
+        if "bio" in data:
+            user.bio=data['bio']
+        if 'avatar_url' in data:
+            user.avatar_url=data['avatar_url']
+        try:
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"更新资料失败:{e}")
+            raise DatabaseError("更新资料失败")
+        UserCache.double_invalidate(user.id,user_name=user.username,email=user.email)
+        return {'user':UserSchema().dump(user)}
+
+    @staticmethod
+    def change_password(self,user_id:int,old_password:str,new_password:str):
+        """修改密码(带历史校验)"""
+        from app.common.exceptions import DatabaseError
+        user=user_repository.get_by_id(user_id,force_master=True)
+        if not user:
+            raise ResourceNotFoundError("用户不存在")
+        if not password_service.verify_password(user.password_hash,old_password):
+            raise AuthenticationError("原密码错误")
+        if password_service.is_password_reused(user,new_password):
+            raise ValidationError("新密码不能是醉经使用过的密码")
+        password_service.update_password(user,new_password)
+        try:
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"修改密码失败:{e}")
+            raise DatabaseError("修改密码失败")
+        UserCache.double_invalidate(user.id,username=user.username,email=user.email)
+        return {'message':'密码修改成功'}
