@@ -184,7 +184,7 @@ class AuthService:
         return {'user':UserSchema().dump(user)}
 
     @staticmethod
-    def change_password(self,user_id:int,old_password:str,new_password:str):
+    def change_password(user_id:int,old_password:str,new_password:str) -> dict:
         """修改密码(带历史校验)"""
         from app.common.exceptions import DatabaseError
         user=user_repository.get_by_id(user_id,force_master=True)
@@ -192,8 +192,10 @@ class AuthService:
             raise ResourceNotFoundError("用户不存在")
         if not password_service.verify_password(user.password_hash,old_password):
             raise AuthenticationError("原密码错误")
+        if old_password == new_password:
+            raise ValidationError("新密码不能与原密码相同")
         if password_service.is_password_reused(user,new_password):
-            raise ValidationError("新密码不能是醉经使用过的密码")
+            raise ValidationError("不能使用最近使用过的密码")
         password_service.update_password(user,new_password)
         try:
             db.session.commit()
@@ -201,5 +203,7 @@ class AuthService:
             db.session.rollback()
             logger.error(f"修改密码失败:{e}")
             raise DatabaseError("修改密码失败")
-        UserCache.double_invalidate(user.id,username=user.username,email=user.email)
+        UserCache.double_invalidate(user.id)
+        # TODO(doc08): 改密后吊销所有 refresh token（待 token 轮换/版本号实现）
+        USER_OPERATIONS.labels(action='change_password', result='success').inc()
         return {'message':'密码修改成功'}

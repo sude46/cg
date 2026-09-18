@@ -179,12 +179,18 @@ class Logout(Resource):
 
 @api.route('/me/password')
 class ChangePassword(Resource):
+    @api.doc(description='修改当前用户密码')
+    @api.response(200, '修改成功')
+    @jwt_required()
     @validate_json(ChangePasswordSchema)
+    @route_limit("5 per minute")
     def put(self):
         """修改密码"""
-        d = g.validated_json
-        AuthService.change_password(g.current_user_id, d['old_password'], d['new_password'])
-        return {'code': 0, 'message': '密码修改成功', 'data': None}
+        data = getattr(g, 'validated_json', request.get_json())
+        result = AuthService.change_password(
+            get_jwt_identity(), data['old_password'], data['new_password']
+        )
+        return success_response(data=result, message='密码修改成功'), 200
 
 
 
