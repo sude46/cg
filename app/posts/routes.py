@@ -237,9 +237,12 @@ class HotSearches(Resource):
 
 		from services.search import PostSearchService
 		hot_searches = PostSearchService.get_hot_searches(size=size)
-
+		items = [
+			{'rank': i, 'keyword': h.get('keyword'), 'heat': h.get('count')}
+			for i, h in enumerate(hot_searches, start=1)
+		]
 		return success_response(
-			data={'hot_searches': hot_searches},
+			data={'items': items},
 			message='获取热搜榜成功'
 		), 200
 
@@ -260,13 +263,13 @@ class SearchSuggestions(Resource):
 		size = request.args.get('size', 10, type=int)
 
 		if not keyword or len(keyword) < 1:
-			return success_response(data={'suggestions': []}, message='获取成功'), 200
+			return success_response(data={'items': []}, message='获取成功'), 200
 
 		from services.search import PostSearchService
 		suggestions = PostSearchService.get_search_suggestions(keyword, size)
 
 		return success_response(
-			data={'suggestions': suggestions},
+			data={'items': suggestions},
 			message='获取搜索建议成功'
 		), 200
 

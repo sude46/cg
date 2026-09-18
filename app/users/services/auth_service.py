@@ -46,7 +46,14 @@ class AuthService:
         UserCache.set_by_email(user.email, user.id)
         UserCache.mark_recently_modified(user.id, ttl=5)
         USER_OPERATIONS.labels(action='register', result='success').inc()
-        return {'message': '用户注册成功', 'user': serialized_user}
+        return {
+            'message': '用户注册成功',
+            'user': serialized_user,
+            'access_token': create_access_token(identity=user.id),
+            'refresh_token': create_refresh_token(identity=user.id),
+            'token_type': 'bearer',
+            'expires_in': 3600,
+        }
 
     @staticmethod
     def authenticate_user(username: str, password: str) -> dict:

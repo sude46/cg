@@ -65,6 +65,8 @@ class PostSchema(Schema):
 	image_url = fields.Str(allow_none=True)
 	user_id = fields.Int()
 	author = fields.Nested(AuthorSchema, allow_none=True)
+	username = fields.Method("get_username", dump_only=True)
+	avatar_url = fields.Method("get_avatar_url", dump_only=True, allow_none=True)
 	created_at = UTCDateTime(attribute="created_at")
 	updated_at = UTCDateTime(attribute="updated_at")
 	is_published = fields.Bool()
@@ -72,6 +74,15 @@ class PostSchema(Schema):
 	comment_count = fields.Int()
 	deleted_at = UTCDateTime(allow_none=True, attribute="deleted_at")
 	has_liked = fields.Bool(load_default=False)
+
+	def get_username(self, obj):
+		author = getattr(obj, "author", None)
+		return author.username if author else None
+
+	def get_avatar_url(self, obj):
+		author = getattr(obj, "author", None)
+		return author.avatar_url if author else None
+
 	def dump_with_options(self,include_author=True,include_stats=True):
 		base_fields=["id","content","image_url","user_id","created_at","updated_at","is_published","deleted_at"]
 		if include_author:

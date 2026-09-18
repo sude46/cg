@@ -28,8 +28,19 @@ class CommentSchema(Schema):
     content = fields.String(dump_only=True, metadata={'description': '评论内容'})
     post_id = fields.Integer(dump_only=True, metadata={'description': '所属帖子id'})
     user_id = fields.Integer(dump_only=True, metadata={'description': '评论用户id'})
+    username = fields.Method('get_username', dump_only=True, metadata={'description': '评论者用户名'})
+    avatar_url = fields.Method('get_avatar_url', dump_only=True, allow_none=True)
+    like_count = fields.Integer(dump_only=True, dump_default=0)
     created_at = UTCDateTime(dump_only=True, metadata={'description': '创建时间'})
     updated_at = UTCDateTime(dump_only=True, metadata={'description': '更新时间'})
+
+    def get_username(self, obj):
+        author = getattr(obj, 'author', None)
+        return author.username if author else None
+
+    def get_avatar_url(self, obj):
+        author = getattr(obj, 'author', None)
+        return author.avatar_url if author else None
 
 comment_create_schema=CommentCreateSchema()
 comment_update_schema=CommentUpdateSchema()
