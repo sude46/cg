@@ -1,5 +1,7 @@
 from marshmallow import Schema, fields, validate
 
+from utils.schema_fields import UTCDateTime
+
 
 #用户基础信息子Schema（进返回关注列表所需字段）
 class UserSimpleSchema(Schema):
@@ -18,7 +20,7 @@ class FollowResponseSchema(Schema):
 	id = fields.Int()
 	follower_id = fields.Int()
 	followed_id = fields.Int()
-	created_at = fields.DateTime()
+	created_at = UTCDateTime()
 	follower = fields.Nested(UserSimpleSchema)
 	followed = fields.Nested(UserSimpleSchema)
 class FollowListSchema(Schema):

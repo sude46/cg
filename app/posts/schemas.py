@@ -1,5 +1,6 @@
 from marshmallow import Schema, ValidationError, fields, validate, validates_schema
 
+from utils.schema_fields import UTCDateTime
 from utils.validators import validate_content_length, validate_image_url
 
 
@@ -64,12 +65,12 @@ class PostSchema(Schema):
 	image_url = fields.Str(allow_none=True)
 	user_id = fields.Int()
 	author = fields.Nested(AuthorSchema, allow_none=True)
-	created_at = fields.DateTime(attribute="created_at")
-	updated_at = fields.DateTime(attribute="updated_at")
+	created_at = UTCDateTime(attribute="created_at")
+	updated_at = UTCDateTime(attribute="updated_at")
 	is_published = fields.Bool()
 	like_count = fields.Int()
 	comment_count = fields.Int()
-	deleted_at = fields.DateTime(allow_none=True, attribute="deleted_at")
+	deleted_at = UTCDateTime(allow_none=True, attribute="deleted_at")
 	has_liked = fields.Bool(load_default=False)
 	def dump_with_options(self,include_author=True,include_stats=True):
 		base_fields=["id","content","image_url","user_id","created_at","updated_at","is_published","deleted_at"]

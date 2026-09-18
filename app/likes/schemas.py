@@ -1,6 +1,8 @@
 
 from marshmallow import Schema, ValidationError, fields, validate, validates_schema
 
+from utils.schema_fields import UTCDateTime
+
 
 class LikeCreateSchema(Schema):
     """点赞操作请求模式（用于参数验证）"""
@@ -23,7 +25,7 @@ class LikeSchema(Schema):
     post_id = fields.Integer(dump_only=True, allow_none=True)
     comment_id = fields.Integer(dump_only=True, allow_none=True)
     user_id = fields.Integer(dump_only=True)
-    created_at = fields.DateTime(dump_only=True)
+    created_at = UTCDateTime(dump_only=True)
 
 
 

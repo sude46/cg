@@ -1,5 +1,7 @@
 from marshmallow import Schema, fields, validate
 
+from utils.schema_fields import UTCDateTime
+
 
 class NotificationCreateSchema(Schema):
     '''创建通知的请求'''
@@ -20,7 +22,7 @@ class NotificationSchema(Schema):
     resource_type=fields.String(dump_only=True,allow_none=True)
     content=fields.String(dump_only=True)
     is_read=fields.Boolean(dump_only=True)
-    created_at=fields.DateTime(dump_only=True)
+    created_at=UTCDateTime(dump_only=True)
 
 
 notification_create_schema=NotificationCreateSchema()

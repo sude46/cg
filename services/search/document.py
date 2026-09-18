@@ -3,7 +3,7 @@ ES文档模型定义
 职责：索引结构、字段映射、基础CRUD
 '''
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from elastic_transport import ConnectionError as ESConnectionError
@@ -113,8 +113,14 @@ class PostDocument:
         try:
             # 日期格式转换
             doc = document.copy()
-            if isinstance(doc.get('created_at'), datetime):
-                doc['created_at'] = doc['created_at'].isoformat()
+            created = doc.get('created_at')
+            if isinstance(created, datetime):
+                if created.tzinfo is None:
+                    created = created.replace(tzinfo=UTC)
+                doc['created_at'] = created.isoformat()
+            elif isinstance(created, str) and created and '+' not in created and not created.endswith('Z'):
+                # 调用方可能直接传 naive UTC 字符串（如事件负载），补时区
+                doc['created_at'] = created + '+00:00'
             # 补全字段：与正文同源，调用方无需感知
             if doc.get('content'):
                 doc['suggest'] = doc['content']

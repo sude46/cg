@@ -1,5 +1,7 @@
 from marshmallow import Schema, fields, validate
 
+from utils.schema_fields import UTCDateTime
+
 
 class CommentCreateSchema(Schema):
     '''评论创建请求的数据验证Schema'''
@@ -26,8 +28,8 @@ class CommentSchema(Schema):
     content = fields.String(dump_only=True, metadata={'description': '评论内容'})
     post_id = fields.Integer(dump_only=True, metadata={'description': '所属帖子id'})
     user_id = fields.Integer(dump_only=True, metadata={'description': '评论用户id'})
-    created_at = fields.DateTime(dump_only=True, metadata={'description': '创建时间'})
-    updated_at = fields.DateTime(dump_only=True, metadata={'description': '更新时间'})
+    created_at = UTCDateTime(dump_only=True, metadata={'description': '创建时间'})
+    updated_at = UTCDateTime(dump_only=True, metadata={'description': '更新时间'})
 
 comment_create_schema=CommentCreateSchema()
 comment_update_schema=CommentUpdateSchema()
