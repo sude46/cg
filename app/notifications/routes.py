@@ -85,6 +85,18 @@ class NotificationListResource(Resource):
         ), 200
 
 
+@api.route('/unread-count')
+class UnreadCountResource(Resource):
+    @api.doc('get_unread_count')
+    @api.response(200, '获取未读通知数成功')
+    @jwt_required()
+    def get(self):
+        '''获取当前用户未读通知数（轻量轮询接口）'''
+        current_user_id=get_jwt_identity()
+        count=NotificationService.get_unread_count(current_user_id)
+        return success_response(data={'unread_count': count}, message='获取未读数成功'), 200
+
+
 @api.route('/<int:notification_id>')
 @api.param('notification_id','通知ID')
 class NotificationResource(Resource):

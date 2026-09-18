@@ -134,25 +134,24 @@ class NotificationService:
         if not isinstance(items, list):
             items = []
 
-        # 缓存：查未读数（Cache-Aside）
-        unread_count = NotificationCache.get_unread_count(user_id)
-        if unread_count is None:
-            #强一致窗口内（用户刚创建/已读通知），强制走主库，放止主从延迟旧值回跳
-            force_master = NotificationCache.is_recently_modified(user_id)
-            if unread_only:
-                # 分页 total 本身是从库读的，窗口内直接主库 count 更稳
-                total_unread = (notification_repository.count_unread(user_id, force_master=True)
-                                if force_master
-                                else pagination_info.get('total', 0))
-            else:
-                total_unread = notification_repository.count_unread(user_id, force_master=force_master)
-            if total_unread == 0:
-                NotificationCache.set_empty(user_id)
-            else:
-                NotificationCache.set_unread_count(user_id, total_unread)
-            unread_count = total_unread
+        unread_count = NotificationService.get_unread_count(user_id)
         NOTIFICATION_OPERATIONS.labels(action='list', result='success').inc()
         return {'items': items, 'pagination': pagination_info, 'unread_count': unread_count}
+
+    @staticmethod
+    def get_unread_count(user_id: int) -> int:
+        """未读数：缓存 → miss 查 DB 回填（强一致窗口走主库，空值防穿透）。"""
+        count = NotificationCache.get_unread_count(user_id)
+        if count is not None:
+            return count
+        # 刚创建/已读通知的 60s 强一致窗口内，强制走主库，避免主从延迟旧值回跳
+        force_master = NotificationCache.is_recently_modified(user_id)
+        total = notification_repository.count_unread(user_id, force_master=force_master)
+        if total == 0:
+            NotificationCache.set_empty(user_id)
+        else:
+            NotificationCache.set_unread_count(user_id, total)
+        return total
 
     @staticmethod
     def mark_as_read(notification_id: int, user_id: int):
