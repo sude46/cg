@@ -118,3 +118,30 @@ def test_db_router_falls_back_to_master(monkeypatch):
     session = mod.db_router.get_read_session()
     assert session is db.session
     assert mod.db_router._state['replica']['fail_count'] >= 1
+
+
+def test_restx_error_bridge_formats_http_exception():
+    """restx 端点(如 405)经桥接后返回统一契约 {code,message,request_id}。"""
+    import json
+
+    from flask import Flask
+    from flask import g as flask_g
+    from werkzeug.exceptions import MethodNotAllowed
+
+    from core.restx_error_bridge import (
+        format_http_exception,
+        install_restx_error_bridge,
+    )
+
+    install_restx_error_bridge()
+    app = Flask(__name__)
+    with app.test_request_context('/x', method='DELETE'):
+        flask_g.request_id = 'rid-1'
+        resp = format_http_exception(MethodNotAllowed(valid_methods=['POST']))
+
+    body = json.loads(resp.get_data(as_text=True))
+    assert resp.status_code == 405
+    assert body['code'] == 10009
+    assert body['request_id'] == 'rid-1'
+    assert body['details']['allowed_methods'] == ['POST']
+    assert resp.headers.get('Allow') == 'POST'

@@ -19,6 +19,7 @@ from core.database import db, migrate
 from core.db_router import db_router
 from core.extensions import bcrypt, jwt, mail
 from core.logging_config import init_structured_logger
+from core.restx_error_bridge import install_restx_error_bridge
 from services.search.event_handlers import register_search_event_handlers
 
 
@@ -99,6 +100,8 @@ def create_app(config_name: str = None) -> Flask:
 
     # 注册全局异常处理器
     register_error_handlers(app)
+    # 让 flask-restx 端点（404/405 等）也返回统一错误格式
+    install_restx_error_bridge()
 
     # 开发环境自动建表
     with app.app_context():

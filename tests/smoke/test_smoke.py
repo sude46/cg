@@ -116,4 +116,9 @@ def test_full_core_chain():
     code, data = _expect('GET', f'/posts/search?q={q}', token=t1)
     assert data['data'].get('items') is not None, '搜索返回缺少 items 字段'
 
+    # 10. restx 端点的 405 也走统一错误契约（桥接 flask-restx）
+    code, err = _expect('DELETE', '/users/login', codes=(405,))
+    assert err.get('code') == 10009, f'405 业务码应为 10009: {err}'
+    assert 'request_id' in err, f'405 缺少 request_id: {err}'
+
     print(f'SMOKE OK: 全链路通过 (user1={uid1}, user2={uid2}, post={pid})')

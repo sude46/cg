@@ -13,6 +13,7 @@ from app.common.exceptions import (
     ServiceUnavailableError,
     ValidationError,
 )
+from core.restx_error_bridge import business_code_for_status
 
 
 def _get_log_extra():
@@ -52,11 +53,13 @@ def handle_404_error(e):
 
 def handle_405_error(error):
     """处理405异常，转为自定义BaseError"""
+    allowed = getattr(error, 'valid_methods', None)
+    details = {"allowed_methods": sorted(allowed)} if allowed else None
     e = BaseError(
         message='请求方法不被允许',
         status_code=405,
-        error_code=10009,
-        details={"allowed_methods": error.description.split()[-1].strip('()')}
+        error_code=business_code_for_status(405),
+        details=details
     )
     return handle_base_error(e)  # 复用自定义异常处理逻辑
 
