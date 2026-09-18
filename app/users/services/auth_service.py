@@ -164,11 +164,11 @@ class AuthService:
         return {'user':profile}
 
     @staticmethod
-    def update_profile(self,user_id:int,data:dict):
-        """更新当前用户资料"""
+    def update_profile(user_id:int,data:dict) -> dict:
+        """更新当前用户资料（bio/avatar_url）"""
         from app.common.exceptions import DatabaseError
         user=user_repository.get_by_id(user_id,force_master=True)
-        if not user:
+        if not user or not getattr(user,'is_active',True):
             raise ResourceNotFoundError("用户不存在")
         if "bio" in data:
             user.bio=data['bio']
@@ -180,7 +180,8 @@ class AuthService:
             db.session.rollback()
             logger.error(f"更新资料失败:{e}")
             raise DatabaseError("更新资料失败")
-        UserCache.double_invalidate(user.id,user_name=user.username,email=user.email)
+        UserCache.double_invalidate(user.id)
+        USER_OPERATIONS.labels(action='update_profile', result='success').inc()
         return {'user':UserSchema().dump(user)}
 
     @staticmethod

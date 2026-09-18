@@ -11,7 +11,12 @@ from utils.formatters import desensitize_data, desensitize_token
 from utils.response import success_response
 
 from . import users_bp
-from .schemas import ChangePasswordSchema, LoginSchema, RegisterSchema
+from .schemas import (
+    ChangePasswordSchema,
+    LoginSchema,
+    RegisterSchema,
+    UpdateProfileSchema,
+)
 from .services.auth_service import AuthService
 
 authorizations = {
@@ -142,6 +147,16 @@ class CurrentUser(Resource):
 
         result=AuthService.get_current_user(current_user_id)
         return success_response(data=result),200
+
+    @api.doc(description='更新当前用户资料（bio / avatar_url）')
+    @api.response(200, '更新成功')
+    @jwt_required()
+    @validate_json(UpdateProfileSchema)
+    def put(self):
+        """更新当前用户资料"""
+        data = getattr(g, 'validated_json', request.get_json())
+        result = AuthService.update_profile(get_jwt_identity(), data)
+        return success_response(data=result, message='资料更新成功'), 200
 
 @api.route('/<int:user_id>')
 class UserProfile(Resource):

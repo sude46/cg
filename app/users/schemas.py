@@ -62,6 +62,8 @@ class UserSchema(Schema):
     id = fields.Integer()
     username = fields.String()
     email = fields.Email()
+    bio = fields.String(allow_none=True)
+    avatar_url = fields.String(allow_none=True)
     is_active = fields.Boolean()
     is_admin = fields.Boolean()
     created_at = fields.DateTime()
@@ -98,6 +100,11 @@ class PublicUserSchema(Schema):
 class UpdateProfileSchema(Schema):
     bio=fields.Str(required=False,validate=validate.Length(max=200))
     avatar_url=fields.Str(required=False,validate=validate.Length(max=500))
+
+    @validates_schema
+    def at_least_one(self,data,**kwargs):
+        if 'bio' not in data and 'avatar_url' not in data:
+            raise ValidationError("至少提供一个要修改的字段(bio/avatar_url)")
 
 
 update_profile_schema=UpdateProfileSchema()
