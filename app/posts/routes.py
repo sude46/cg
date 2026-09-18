@@ -193,7 +193,7 @@ class PostSearch(Resource):
 		current_user_id = get_jwt_identity()
 
 		if not query:
-			return fail_response(ResponseCode.PARAM_ERROR, '搜索关键词不能为空'), 400
+			return fail_response(ResponseCode.VALIDATION_ERROR, '搜索关键词不能为空'), 400
 
 		if sort_by not in ['relevance', 'time', 'hot']:
 			sort_by = 'relevance'

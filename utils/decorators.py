@@ -38,7 +38,7 @@ def validate_json(schema_class):
                 if json_data is None:
                     raise ValidationError("请求必须是JSON格式")
             except Exception:
-                return fail_response(ResponseCode.PARAM_ERROR, "请求体不能为空，且必须为JSON格式"), 400
+                return fail_response(ResponseCode.VALIDATION_ERROR, "请求体不能为空，且必须为JSON格式"), 400
 
             try:
                 schema = schema_class() if isinstance(schema_class, type) else schema_class
@@ -47,12 +47,12 @@ def validate_json(schema_class):
                 logger.debug(f"入参校验成功: {validated_data}")
             except MarshmallowValidationError as e:
                 error_detail = e.messages
-                return fail_response(ResponseCode.PARAM_ERROR, f"参数校验失败:{error_detail}"), 400
+                return fail_response(ResponseCode.VALIDATION_ERROR, f"参数校验失败:{error_detail}"), 400
             except ValidationError as e:
-                return fail_response(ResponseCode.PARAM_ERROR, f"参数校验失败:{str(e)}"), 400
+                return fail_response(ResponseCode.VALIDATION_ERROR, f"参数校验失败:{str(e)}"), 400
             except Exception as e:
                 logger.error(f"参数校验内部错误: {str(e)}", exc_info=True)
-                return fail_response(ResponseCode.PARAM_ERROR, "服务器内部错误"), 500
+                return fail_response(ResponseCode.INTERNAL_ERROR, "服务器内部错误"), 500
             return f(*args,**kwargs)
         return wrapper
     return decorator

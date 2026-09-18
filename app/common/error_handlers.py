@@ -55,7 +55,7 @@ def handle_405_error(error):
     e = BaseError(
         message='请求方法不被允许',
         status_code=405,
-        error_code=10007,
+        error_code=10009,
         details={"allowed_methods": error.description.split()[-1].strip('()')}
     )
     return handle_base_error(e)  # 复用自定义异常处理逻辑

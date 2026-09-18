@@ -74,7 +74,7 @@ class FeedPublishResource(Resource):
         post_id = data.get('post_id')
         created_at = data.get('created_at')
         if not post_id or not created_at:
-            return fail_response(ResponseCode.PARAM_ERROR, '缺少 post_id 或 created_at'), 400
+            return fail_response(ResponseCode.VALIDATION_ERROR, '缺少 post_id 或 created_at'), 400
         current_app.logger.info(
             f'用户{current_user_id}发布帖子{post_id}，开始推送Feed'
         )

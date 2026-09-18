@@ -22,14 +22,7 @@ class BaseError(Exception):
         if error_code:
             self.error_code=error_code
         self.details=details or {}
-    def to_dict(self)->dict:
-        '''将一场转换为字典，方便接口返回json'''
-        return{
-                'code':self.error_code,
-                'message':self.message,
-                'details':self.details
-                }
-    def __str__(self)->str:
+    def __str__(self)->dict:
         return f'{self.message}(错误码:{self.error_code},详情:{self.details})'
 class ValidationError(BaseError):
     '''参数验证失败异常'''

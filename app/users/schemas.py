@@ -77,15 +77,6 @@ class UserSchema(Schema):
         return {k: v for k, v in data.items() if v is not None}
 
 
-class UserListSchema(Schema):
-    """分页用户列表的序列化规则"""
-    items = fields.Nested(UserSchema, many=True)  # 列表项用 UserSchema 序列化
-    total = fields.Integer()  # 总条数
-    page = fields.Integer()   # 当前页
-    size = fields.Integer()   # 每页条数
-    pages = fields.Integer()  # 总页数
-
-
 class PublicUserSchema(Schema):
     """用户公开资料（不含 email/is_admin/mfa 等隐私字段）"""
     id=fields.Int(dump_only=True)
