@@ -187,8 +187,16 @@ class PostService:
             has_liked = False
             if current_user_id:
                 has_liked = LikeCache.is_liked(current_user_id, post_id, 'post') or False
+
+            # 5. 查询当前用户是否关注作者（详情页关注按钮）
+            is_following = False
+            author_id = post_dict.get('user_id')
+            if current_user_id and author_id and int(current_user_id) != int(author_id):
+                from app.follows.services import FollowService
+                is_following = FollowService.is_following(int(current_user_id), int(author_id))
+
             POST_OPERATIONS.labels(action='get', result='success').inc()
-            return {'post': post_dict, 'has_liked': has_liked}
+            return {'post': post_dict, 'has_liked': has_liked, 'is_following': is_following}
         except Exception:
             POST_OPERATIONS.labels(action='get', result='error').inc()
             raise

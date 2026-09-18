@@ -122,7 +122,8 @@ class PostDetail(Resource):
 		return success_response(
 				data={
 					'post': post_data,
-					'has_liked': result['has_liked']
+					'has_liked': result['has_liked'],
+					'is_following': result.get('is_following', False)
 				},
 				message='获取帖子详情成功'
 			), 200
