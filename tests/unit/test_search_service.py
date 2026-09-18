@@ -86,6 +86,6 @@ class TestPostSearchService:
         monkeypatch.setattr('services.search.services.PostSearchRepository', fake_repo)
         with app.app_context():
             result = PostSearchService.search("test", page=1, per_page=20)
-            assert result["pagination"]["total_pages"] == 3
+            assert result["pagination"]["pages"] == 3
             assert result["pagination"]["has_next"] is True
             assert result["pagination"]["has_prev"] is False

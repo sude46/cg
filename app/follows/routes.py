@@ -5,7 +5,7 @@ from flask_restx import Api, Namespace, Resource, fields
 from middlewares import route_limit
 from utils.decorators import validate_json
 from utils.pagination import get_pagination_params
-from utils.response import success_response
+from utils.response import paginated_response, success_response
 
 from . import follows_bp
 from .schemas import FollowCreateSchema
@@ -104,7 +104,7 @@ class Following(Resource):
                     page=page,
                     per_page=per_page
                     )
-        return success_response(data=result),200
+        return paginated_response(result['items'], result['pagination'], message='获取成功'),200
 @api.route('/followers')
 class FollowerList(Resource):
     @api.doc(
@@ -126,7 +126,7 @@ class FollowerList(Resource):
                     page=page,
                     per_page=per_page
                     )
-        return success_response(data=result,message='获取成功'),200
+        return paginated_response(result['items'], result['pagination'], message='获取成功'),200
 @api.route('/following/mutual')
 class MutualFollowList(Resource):
     @api.doc(
@@ -149,7 +149,7 @@ class MutualFollowList(Resource):
                     page=page,
                     per_page=per_page
                     )
-        return success_response(data=result,message='获取成功'),200
+        return paginated_response(result['items'], result['pagination'], message='获取成功'),200
 api_restx.add_namespace(api)
 
 

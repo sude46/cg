@@ -4,7 +4,7 @@ from flask_restx import Api, Namespace, Resource, fields
 
 from middlewares import route_limit
 from utils.decorators import validate_json
-from utils.response import success_response
+from utils.response import paginated_response, success_response
 
 from . import likes_bp
 from .schemas import like_create_schema
@@ -126,7 +126,7 @@ class UserLikes(Resource):
         per_page = min(per_page, 100)
 
         result = LikeService.get_user_likes(user_id=current_user_id, page=page, per_page=per_page)
-        return success_response(data=result), 200
+        return paginated_response(result['items'], result['pagination'], message='查询成功'), 200
 
 
 api_restx.add_namespace(api)

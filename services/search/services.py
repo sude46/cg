@@ -211,13 +211,13 @@ class PostSearchService:
 
     @staticmethod
     def _pagination(page:int,per_page:int,total:int)->dict:
-        total_pages=(total+per_page-1)//per_page if total>0 else 1
+        pages=(total+per_page-1)//per_page if total>0 else 0
         return {
             'page':page,
             'per_page':per_page,
             'total':total,
-            'total_pages':max(1,total_pages),
-            'has_next':page<total_pages,
+            'pages':pages,
+            'has_next':page<pages,
             'has_prev':page>1
         }
 

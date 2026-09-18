@@ -3,7 +3,7 @@ from flask_jwt_extended import get_jwt_identity, jwt_required
 from flask_restx import Api, Namespace, Resource, fields, reqparse
 from flask_restx.inputs import boolean
 
-from utils.response import success_response
+from utils.response import paginated_response, success_response
 
 from . import notifications_bp
 from .services import NotificationService
@@ -77,7 +77,12 @@ class NotificationListResource(Resource):
                     unread_only=unread_only
                     )
         current_app.logger.info(f'用户{current_user_id}获取通知列表成功')
-        return success_response(data=notifications, message='获取通知列表成功'), 200
+        return paginated_response(
+            notifications['items'],
+            notifications['pagination'],
+            extra={'unread_count': notifications.get('unread_count')},
+            message='获取通知列表成功'
+        ), 200
 
 
 @api.route('/<int:notification_id>')

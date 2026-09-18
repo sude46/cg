@@ -68,8 +68,8 @@ class TestFollowService:
                 followed = UserFactory()
                 FollowService.follow_user(user.id, followed.id)
             result = FollowService.get_following(user.id, page=1, per_page=10)
-            assert "follows" in result
-            assert len(result["follows"]) == 3
+            assert "items" in result
+            assert len(result["items"]) == 3
 
     def test_get_followers(self, app, db_session, mock_redis):
         """测试获取粉丝列表"""
@@ -80,8 +80,8 @@ class TestFollowService:
                 FollowService.follow_user(follower.id, user.id)
             result = FollowService.get_followers(user.id, page=1, per_page=10)
 
-            assert "follows" in result
-            assert len(result["follows"]) == 3
+            assert "items" in result
+            assert len(result["items"]) == 3
 
     def test_get_mutual_follows(self, app, db_session, mock_redis):
         """测试获取互关列表"""
@@ -95,8 +95,8 @@ class TestFollowService:
 
             result = FollowService.get_mutual_follows(user_a.id)
 
-            assert "mutual_users" in result
-            assert len(result["mutual_users"]) == 1
+            assert "items" in result
+            assert len(result["items"]) == 1
 
     def test_follow_nonexistent_user(self, app, db_session, mock_redis):
         """测试关注不存在的用户"""

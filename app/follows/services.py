@@ -121,7 +121,7 @@ class FollowService:
             result = follow_repository.list_following(user_id, page=page, per_page=per_page)
             items = follow_response_schema.dump(result.get('items', []), many=True)
             FOLLOW_OPERATIONS.labels(action='list_following', result='success').inc()
-            return {'follows': items, 'pagination': result.get('pagination', {})}
+            return {'items': items, 'pagination': result.get('pagination', {})}
         except Exception as e:
             logger.error('获取关注列表失败: %s', e)
             if isinstance(e, ResourceNotFoundError):
@@ -138,7 +138,7 @@ class FollowService:
             result = follow_repository.list_followers(user_id, page=page, per_page=per_page)
             items = follow_response_schema.dump(result.get('items', []), many=True)
             FOLLOW_OPERATIONS.labels(action='list_followers', result='success').inc()
-            return {'follows': items, 'pagination': result.get('pagination', {})}
+            return {'items': items, 'pagination': result.get('pagination', {})}
         except Exception as e:
             logger.error('获取粉丝列表失败: %s', e)
             if isinstance(e, ResourceNotFoundError):
@@ -160,7 +160,7 @@ class FollowService:
         # Service 只负责序列化
         users = UserSchema(many=True).dump(result.get('items', []))
         FOLLOW_OPERATIONS.labels(action='mutual', result='success').inc()
-        return {'mutual_users': users, 'pagination': result.get('pagination', {})}
+        return {'items': users, 'pagination': result.get('pagination', {})}
 
     @staticmethod
     def is_following(follower_id: int, followed_id: int) -> bool:

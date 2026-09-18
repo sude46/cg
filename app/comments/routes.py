@@ -5,7 +5,7 @@ from flask_restx import Api, Namespace, Resource, fields, reqparse
 
 from utils.decorators import validate_json
 from utils.pagination import get_pagination_params
-from utils.response import success_response
+from utils.response import paginated_response, success_response
 
 from . import comments_bp
 from .schemas import comment_create_schema, comment_update_schema
@@ -122,7 +122,7 @@ class PostCommentsResource(Resource):
                     per_page=per_page
                     )
         current_app.logger.info(f'成功获取帖子ID{post_id}的评论列表，共{result["pagination"]["total"]}条评论')
-        return success_response(data=result,message='获取评论列表成功'),200
+        return paginated_response(result['items'], result['pagination'], message='获取评论列表成功'),200
 
 api_restx.add_namespace(api)
 
