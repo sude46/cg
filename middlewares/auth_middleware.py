@@ -92,6 +92,12 @@ def is_public_route(path:str,method:str=None):
     if path in public_exact:
         return True
 
+    # 公开用户主页：GET /users/<数字id>（/users/me、/users/refresh 等静态路由不匹配）
+    if path.startswith('/users/'):
+        rest=path[len('/users/'):]
+        if rest.isdigit() and (method is None or method.upper()=='GET'):
+            return True
+
     #前缀匹配
     public_prefixes=['/auth','/api/auth','/health']
     for prefix in public_prefixes:

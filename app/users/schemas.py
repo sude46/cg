@@ -1,5 +1,6 @@
 from marshmallow import Schema, ValidationError, fields, post_dump, validate, validates_schema
 
+from utils.schema_fields import UTCDateTime
 from utils.validators import (
     validate_email,
     validate_password_complexity,
@@ -84,13 +85,15 @@ class UserListSchema(Schema):
 
 
 class PublicUserSchema(Schema):
-    """用户公开资料（不含email等隐私字段)"""
+    """用户公开资料（不含 email/is_admin/mfa 等隐私字段）"""
     id=fields.Int(dump_only=True)
     username=fields.Str(dump_only=True)
     avatar_url=fields.Str(dump_only=True,allow_none=True)
     bio=fields.Str(dump_only=True,allow_none=True)
-    following_count=fields.Int(dump_only=True)
-    created_at=fields.DateTime(dump_only=True)
+    follower_count=fields.Int(dump_only=True,dump_default=0)
+    following_count=fields.Int(dump_only=True,dump_default=0)
+    post_count=fields.Int(dump_only=True,dump_default=0)
+    created_at=UTCDateTime(dump_only=True)
 
 class UpdateProfileSchema(Schema):
     bio=fields.Str(required=False,validate=validate.Length(max=200))

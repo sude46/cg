@@ -145,10 +145,14 @@ class CurrentUser(Resource):
 
 @api.route('/<int:user_id>')
 class UserProfile(Resource):
+    @api.doc(description='获取用户公开资料', params={'user_id': '用户ID'})
+    @api.response(200, '获取成功')
+    @jwt_required(optional=True)
     def get(self,user_id):
-        """获取用户公开资料"""
-        data=AuthService.get_public_profile(user_id)
-        return {'code':0,'message':'success','data':data}
+        """获取用户公开资料（未登录也可访问）"""
+        current_user_id=get_jwt_identity()
+        result=AuthService.get_public_profile(user_id,current_user_id)
+        return success_response(data=result,message='获取用户资料成功'),200
 
 @api.route('/logout')
 class Logout(Resource):

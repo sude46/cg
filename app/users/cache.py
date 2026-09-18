@@ -34,6 +34,9 @@ class UserCache:
     @classmethod
     def _email_key(cls,email:str):
         return f'user:email:{email.lower()}'
+    @classmethod
+    def _public_key(cls,user_id:int):
+        return f'user:public:{user_id}'
 
     #=========================敏感数据过滤=================
     # 防御纵深（Defense-in-Depth）：
@@ -76,12 +79,36 @@ class UserCache:
 
     @classmethod
     def invalidate(cls,user_id:int):
-        '''删除用户资料缓存'''
+        '''删除用户资料缓存（含公开资料缓存）'''
         try:
             redis_cache.delete(cls._profile_key(user_id))
+            redis_cache.delete(cls._public_key(user_id))
             return True
         except Exception as e:
             logger.error(f'删除用户{user_id}缓存失败:{e}')
+            return False
+
+    @classmethod
+    def get_public_profile(cls,user_id:int):
+        '''读用户公开资料缓存（脱敏，独立 key，不复用含 email 的 profile）'''
+        try:
+            return redis_cache.get(cls._public_key(user_id),for_write=False)
+        except Exception as e:
+            logger.error(f'获取用户{user_id}公开资料缓存失败:{e}')
+            return None
+
+    @classmethod
+    def set_public_profile(cls,user_id:int,data:dict):
+        '''写用户公开资料缓存'''
+        try:
+            return redis_cache.set(
+                cls._public_key(user_id),
+                data,
+                expire=cls.PROFILE_TTL,
+                for_write=True
+            )
+        except Exception as e:
+            logger.error(f'设置用户{user_id}公开资料缓存失败:{e}')
             return False
 
 

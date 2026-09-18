@@ -139,13 +139,29 @@ class AuthService:
         return {'user': serialized_user}
 
     @staticmethod
-    def get_public_profile(self,user_id:int):
-        """按id获取用户公开资料"""
+    def get_public_profile(target_id:int,current_user_id:int | None=None) -> dict:
+        """获取用户公开资料（脱敏；公开资料走独立缓存，不复用含 email 的 profile）"""
+        from app.follows.services import FollowService
+
         from ..schemas import public_user_schema
-        user=user_repository.get_by_id(user_id)
-        if not user or user.is_deleted:
-           raise ResourceNotFoundError("用户不存在")
-        return {'user':public_user_schema.dump(user)}
+
+        profile=UserCache.get_public_profile(target_id)
+        if not profile:
+            force_master=UserCache.is_recently_modified(target_id)
+            user=user_repository.get_by_id(target_id,force_master=force_master)
+            if not user or not getattr(user,'is_active',True):
+                raise ResourceNotFoundError('用户不存在')
+            profile=public_user_schema.dump(user)
+            profile['post_count']=user.posts.filter_by(deleted_at=None).count()
+            UserCache.set_public_profile(target_id,profile)
+
+        if current_user_id:
+            profile['is_me']=(int(current_user_id)==int(target_id))
+            profile['is_following']=(
+                False if profile['is_me']
+                else FollowService.is_following(int(current_user_id),target_id)
+            )
+        return {'user':profile}
 
     @staticmethod
     def update_profile(self,user_id:int,data:dict):
