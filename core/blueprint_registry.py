@@ -8,6 +8,7 @@ def register_all_blueprints(app):
         ("app.notifications", "notifications_bp", ""),
         ("app.users", "users_bp", ""),
         ("app.feeds", "feeds_bp", ""),
+        ("app.uploads", "uploads_bp", ""),
     ]
 
     for module_path, bp_name, url_prefix in blueprint_configs:

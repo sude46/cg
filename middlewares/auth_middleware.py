@@ -99,7 +99,7 @@ def is_public_route(path:str,method:str=None):
             return True
 
     #前缀匹配
-    public_prefixes=['/auth','/api/auth','/health']
+    public_prefixes=['/auth','/api/auth','/health','/uploads/files']
     for prefix in public_prefixes:
         if path==prefix or path.startswith(prefix+'/'):
             return True

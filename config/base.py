@@ -114,6 +114,15 @@ class BaseConfig:
     def UPLOAD_FOLDER(self):
         return os.path.join(PROJECT_ROOT, 'app', 'static', 'uploads')
 
+    # 存储后端：local（本地磁盘）；后续可扩展 s3/minio
+    STORAGE_BACKEND = os.getenv('STORAGE_BACKEND', 'local')
+    # 图片回显基址（local 默认 /uploads/files；生产可指向 CDN/OSS）
+    STORAGE_PUBLIC_BASE = os.getenv('STORAGE_PUBLIC_BASE', 'http://localhost:5000/uploads/files')
+    # 单图大小上限（默认 5MB）
+    UPLOAD_MAX_BYTES = int(os.getenv('UPLOAD_MAX_BYTES', str(5 * 1024 * 1024)))
+    # 允许的图片 MIME（禁止 svg）
+    UPLOAD_ALLOWED_TYPES = {'image/jpeg', 'image/png', 'image/webp', 'image/gif'}
+
     # ==================== 安全配置（基础设施）====================
     BCRYPT_LOG_ROUNDS = int(os.getenv('BCRYPT_LOG_ROUNDS', 12))
     SESSION_COOKIE_SECURE = False
