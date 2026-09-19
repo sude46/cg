@@ -1,6 +1,7 @@
 import logging
+import time
 
-from flask_jwt_extended import create_access_token, create_refresh_token
+from flask_jwt_extended import create_access_token, create_refresh_token, decode_token
 
 from app.common.database import utcnow
 from app.common.exceptions import AuthenticationError, ResourceNotFoundError, ValidationError
@@ -8,6 +9,7 @@ from app.users.cache import UserCache
 from app.users.repositories import user_repository
 from core import db
 from core.metrics import USER_OPERATIONS
+from core.redis_cache import redis_cache
 from core.security import security_manager
 
 from ..schemas import UserSchema
@@ -19,6 +21,50 @@ logger = logging.getLogger(__name__)
 
 
 class AuthService:
+    # ============ Refresh Token 轮换 / 复用检测 ============
+    # 会话族：一次登录一个 fid；Redis 保存当前有效的 refresh jti
+    REFRESH_FAMILY_KEY = 'refresh:{fid}'
+    # 宽限窗口：旧 refresh 在窗口内重用视为网络重试/多 tab，返回与新 token 相同的结果
+    REFRESH_GRACE_KEY = 'refresh:{fid}:grace:{jti}'
+    AUTH_VER_KEY = 'auth:ver:{uid}'
+    REFRESH_GRACE_SECONDS = 20
+
+    @staticmethod
+    def _refresh_ttl() -> int:
+        from flask import current_app
+        exp = current_app.config.get('JWT_REFRESH_TOKEN_EXPIRES')
+        return int(exp.total_seconds()) if hasattr(exp, 'total_seconds') else int(exp or 30 * 86400)
+
+    @staticmethod
+    def _auth_version(user_id: int) -> int:
+        """用户 token 版本号；Redis 不可用时降级为 0。"""
+        try:
+            return int(redis_cache.get(AuthService.AUTH_VER_KEY.format(uid=user_id), for_write=True) or 0)
+        except Exception as e:
+            logger.warning('读取 token_version 失败（降级为0）: %s', e)
+            return 0
+
+    @staticmethod
+    def _start_session(user) -> dict:
+        """登录/注册建立会话：签发 access+refresh（含 fid/ver）并登记 family。"""
+        from uuid import uuid4
+        fid = uuid4().hex
+        ver = AuthService._auth_version(user.id)
+        access = create_access_token(identity=user.id, additional_claims={'ver': ver, 'fid': fid})
+        refresh = create_refresh_token(identity=user.id, additional_claims={'ver': ver, 'fid': fid})
+        try:
+            jti = decode_token(refresh)['jti']
+            redis_cache.set_exact(
+                AuthService.REFRESH_FAMILY_KEY.format(fid=fid), jti, AuthService._refresh_ttl()
+            )
+        except Exception as e:
+            logger.warning('登记 refresh 会话失败（降级，不轮换）: %s', e)
+        return {
+            'access_token': access,
+            'refresh_token': refresh,
+            'token_type': 'bearer',
+            'expires_in': 3600,
+        }
 
     @staticmethod
     def register_user(username: str, email: str, password: str):
@@ -46,13 +92,11 @@ class AuthService:
         UserCache.set_by_email(user.email, user.id)
         UserCache.mark_recently_modified(user.id, ttl=5)
         USER_OPERATIONS.labels(action='register', result='success').inc()
+        tokens = AuthService._start_session(user)
         return {
             'message': '用户注册成功',
             'user': serialized_user,
-            'access_token': create_access_token(identity=user.id),
-            'refresh_token': create_refresh_token(identity=user.id),
-            'token_type': 'bearer',
-            'expires_in': 3600,
+            **tokens,
         }
 
     @staticmethod
@@ -75,8 +119,6 @@ class AuthService:
         except Exception:
             db.session.rollback()
 
-        access_token = create_access_token(identity=user.id)
-        refresh_token = create_refresh_token(identity=user.id)
         user_schema = UserSchema()
         serialized_user = user_schema.dump(user)
 
@@ -84,13 +126,8 @@ class AuthService:
         UserCache.mark_recently_modified(user.id, ttl=5)
 
         USER_OPERATIONS.labels(action='login', result='success').inc()
-        return {
-            'access_token': access_token,
-            'refresh_token': refresh_token,
-            'token_type': 'bearer',
-            'expires_in': 3600,
-            'user': serialized_user,
-        }
+        tokens = AuthService._start_session(user)
+        return {**tokens, 'user': serialized_user}
 
     @staticmethod
     def generate_password_reset_token(user_id: int):
@@ -114,13 +151,101 @@ class AuthService:
         return {'message': '密码重置成功'}
 
     @staticmethod
-    def refresh_token(user_id: int) -> dict:
-        user = user_repository.get_by_id(user_id)
+    def refresh_tokens(user_id: int, claims: dict) -> dict:
+        """刷新令牌：轮换 + 复用检测（带宽限窗口；Redis 故障时降级不轮换）。"""
+        fid = claims.get('fid')
+        old_jti = claims.get('jti')
+        ver = int(claims.get('ver', 0) or 0)
+        if not fid or not old_jti:
+            # 老 token 无 fid，无法追踪族，强制重新登录
+            raise AuthenticationError('登录状态已失效，请重新登录')
+
+        user = user_repository.get_by_id(user_id, force_master=True)
         if not user or not getattr(user, 'is_active', True):
             raise AuthenticationError('用户不存在或被禁用')
-        access_token = create_access_token(identity=user_id)
+
+        # 全局版本校验（改密/封禁后旧 token 全失效）；Redis 故障时降级跳过
+        try:
+            current_ver = int(
+                redis_cache.get(AuthService.AUTH_VER_KEY.format(uid=user_id), for_write=True) or 0
+            )
+            if ver != current_ver:
+                raise AuthenticationError('登录状态已失效，请重新登录')
+        except AuthenticationError:
+            raise
+        except Exception as e:
+            logger.error('Redis 不可用，refresh 降级：跳过 token_version 校验: %s', e)
+
+        family_key = AuthService.REFRESH_FAMILY_KEY.format(fid=fid)
+        grace_key = AuthService.REFRESH_GRACE_KEY.format(fid=fid, jti=old_jti)
+
+        new_access = create_access_token(
+            identity=user_id, additional_claims={'ver': ver, 'fid': fid}
+        )
+        new_refresh = create_refresh_token(
+            identity=user_id, additional_claims={'ver': ver, 'fid': fid}
+        )
+        try:
+            new_jti = decode_token(new_refresh)['jti']
+        except Exception:
+            new_jti = ''
+
+        lua = """
+        local cur = redis.call('GET', KEYS[1])
+        if not cur then return -1 end
+        if cur ~= ARGV[1] then return 0 end
+        redis.call('SET', KEYS[1], ARGV[2], 'EX', ARGV[3])
+        return 1
+        """
+        try:
+            r = redis_cache.eval(lua, 1, family_key, old_jti, new_jti, AuthService._refresh_ttl())
+        except Exception as e:
+            # 条件②：Redis 故障降级——只发新 access，不做轮换
+            logger.error('Redis 不可用，refresh 降级为不轮换: %s', e)
+            return {'access_token': new_access, 'token_type': 'bearer', 'expires_in': 3600}
+
+        if r == -1:
+            raise AuthenticationError('登录已过期，请重新登录')
+
+        if r == 0:
+            # 条件①：疑似复用 -> 宽限期内返回与上次轮换相同的结果
+            cached = AuthService._get_grace_result(grace_key)
+            if cached:
+                return cached
+            time.sleep(0.05)  # 极端并发：给获胜请求写入宽限结果的时间
+            cached = AuthService._get_grace_result(grace_key)
+            if cached:
+                return cached
+            # 超过宽限窗口：判定复用攻击，整族作废
+            try:
+                redis_cache.delete(family_key)
+            except Exception:
+                pass
+            logger.warning('refresh token 复用 detected: user=%s fid=%s', user_id, fid)
+            raise AuthenticationError('检测到令牌复用，请重新登录')
+
+        result = {
+            'access_token': new_access,
+            'refresh_token': new_refresh,
+            'token_type': 'bearer',
+            'expires_in': 3600,
+        }
+        try:
+            redis_cache.set_exact(grace_key, result, AuthService.REFRESH_GRACE_SECONDS)
+        except Exception:
+            pass
         USER_OPERATIONS.labels(action='refresh_token', result='success').inc()
-        return {'access_token': access_token, 'token_type': 'bearer', 'expires_in': 3600}
+        return result
+
+    @staticmethod
+    def _get_grace_result(grace_key: str):
+        try:
+            cached = redis_cache.get(grace_key, for_write=True)
+            if isinstance(cached, dict) and cached.get('access_token'):
+                return cached
+        except Exception:
+            pass
+        return None
 
     @staticmethod
     def get_current_user(user_id: int) -> dict:
@@ -212,7 +337,11 @@ class AuthService:
             logger.error(f"修改密码失败:{e}")
             raise DatabaseError("修改密码失败")
         UserCache.double_invalidate(user.id)
-        # TODO(doc08): 改密后吊销所有 refresh token（待 token 轮换/版本号实现）
+        # 改密后提升 token_version：所有旧 access/refresh 立即失效（前端需重新登录）
+        try:
+            redis_cache.increment(AuthService.AUTH_VER_KEY.format(uid=user.id))
+        except Exception as e:
+            logger.error('提升 token_version 失败（改密后旧 token 可能未失效）: %s', e)
         USER_OPERATIONS.labels(action='change_password', result='success').inc()
         return {'message':'密码修改成功'}
 

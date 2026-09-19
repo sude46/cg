@@ -82,6 +82,15 @@ class RedisCache:
             current_app.logger.error(f'Redis set error:{e}')
             return False
 
+    def set_exact(self,key:str,value:Any,expire:int):
+        '''不带随机抖动的 setex（token/游标等需精确 TTL）'''
+        client=self._get_client(for_write=True)
+        if not client:
+            return False
+        if isinstance(value,(dict,list)):
+            value=json.dumps(value,ensure_ascii=False)
+        return client.setex(key,expire,value)
+
     #=========cache_through(防击穿)
     def cache_through(self,key:str,loader,expire:int=300,for_write:bool=False,lock_timeout:int=10):
         '''

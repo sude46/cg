@@ -103,11 +103,13 @@ class TestAuthService:
 
     def test_token_refresh(self, app, db_session, mock_redis):
         """测试刷新令牌返回新的access_token"""
+        from flask_jwt_extended import decode_token
         with app.app_context():
             username = f"refresh_{uuid.uuid4().hex[:8]}"
             email = f'{username}@example.com'
-            user = AuthService.register_user(username, email, "Str0ng!Pass")["user"]
-            result = AuthService.refresh_token(user["id"])
+            reg = AuthService.register_user(username, email, "Str0ng!Pass")
+            claims = decode_token(reg["refresh_token"])
+            result = AuthService.refresh_tokens(reg["user"]["id"], claims)
             assert "access_token" in result
             assert result["token_type"] == "bearer"
             assert result["expires_in"] == 3600

@@ -318,6 +318,15 @@ class FakeRedisClient:
         keys = list(keys_and_args[:numkeys])
         args = list(keys_and_args[numkeys:])
         s = script.lower().replace(' ', '').replace('\n', '')
+        # refresh 轮换 CAS：GET 比较后 SET EX
+        if "redis.call('set'" in s and "redis.call('get'" in s and 'ex' in s:
+            cur = self.get(keys[0])
+            if cur is None:
+                return -1
+            if cur != args[0]:
+                return 0
+            self.setex(keys[0], int(args[2]), args[1])
+            return 1
         # LIKE INCR: sismember -> 不存在则 sadd + incr
         if 'sadd' in s and 'sismember' in s:
             member = args[0]

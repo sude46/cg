@@ -179,6 +179,16 @@ def init_auth_middleware(app):
             #用户状态校验
             if not getattr(user,'is_active',True):
                 raise AuthenticationError('用户已被禁用')
+            # token_version 校验（改密/封禁后旧 access 失效）；Redis 故障时降级跳过
+            try:
+                from core.redis_cache import redis_cache
+                cur_ver=int(redis_cache.get(f'auth:ver:{user_id}',for_write=True) or 0)
+                if int(jwt_data.get('ver',0) or 0)!=cur_ver:
+                    raise AuthenticationError('登录状态已失效，请重新登录')
+            except AuthenticationError:
+                raise
+            except Exception as e:
+                logger.warning(f'Redis 不可用，跳过 token_version 校验: {e}')
             #注入全局对象
             g.current_user=user
         except NoAuthorizationError:

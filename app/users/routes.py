@@ -133,8 +133,8 @@ class RefreshToken(Resource):
     def post(self):
         '''刷新访问令牌'''
         current_user_id=get_jwt_identity()
-
-        result=AuthService.refresh_token(current_user_id)
+        claims=get_jwt()
+        result=AuthService.refresh_tokens(current_user_id, claims)
         return success_response(data=result,message='令牌刷新成功'),200
 
 
@@ -202,6 +202,14 @@ class Logout(Resource):
         now = datetime.now(UTC).timestamp()
         remain_seconds = max(0, int(exp - now))
         current_app.revoke_token(jti,remain_seconds)
+        # 作废该设备的 refresh 会话族
+        fid = jwt_payload.get('fid')
+        if fid:
+            try:
+                from core.redis_cache import redis_cache
+                redis_cache.delete(f'refresh:{fid}')
+            except Exception as e:
+                current_app.logger.warning(f'删除 refresh 会话失败: {e}')
             # 4. 返回统一响应
         return success_response(
                 data=None,

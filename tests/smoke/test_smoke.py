@@ -64,7 +64,7 @@ def _new_user(seq):
 
 def test_full_core_chain():
     # 1. 注册两个用户
-    _, _, t1, uid1 = _new_user(1)
+    _, p1, t1, uid1 = _new_user(1)
     _, _, t2, uid2 = _new_user(2)
 
     # 2. 用户1发帖
@@ -121,5 +121,11 @@ def test_full_core_chain():
     code, err = _expect('DELETE', '/users/login', codes=(405,))
     assert err.get('code') == 10009, f'405 业务码应为 10009: {err}'
     assert 'request_id' in err, f'405 缺少 request_id: {err}'
+
+    # 11. 改密后旧 access 立即失效（token_version 提升）
+    _expect('PUT', '/users/me/password', token=t1,
+            body={'old_password': p1, 'new_password': 'Smoke@2026z'})
+    code, _ = _request('GET', '/users/me', token=t1)
+    assert code == 401, f'改密后旧 access 应 401，实际 {code}'
 
     print(f'SMOKE OK: 全链路通过 (user1={uid1}, user2={uid2}, post={pid})')
