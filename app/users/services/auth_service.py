@@ -297,22 +297,44 @@ class AuthService:
 
     @staticmethod
     def update_profile(user_id:int,data:dict) -> dict:
-        """更新当前用户资料（bio/avatar_url）"""
+        """更新当前用户资料（bio/avatar_url/username/email）"""
         from app.common.exceptions import DatabaseError
         user=user_repository.get_by_id(user_id,force_master=True)
         if not user or not getattr(user,'is_active',True):
             raise ResourceNotFoundError("用户不存在")
+
+        old_username=user.username
+        old_email=user.email
+        new_username=(data.get('username') or '').strip() or None
+        new_email=(data.get('email') or '').strip() or None
+
+        if new_username and new_username!=old_username:
+            if user_repository.get_by_username(new_username,force_master=True):
+                raise ValidationError('用户名已存在')
+            user.username=new_username
+        if new_email and new_email!=old_email:
+            if user_repository.get_by_email(new_email,force_master=True):
+                raise ValidationError('邮箱已存在')
+            user.email=new_email
         if "bio" in data:
             user.bio=data['bio']
         if 'avatar_url' in data:
             user.avatar_url=data['avatar_url']
+
         try:
             db.session.commit()
         except Exception as e:
             db.session.rollback()
             logger.error(f"更新资料失败:{e}")
             raise DatabaseError("更新资料失败")
-        UserCache.double_invalidate(user.id)
+
+        # 失效 profile/public + 旧/新用户名、邮箱索引
+        UserCache.double_invalidate(user.id,username=old_username,email=old_email)
+        if new_username:
+            UserCache.invalidate_by_username(new_username)
+        if new_email:
+            UserCache.invalidate_by_email(new_email)
+        UserCache.mark_recently_modified(user.id,ttl=5)
         USER_OPERATIONS.labels(action='update_profile', result='success').inc()
         return {'user':UserSchema().dump(user)}
 

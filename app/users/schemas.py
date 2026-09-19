@@ -89,13 +89,15 @@ class PublicUserSchema(Schema):
     created_at=UTCDateTime(dump_only=True)
 
 class UpdateProfileSchema(Schema):
+    username=fields.Str(required=False,validate=validate.Length(min=4,max=50,error='用户名长度必须在4-50字符之间'))
+    email=fields.Email(required=False,error_messages={'invalid':'邮箱格式无效'})
     bio=fields.Str(required=False,validate=validate.Length(max=200))
     avatar_url=fields.Str(required=False,validate=validate.Length(max=500))
 
     @validates_schema
     def at_least_one(self,data,**kwargs):
-        if 'bio' not in data and 'avatar_url' not in data:
-            raise ValidationError("至少提供一个要修改的字段(bio/avatar_url)")
+        if not any(k in data for k in ('username','email','bio','avatar_url')):
+            raise ValidationError("至少提供一个要修改的字段")
 
 
 update_profile_schema=UpdateProfileSchema()
