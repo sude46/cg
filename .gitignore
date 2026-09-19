@@ -21,5 +21,8 @@ logs/
 elasticsearch/
 *.zip
 
+# 上传的图片（本地存储，运行时生成，不入库）
+app/static/uploads/
+
 # 系统垃圾
 .DS_Store
