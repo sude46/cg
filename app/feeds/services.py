@@ -6,6 +6,7 @@ from app.posts.schemas import posts_schema
 from core.metrics import FEED_OPERATIONS, REDIS_HIT_RATE
 
 from .cache import FeedCache
+from .cursor import decode_cursor
 from .repository import FeedRepository
 
 logger=logging.getLogger(__name__)
@@ -26,59 +27,52 @@ class FeedService:
 
 
     @classmethod
-    def get_timeline(cls,user_id:int,page:int=1,per_page:int=20):
+    def get_timeline(cls,user_id:int,cursor=None,limit:int=20):
         '''
-        获取用户时间线
+        获取用户时间线（游标分页）
         策略：
-        1.先读redis缓存
-        2.缓存命中->批量查询数据库->按缓存顺序排序->返回
-        3.缓存未命中->数据库拉取->回填缓存->返回
-
+        1.先读 redis 缓存（按 score 游标）
+        2.缓存命中 -> 批量查库按序返回
+        3.缓存未命中 -> DB keyset 拉取 -> 回填缓存
+        cursor: 上一页返回的 next_cursor；首页传 None
         '''
         try:
+            limit=min(max(1,limit),cls.MAX_PRE_PAGE)
+            cur=decode_cursor(cursor)
 
-            #参数校验
-            page=max(1,page)
-            per_page=min(max(1,per_page),cls.MAX_PRE_PAGE)
+            #===========第一步：尝试从Redis拉取============
+            result=FeedCache.pull_feed_by_cursor(user_id,cur,limit)
 
-            #===========第一步：尝试从Redist拉取============
-            cached_ids=FeedCache.pull_feed(user_id,page,per_page)
-
-            #情况1：缓存命中且有数据
-            if cached_ids is not None and len(cached_ids)>0:
+            #情况1：缓存命中
+            if result is not None:
+                cached_ids,next_cursor,has_more=result
                 REDIS_HIT_RATE.labels(cache_type='feed').set(1)
+                if not cached_ids:
+                    FEED_OPERATIONS.labels(action='timeline', result='success').inc()
+                    return {'items':[],'next_cursor':None,'has_more':False,'source':'empty'}
                 posts=cls._get_posts_by_ids(cached_ids)
+                FEED_OPERATIONS.labels(action='timeline', result='success').inc()
                 return {
                         'items':posts_schema.dump(posts),
-                        'source':'cache',
-                        'total':len(posts),
-                        'page':page,
-                        'has_more':len(cached_ids)>=per_page
+                        'next_cursor':next_cursor,
+                        'has_more':has_more,
+                        'source':'cache'
                     }
-            #情况2 ：缓存命中但为空列表（用户未关注任何人，或关注的人都没发帖）
-            if cached_ids is not None and len(cached_ids)==0:
-                REDIS_HIT_RATE.labels(cache_type='feed').set(1)
-                return {
-                        'items':[],
-                        'source':'empty',
-                        'total':0,
-                        'page':page,
-                        'has_more':False
-                    }
-            #情况3：缓存未命中，走数据库拉取
-            result=cls._pull_from_database(user_id,page,per_page)
+
+            #情况2：缓存未命中，走数据库 keyset
+            posts,has_more,nc=FeedRepository.get_following_posts_cursor(user_id,cur,limit)
             REDIS_HIT_RATE.labels(cache_type='feed').set(0)
-
-            #回填缓存（使用ORM对象）
-            if result['items']:
-                    cls._backfill_cache(user_id,result['items'])
+            if posts:
+                    cls._backfill_cache(user_id,posts)
             else:
-                    #数据库也没有，设置空缓存标记防穿透）
                     FeedCache.set_empty_cache(user_id)
-            result['items']=posts_schema.dump(result['items'])
-
             FEED_OPERATIONS.labels(action='timeline', result='success').inc()
-            return result
+            return {
+                    'items':posts_schema.dump(posts),
+                    'next_cursor':nc,
+                    'has_more':has_more,
+                    'source':'db'
+                }
         except Exception:
             FEED_OPERATIONS.labels(action='timeline', result='failed').inc()
             raise
@@ -122,25 +116,6 @@ class FeedService:
             raise
 
 
-    @classmethod
-    def _pull_from_database(cls,user_id:int,page:int,per_page:int=20):
-        '''
-         从数据库实时拉去关注用户的帖子（拉模式核心）
-        '''
-        offset=(page-1)*per_page
-        posts, total = FeedRepository.get_following_posts(
-            user_id=user_id,
-            offset=offset,
-            limit=per_page
-        )
-        has_more=len(posts)>=per_page
-        return {
-            'items': posts,
-            'source': 'db',
-            'total': total,
-            'page': page,
-            'has_more': has_more
-        }
     @classmethod
     def _backfill_cache(cls,user_id:int,posts):
         '''
@@ -308,7 +283,7 @@ class FeedService:
         FeedCache.invalidate_feed(user_id)
 
         # 重新加载第一页
-        result = cls.get_timeline(user_id, page=1, per_page=cls.DEFAULT_PER_PAGE)
+        result = cls.get_timeline(user_id, cursor=None, limit=cls.DEFAULT_PER_PAGE)
 
         return {
             'user_id': user_id,

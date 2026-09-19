@@ -187,6 +187,14 @@ class RedisCache:
         if not client:
             return []
         return client.zrevrange(key,start,end,withscores=withscores)
+    def zrevrangebyscore(self,key:str,max_score,min_score,start:int=0,num:int=None,withscores:bool=False):
+        '''Sorted set按分数倒序获取（feed 游标分页用；只读走副本）'''
+        client = self._get_client(for_write=False)
+        if not client:
+            return []
+        return client.zrevrangebyscore(
+            key,max_score,min_score,start=start,num=num,withscores=withscores
+        )
     def zrem(self,key:str,*members):
         '''Sorted set删除成员'''
         client = self._get_client(for_write=True)

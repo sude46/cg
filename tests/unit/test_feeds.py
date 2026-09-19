@@ -15,7 +15,7 @@ class TestFeedService:
             FeedCache.add_post_to_feed(user.id, str(p1.id), 1719820800)
             FeedCache.add_post_to_feed(user.id, str(p2.id), 1719820801)
 
-            result = FeedService.get_timeline(user.id, page=1, per_page=10)
+            result = FeedService.get_timeline(user.id, limit=10)
             assert result["source"] == "cache"
             assert len(result["items"]) == 2
 
@@ -24,7 +24,7 @@ class TestFeedService:
         with app.app_context():
             user = UserFactory()
             FeedCache.set_empty_cache(user.id)
-            result = FeedService.get_timeline(user.id, page=1, per_page=10)
+            result = FeedService.get_timeline(user.id, limit=10)
             assert result["source"] == "empty"
             assert result["items"] == []
             assert result["has_more"] is False
@@ -36,9 +36,30 @@ class TestFeedService:
             author = UserFactory()
             PostFactory(author=author)
             FollowService.follow_user(user.id, author.id)
-            result = FeedService.get_timeline(user.id, page=0, per_page=10)
+            result = FeedService.get_timeline(user.id, limit=10)
             assert result["source"] == "db"
             assert len(result["items"]) >= 0
+
+    def test_get_timeline_cursor_pagination(self, app, db_session, mock_redis):
+        """游标翻页不重复、不遗漏"""
+        with app.app_context():
+            user = UserFactory()
+            p1, p2, p3 = PostFactory(), PostFactory(), PostFactory()
+            FeedCache.add_post_to_feed(user.id, str(p1.id), 1719820800)
+            FeedCache.add_post_to_feed(user.id, str(p2.id), 1719820801)
+            FeedCache.add_post_to_feed(user.id, str(p3.id), 1719820802)
+
+            first = FeedService.get_timeline(user.id, limit=2)
+            assert first["source"] == "cache"
+            assert first["has_more"] is True
+            assert first["next_cursor"]
+            assert first["items"][0]["id"] == p3.id  # 最新的在前
+
+            second = FeedService.get_timeline(user.id, cursor=first["next_cursor"], limit=2)
+            ids1 = {p["id"] for p in first["items"]}
+            ids2 = {p["id"] for p in second["items"]}
+            assert not (ids1 & ids2), "翻页不可重复"
+            assert ids1 | ids2 == {p1.id, p2.id, p3.id}, "翻页不可遗漏"
 
     def test_publish_post_push_mode(self, app, db_session, mock_redis):
         """普通用户发帖，推模式推送粉丝"""

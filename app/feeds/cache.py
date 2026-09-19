@@ -8,6 +8,9 @@ from datetime import UTC, datetime
 
 from core.redis_cache import redis_cache
 
+from .cursor import encode_cursor
+from .cursor import score_for as _score
+
 logger=logging.getLogger(__name__)
 
 def _to_timestamp(value) -> float:
@@ -83,7 +86,7 @@ class FeedCache:
 
                 for fid in batch:
                     key = cls._feed_key(fid)
-                    pipe.zadd(key, {str(post_id): created_at})
+                    pipe.zadd(key, {str(post_id): _score(int(created_at), int(post_id))})
                     # 保留最近 MAX_FEED_SIZE 条，超出裁剪
                     pipe.zremrangebyrank(key, 0, -(cls.MAX_FEED_SIZE + 1))
                     pipe.expire(key, expire_seconds)
@@ -140,6 +143,47 @@ class FeedCache:
         except Exception as e:
             logger.error(f"拉取用户{user_id}时间线失败: {e}")
             return None
+
+    @classmethod
+    def pull_feed_by_cursor(cls,user_id:int,cursor,limit:int=20):
+        '''
+        游标拉取时间线（Redis ZSet，按 score 倒序）。
+        cursor: (sec, post_id) 元组或 None（首页）
+        返回 (post_ids, next_cursor, has_more)；None 表示缓存未命中需走 DB。
+        '''
+        key = cls._feed_key(user_id)
+        empty_key = cls._empty_key(user_id)
+        try:
+            if redis_cache.exists(empty_key):
+                return [], None, False
+            if not redis_cache.exists(key):
+                return None
+
+            if cursor is None:
+                max_score = '+inf'
+            else:
+                score, _pid = cursor
+                max_score = f'({float(score)}'  # 开区间，排除上一页最后一条
+
+            rows = redis_cache.zrevrangebyscore(
+                key, max_score, '-inf', start=0, num=limit + 1, withscores=True
+            )
+            has_more = len(rows) > limit
+            rows = rows[:limit]
+            if not rows:
+                return [], None, False
+
+            post_ids = [
+                (m.decode() if isinstance(m, bytes) else str(m)) for m, _ in rows
+            ]
+            next_cursor = (
+                encode_cursor(rows[-1][1], rows[-1][0]) if has_more else None
+            )
+            return post_ids, next_cursor, has_more
+        except Exception as e:
+            logger.error(f"游标拉取用户{user_id}时间线失败: {e}")
+            return None
+
     @classmethod
     def add_post_to_feed(cls,user_id:int,post_id:int,created_at:float):
         '''用户自己发帖也加入自己时间线'''
@@ -148,7 +192,7 @@ class FeedCache:
         try:
             key = cls._feed_key(user_id)
             pipe = redis_cache.pipeline(transaction=False,for_write=True)
-            pipe.zadd(key, {str(post_id): created_at})
+            pipe.zadd(key, {str(post_id): _score(int(created_at), int(post_id))})
             pipe.zremrangebyrank(key, 0, -(cls.MAX_FEED_SIZE + 1))
             pipe.expire(key, cls.FEED_EXPIRE_DAYS * 86400)
             pipe.delete(cls._empty_key(user_id))
@@ -257,7 +301,7 @@ class FeedCache:
             for post in posts:
                 pid = str(post["id"])
                 ts = _to_timestamp(post["created_at"])
-                mapping[pid] = ts
+                mapping[pid] = _score(int(ts), int(pid))
 
             # 用 Pipeline 保证原子性
             pipe = redis_cache.pipeline(transaction=False,for_write=True)

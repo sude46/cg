@@ -143,6 +143,36 @@ class FakeRedisClient:
         slice_items = sorted_items[start:end + 1] if end != -1 else sorted_items[start:]
         return slice_items if withscores else [i[0] for i in slice_items]
 
+    def zrevrangebyscore(self, key, max_score, min_score, start=0, num=None, withscores=False):
+        items = self.store.get(key, {})
+
+        def parse_bound(v):
+            exclusive = isinstance(v, str) and v.startswith('(')
+            s = v[1:] if exclusive else v
+            if s in ('+inf', 'inf'):
+                val = float('inf')
+            elif s == '-inf':
+                val = float('-inf')
+            else:
+                val = float(s)
+            return val, exclusive
+
+        mx, mx_exclusive = parse_bound(max_score)
+        mn, _ = parse_bound(min_score)
+        ordered = sorted(items.items(), key=lambda x: x[1], reverse=True)
+        out = []
+        for member, score in ordered:
+            if score > mx or score < mn:
+                continue
+            if mx_exclusive and score == mx:
+                continue
+            out.append((member, score))
+        if num is not None:
+            out = out[start:start + num]
+        elif start:
+            out = out[start:]
+        return out if withscores else [m for m, _ in out]
+
     def zadd(self, key, mapping, **kwargs):
         if key not in self.store:
             self.store[key] = {}

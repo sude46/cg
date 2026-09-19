@@ -1,9 +1,12 @@
+from sqlalchemy import and_, or_
 from sqlalchemy.orm import joinedload
 
 from app.common.database import get_read_session
 from app.follows.models import Follow
 from app.posts.models import Post
 from core.metrics import monitor_db
+
+from .cursor import encode_cursor, score_for
 
 
 class FeedRepository:
@@ -39,13 +42,10 @@ class FeedRepository:
     #帖子查询
     @staticmethod
     @monitor_db("select","feeds")
-    def get_following_posts(
-        user_id:int,
-        offset:int,
-        limit:int
-    ):
-        '''拉模式核心：查询关注用户的帖子（分页、倒序）
-        返回：（posts_list,total_count）'''
+    def get_following_posts_cursor(user_id:int,cursor,limit:int=20):
+        '''拉模式 keyset 分页：按 (created_at, id) 倒序，返回 (posts, has_more, next_cursor)
+        cursor: (sec, post_id) 元组或 None'''
+        from datetime import UTC, datetime
         session=FeedRepository._read_session()
         query=session.query(Post).join(
             Follow,Post.user_id==Follow.followed_id
@@ -56,11 +56,24 @@ class FeedRepository:
                 Follow.deleted_at.is_(None),
                 Post.deleted_at.is_(None),
                 Post.is_published.is_(True)
-            ).order_by(Post.created_at.desc())
-        total=query.count()
-        posts=query.offset(offset).limit(limit).all()
-        return (posts,total)
-
+            )
+        if cursor is not None:
+            score, id_low = cursor
+            sec = int(float(score))
+            sec_dt = datetime.fromtimestamp(sec, tz=UTC).replace(tzinfo=None)
+            query = query.filter(or_(
+                Post.created_at < sec_dt,
+                and_(Post.created_at == sec_dt, Post.id < int(id_low)),
+            ))
+        rows=query.order_by(Post.created_at.desc(), Post.id.desc()).limit(limit+1).all()
+        has_more=len(rows)>limit
+        rows=rows[:limit]
+        next_cursor=None
+        if has_more and rows:
+            last=rows[-1]
+            sec=int(last.created_at.replace(tzinfo=UTC).timestamp())
+            next_cursor=encode_cursor(score_for(sec, last.id), last.id)
+        return rows, has_more, next_cursor
 
     @staticmethod
     @monitor_db("select","feeds")

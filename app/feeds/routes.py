@@ -2,7 +2,6 @@ from flask import current_app, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from flask_restx import Api, Namespace, Resource, fields
 
-from utils.pagination import get_pagination_params
 from utils.response import ResponseCode, fail_response, success_response
 
 from . import feeds_bp
@@ -34,10 +33,10 @@ publish_model=api.model('FeedPublish',{
     'created_at':fields.Float(required=True,description='帖子创建时间戳'),
 })
 
-#分页参数
+#分页参数（游标）
 feed_parser=api.parser()
-feed_parser.add_argument('page',type=int,default=1,help='页码',location='args')
-feed_parser.add_argument('per_page',type=int,default=20,help='每页数量(默认20，最大100)',location='args')
+feed_parser.add_argument('cursor',type=str,default=None,help='上一页返回的 next_cursor；首页不传',location='args')
+feed_parser.add_argument('limit',type=int,default=20,help='每页数量(默认20，最大100)',location='args')
 
 
 @api.route('/timeline')
@@ -47,17 +46,16 @@ class TimelineResource(Resource):
     @api.response(200,'获取时间线成功')
     @jwt_required()
     def get(self):
-        '''获取当前用户的时间线（分页）'''
+        '''获取当前用户的时间线（游标分页）'''
         current_user_id=get_jwt_identity()
-        feed_parser.parse_args()
-        page,per_page=get_pagination_params(default_per_page=20)
+        args=feed_parser.parse_args()
         current_app.logger.info(
-            f'用户{current_user_id}获取时间线，页码:{page},每页数量:{per_page}'
+            f'用户{current_user_id}获取时间线，cursor={args.get("cursor")},limit={args.get("limit")}'
         )
         result=FeedService.get_timeline(
             user_id=current_user_id,
-            page=page,
-            per_page=per_page
+            cursor=args.get('cursor'),
+            limit=args.get('limit', 20),
         )
         return success_response(data=result,message='获取时间线成功'),200
 

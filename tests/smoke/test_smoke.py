@@ -107,6 +107,7 @@ def test_full_core_chain():
     feed = data['data']
     items = feed.get('items') or []
     assert isinstance(items, list), 'feed items 不是 list'
+    assert 'next_cursor' in feed, 'feed 缺少 next_cursor'
     for it in items:
         assert isinstance(it, dict), f'feed 返回了未序列化的对象: {type(it)}'
         assert 'created_at' in it, 'feed 帖子缺少 created_at'
