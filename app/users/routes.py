@@ -8,7 +8,8 @@ from flask_restx import Api, Namespace, Resource, fields
 from middlewares import route_limit
 from utils.decorators import validate_json
 from utils.formatters import desensitize_data, desensitize_token
-from utils.response import success_response
+from utils.pagination import get_pagination_params
+from utils.response import ResponseCode, fail_response, paginated_response, success_response
 
 from . import users_bp
 from .schemas import (
@@ -157,6 +158,21 @@ class CurrentUser(Resource):
         data = getattr(g, 'validated_json', request.get_json())
         result = AuthService.update_profile(get_jwt_identity(), data)
         return success_response(data=result, message='资料更新成功'), 200
+
+@api.route('/search')
+class UserSearch(Resource):
+    @api.doc(description='按用户名搜索用户', params={'q': '关键词', 'page': '页码', 'per_page': '每页数量'})
+    @api.response(200, '搜索成功')
+    @jwt_required(optional=True)
+    def get(self):
+        """按用户名搜索用户（结果脱敏，不含 email）"""
+        keyword = request.args.get('q', '').strip()
+        if not keyword:
+            return fail_response(ResponseCode.VALIDATION_ERROR, '搜索关键词不能为空'), 400
+        page, per_page = get_pagination_params()
+        result = AuthService.search_users(keyword, page=page, per_page=per_page)
+        return paginated_response(result['items'], result['pagination'], message='搜索用户成功'), 200
+
 
 @api.route('/<int:user_id>')
 class UserProfile(Resource):

@@ -150,6 +150,28 @@ class MutualFollowList(Resource):
                     per_page=per_page
                     )
         return paginated_response(result['items'], result['pagination'], message='获取成功'),200
+@api.route('/users/<int:user_id>/following')
+class UserFollowingList(Resource):
+    @api.doc(description='获取指定用户关注的人', params={'user_id': '用户ID', 'page': '页码', 'per_page': '每页数量'})
+    @api.response(200, '获取成功')
+    @jwt_required(optional=True)
+    def get(self, user_id):
+        page, per_page = get_pagination_params()
+        result = FollowService.get_following(user_id=user_id, page=page, per_page=per_page)
+        return paginated_response(result['items'], result['pagination'], message='获取成功'), 200
+
+
+@api.route('/users/<int:user_id>/followers')
+class UserFollowerList(Resource):
+    @api.doc(description='获取指定用户的粉丝', params={'user_id': '用户ID', 'page': '页码', 'per_page': '每页数量'})
+    @api.response(200, '获取成功')
+    @jwt_required(optional=True)
+    def get(self, user_id):
+        page, per_page = get_pagination_params()
+        result = FollowService.get_followers(user_id=user_id, page=page, per_page=per_page)
+        return paginated_response(result['items'], result['pagination'], message='获取成功'), 200
+
+
 api_restx.add_namespace(api)
 
 

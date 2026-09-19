@@ -78,10 +78,11 @@ class UserRepository:
     @staticmethod
     @monitor_db("select", "users")
     def search_by_keyword(keyword: str, page: int = 1, per_page: int = 20):
-        """根据关键词搜索用户（排除已删除）"""
+        """根据关键词搜索用户（排除已删除，转义 LIKE 通配符）"""
         session = UserRepository._read_session()
+        escaped = (keyword or '').replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_')
         query = session.query(User).filter(
-            User.username.ilike(f'%{keyword}%'),
+            User.username.ilike(f'%{escaped}%', escape='\\'),
             User.deleted_at.is_(None)
         ).order_by(User.username)
         result = pagination_utils.paginate(query, page=page, per_page=per_page)

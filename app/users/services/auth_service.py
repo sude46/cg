@@ -215,3 +215,14 @@ class AuthService:
         # TODO(doc08): 改密后吊销所有 refresh token（待 token 轮换/版本号实现）
         USER_OPERATIONS.labels(action='change_password', result='success').inc()
         return {'message':'密码修改成功'}
+
+    @staticmethod
+    def search_users(keyword: str, page: int = 1, per_page: int = 20) -> dict:
+        """按用户名搜索用户（脱敏，绝不返回 email）。"""
+        from ..schemas import public_user_schema
+
+        keyword = (keyword or '').strip()[:50]
+        result = user_repository.search_by_keyword(keyword, page=page, per_page=per_page)
+        items = public_user_schema.dump(result.get('items', []), many=True)
+        USER_OPERATIONS.labels(action='search', result='success').inc()
+        return {'items': items, 'pagination': result.get('pagination', {})}
