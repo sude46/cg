@@ -10,6 +10,7 @@ from app.common.exceptions import (
 )
 from app.feeds.cache import FeedCache
 from app.users.repositories import user_repository
+from app.users.schemas import public_user_schema
 from core import db
 from core.metrics import FOLLOW_OPERATIONS
 
@@ -119,7 +120,8 @@ class FollowService:
                 raise ResourceNotFoundError('用户不存在或已被禁用')
 
             result = follow_repository.list_following(user_id, page=page, per_page=per_page)
-            items = follow_response_schema.dump(result.get('items', []), many=True)
+            users = [f.followed for f in result.get('items', []) if f.followed]
+            items = public_user_schema.dump(users, many=True)
             FOLLOW_OPERATIONS.labels(action='list_following', result='success').inc()
             return {'items': items, 'pagination': result.get('pagination', {})}
         except Exception as e:
@@ -136,7 +138,8 @@ class FollowService:
                 raise ResourceNotFoundError('用户不存在或已被禁用')
 
             result = follow_repository.list_followers(user_id, page=page, per_page=per_page)
-            items = follow_response_schema.dump(result.get('items', []), many=True)
+            users = [f.follower for f in result.get('items', []) if f.follower]
+            items = public_user_schema.dump(users, many=True)
             FOLLOW_OPERATIONS.labels(action='list_followers', result='success').inc()
             return {'items': items, 'pagination': result.get('pagination', {})}
         except Exception as e:
@@ -156,9 +159,8 @@ class FollowService:
             page=page,
             per_page=per_page
         )
-        from app.users.schemas import UserSchema
-        # Service 只负责序列化
-        users = UserSchema(many=True).dump(result.get('items', []))
+        # 互关列表返回脱敏用户对象
+        users = public_user_schema.dump(result.get('items', []), many=True)
         FOLLOW_OPERATIONS.labels(action='mutual', result='success').inc()
         return {'items': users, 'pagination': result.get('pagination', {})}
 

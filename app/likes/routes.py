@@ -92,6 +92,19 @@ class PostLikeResource(Resource):
                 message='点赞成功'
             ), 201
 
+    @api.doc('取消点赞帖子（幂等，按 user_id+post_id，无需 like_id）')
+    @api.response(200, '取消点赞成功')
+    @jwt_required()
+    def delete(self, post_id):
+        """取消帖子点赞（幂等，不需要 like_id）"""
+        current_user_id = get_jwt_identity()
+
+        result = LikeService.delete_like(user_id=current_user_id, post_id=post_id)
+        return success_response(
+                data=result,
+                message='取消点赞成功'
+            ), 200
+
 
 # 取消点赞带like_id（符合 /posts/{id}/likes/{like_id} 规范）
 @api.route('/posts/<int:post_id>/likes/<int:like_id>')
