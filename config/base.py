@@ -60,6 +60,9 @@ class BaseConfig:
     # 使用整数 user_id 作为 JWT subject，禁用 PyJWT 对 sub 必须是字符串的校验
     JWT_VERIFY_SUB = False
 
+    # 开发环境是否自动建表（运行 alembic 迁移时需显式设 AUTO_CREATE_TABLES=false）
+    AUTO_CREATE_TABLES = os.getenv('AUTO_CREATE_TABLES', 'true').lower() == 'true'
+
     # ==================== Redis 配置 ====================
     REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
     REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))

@@ -105,7 +105,7 @@ def create_app(config_name: str = None) -> Flask:
 
     # 开发环境自动建表
     with app.app_context():
-        if is_dev:
+        if is_dev and app.config.get('AUTO_CREATE_TABLES', True):
             from sqlalchemy import inspect
             inspector = inspect(db.engine)
             # 检查核心表是否存在，不存在才创建
