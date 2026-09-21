@@ -122,6 +122,9 @@ def test_full_core_chain():
     assert err.get('code') == 10009, f'405 业务码应为 10009: {err}'
     assert 'request_id' in err, f'405 缺少 request_id: {err}'
 
+    # 10.5 清理本次测试帖（避免污染热榜/搜索；测试用户由 cleanup_dev_data.py 收尾）
+    _expect('DELETE', f'/posts/{pid}', token=t1)
+
     # 11. 改密后旧 access 立即失效（token_version 提升）
     _expect('PUT', '/users/me/password', token=t1,
             body={'old_password': p1, 'new_password': 'Smoke@2026z'})

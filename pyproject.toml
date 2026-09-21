@@ -96,6 +96,7 @@ ignore = ["E501"]
 # conftest.py 需先 sys.path.insert 才能 import core；wsgi.py 同理，属故意为之
 "tests/**" = ["E402"]
 "wsgi.py" = ["E402"]
+"scripts/**" = ["E402"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
