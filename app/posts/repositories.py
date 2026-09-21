@@ -161,7 +161,6 @@ class PostRepository:
         now = utcnow()
         post.deleted_at = now
 
-        # TODO: 确保 Comment 模型也有 deleted_at 字段，否则此处会报错
         for comment in post.comments.all():
             comment.deleted_at = now
 

@@ -178,7 +178,7 @@ class PostService:
             like_count = LikeCache.get_like_count(post_id, 'post')
             if like_count is not None:
                 post_dict['like_count'] = like_count
-            # 3. 实时覆盖评论数（TODO: 接入 comments/cache.py）
+            # 3. 实时覆盖评论数（comments 模块 Redis 计数）
             comment_count = CommentCache.get_count(post_id)
             if comment_count is not None:
                 post_dict['comment_count'] = comment_count

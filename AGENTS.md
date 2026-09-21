@@ -45,6 +45,7 @@ docker compose build app
 
 - app：`weibo-app`，MySQL 主库 `weibo-mysql-master:3306/weibo` + 从库 replica-1
 - celery worker：`weibo-celery-worker`（`-Q default,like`；like 队列来自 `task_routes`）
+- celery beat：`weibo-celery-beat`（独立进程，`beat -s /tmp/celerybeat-schedule`；调度 `beat_schedule` 里的对账/热榜任务）
 - Redis：master/replica/sentinel-1/2/3（写操作必须 `get_conn(for_write=True)`）
 - ES：`weibo-es-cn`(**IK 中文分词版,9201**) ← app 连的是这个（标准版 `weibo-es` 已移除）
 - IK 插件已装进 `elasticsearch/plugins/ik/`（匹配 ES 8.11.0）
@@ -223,7 +224,10 @@ venv/bin/python monitoring/alert_webhook.py   # 端口 5001
 ```
 
 ### 待办（未完成）
-- mysqld-exporter 用 root 连库，可换专用监控账号（需 PROCESS/REPLICATION CLIENT 权限）
+- （暂无）
+
+> 注：mysqld-exporter 已改用专用账号 `exporter`（见 `docker/mysql/init_master.sql`，
+> PROCESS/REPLICATION CLIENT/SELECT + MAX_USER_CONNECTIONS 3），非 root。
 
 ## 发展规划 / 演进方向
 
@@ -232,7 +236,7 @@ venv/bin/python monitoring/alert_webhook.py   # 端口 5001
 ### 短期（补成完整产品，软著落地）
 - 前端：AI 生成（Vue3 + Vite + TypeScript + Element Plus），以 Swagger/OpenAPI 为输入
 - CI/CD：GitHub Actions（ruff → pytest → docker build）
-- 代码规范：pre-commit + editorconfig + ruff；统一缩进为 4 空格（现有 13 个 tab 缩进文件待清理）
+- 代码规范：pre-commit + editorconfig + ruff；缩进已统一 4 空格（ruff `W191` 已开启）
 
 ### 中期（加业务模块，架构上每个都是 `app/<domain>/` 下加目录）
 - 私信（IM）、话题/标签、收藏、举报与内容审核、搜索推荐
