@@ -29,6 +29,12 @@ ELASTICSEARCH_ENABLED=false REDIS_SENTINEL_HOST= REDIS_HOST=127.0.0.1 \
 
 # 构建镜像（elasticsearch<9 约束在 pyproject.toml）
 docker compose build app
+
+# 重建前端（改 web/ 后；多阶段 node build → nginx）
+docker compose build web && docker compose up -d web
+
+# alembic 迁移（必须在容器内跑；迁移时禁自动建表，见 AUTO_CREATE_TABLES）
+docker compose run --rm -e AUTO_CREATE_TABLES=false app flask db <migrate|upgrade|check>
 ```
 
 ## 依赖管理（重要）
@@ -43,13 +49,16 @@ docker compose build app
 
 ## 容器与服务
 
-- app：`weibo-app`，MySQL 主库 `weibo-mysql-master:3306/weibo` + 从库 replica-1
+- app：`weibo-app`（宿主 `5000:5000`），MySQL `weibo-mysql-master:3306/weibo` + 从库 replica-1
+- web：`weibo-web`（前端 nginx，宿主 `8080:80`；托管 `web/dist` 生产构建，内网反代 `/api`→`app:5000`）
 - celery worker：`weibo-celery-worker`（`-Q default,like`；like 队列来自 `task_routes`）
 - celery beat：`weibo-celery-beat`（独立进程，`beat -s /tmp/celerybeat-schedule`；调度 `beat_schedule` 里的对账/热榜任务）
 - Redis：master/replica/sentinel-1/2/3（写操作必须 `get_conn(for_write=True)`）
 - ES：`weibo-es-cn`(**IK 中文分词版,9201**) ← app 连的是这个（标准版 `weibo-es` 已移除）
 - IK 插件已装进 `elasticsearch/plugins/ik/`（匹配 ES 8.11.0）
-- 测试用户：smoketest1 / `Smoke@2026x`（id 1），smoketest2 / `Smoke@2026y`（id 2）
+- 宿主 nginx：`/etc/nginx/sites-enabled/weibo` 对外 `5001`（`devserver2-5001.cocac.cc`），
+  `/` → `localhost:8080`(web 容器)、`/api/` → `localhost:5000`(后端)；另有 `10080` → 后端
+- 测试账号：DB 已重建，`smoketest1/2` 不复存在；冒烟测试每次自动注册 `smokeXXXX/Smoke@2026x`
 
 ## 从库复制运维（重要）
 
@@ -114,6 +123,10 @@ docker compose build app
 发帖 → `event_bus.publish('post.created', ...)` → `services/search/event_handlers.py:on_post_created` → `PostSearchService.index_post` → ES 索引 `weibo_posts`。
 IK 分词：`ik_max_word`（分析）+ `ik_smart`（搜索），映射在 `services/search/document.py`。
 
+- 同步失败补偿：事件处理器检查 `index/update/delete` 返回值，失败把 post_id 写入 Redis Set `search:dirty`；
+  beat 任务 `tasks.search_reconcile.reconcile_search_index`（300s）以 DB 为准回灌，差异上报 `RECONCILE_DIFF_COUNT{resource_type="search"}`。
+- ES 降级恢复：`reindex_recent_posts` 按 `updated_at` 窗口补索引（软删会 bump updated_at）。
+
 ## 目录结构全览
 
 ```
@@ -128,11 +141,12 @@ weibo-platform/
 │   ├── follows/             # 关注/粉丝/互相关注
 │   ├── feeds/               # Feed 流（推拉结合，粉丝>=1000 用拉模式）
 │   ├── notifications/       # 通知（事件驱动，订阅 comment.created）
+│   ├── uploads/             # 图片上传（本地存储 + magic bytes 校验；GET /uploads/files/<key>）
 │   ├── permissions/         # 权限服务（services.py）
 │   └── common/              # 异常/常量/数据库工具/事件总线
 ├── core/                    # 基础设施
 │   ├── factory.py           # create_app 核心工厂（初始化顺序关键）
-│   ├── blueprint_registry.py# 集中注册 7 个蓝图
+│   ├── blueprint_registry.py# 集中注册 8 个蓝图
 │   ├── database.py          # db/migrate/BaseModel(软删除)/DatabaseManager(CLI命令)
 │   ├── db_router.py         # 主从路由（读写分离，round_robin 选从库）
 │   ├── redis_cache.py       # RedisCache 单例（防穿透/雪崩/击穿 + 各种数据类型封装）
@@ -147,6 +161,7 @@ weibo-platform/
 ├── middlewares/             # 认证/限流/CORS/安全头/日志/metrics/错误
 ├── tasks/                   # Celery 任务（base_task 埋点 + 各业务任务 + 对账 reconcile）
 ├── utils/                   # 装饰器/响应/Redis/雪花ID/分页/安全/校验
+├── web/                     # 前端（Vue3+Vite+TS+Element Plus；Dockerfile 多阶段→nginx；node_modules 不入库）
 ├── monitoring/              # 监控栈（见「监控体系」章节：prometheus/alertmanager/grafana/loki/promtail + 各 exporter）
 ├── migrations/              # Flask-Migrate（alembic）
 ├── tests/                   # smoke/unit/integration/performance
@@ -155,7 +170,7 @@ weibo-platform/
 ├── manage_es.py             # ES 索引管理 CLI
 ├── wsgi.py                  # 入口（含 /metrics 端点）
 ├── Dockerfile               # python:3.11-slim + gunicorn
-├── docker-compose.yml       # 业务栈（MySQL主从/Redis哨兵/ES/ES-CN/app）
+├── docker-compose.yml       # 业务栈（MySQL主从/Redis哨兵/ES/ES-CN/app/web/celery-worker/celery-beat）
 └── .env                     # 环境变量（数据库/Redis/ES/Celery/密钥）
 ```
 
@@ -202,7 +217,8 @@ weibo-platform/
 ### 组件（`monitoring/docker-compose.monitoring.yml`，共 10 个）
 - prometheus（9090）、alertmanager（9093）、grafana（3000，admin/admin123）、loki（3100）、promtail
 - exporter：node-exporter（host 网络 9100）、redis-exporter（9121）、mysqld-exporter（9104）、celery-exporter（9540）
-- 钉钉告警 webhook `alert_webhook.py`（宿主机跑，5001，不在此 compose 内）
+- 钉钉告警 webhook：容器 `weibo-alert-webhook`（宿主 `5011`→内网 `5001`，属本 compose）；
+  alertmanager 目标 `http://alert-webhook:5001/webhook/dingtalk`，prometheus 健康检查 `/health`
 
 ### 抓取目标（prometheus.yml）
 weibo-api(app:5000)、node、redis-business、mysql-master、celery、alert-webhook
@@ -219,8 +235,7 @@ API P99 延迟>500ms、API 5xx>1%、Celery 队列堆积、Redis 内存>80%、DB 
 ### 启动
 ```bash
 docker compose -f monitoring/docker-compose.monitoring.yml up -d
-# 钉钉 webhook（宿主机）：
-venv/bin/python monitoring/alert_webhook.py   # 端口 5001
+# 告警 webhook 已含在上面（服务 alert-webhook，内网 5001；宿主 5011）
 ```
 
 ### 待办（未完成）
@@ -231,10 +246,10 @@ venv/bin/python monitoring/alert_webhook.py   # 端口 5001
 
 ## 发展规划 / 演进方向
 
-> 定位：可申请软著的分布式社交平台系统。当前缺前端 + CI/CD + 代码规范，补齐即可产品化。
+> 定位：可申请软著的分布式社交平台系统。前端(容器化) + CI/CD + pre-commit 已就位，可继续补业务模块。
 
 ### 短期（补成完整产品，软著落地）
-- 前端：AI 生成（Vue3 + Vite + TypeScript + Element Plus），以 Swagger/OpenAPI 为输入
+- 前端：Vue3 + Vite + TypeScript + Element Plus，已容器化并纳入 `web/`（宿主 nginx `5001` 对外）
 - CI/CD：GitHub Actions（ruff → pytest → docker build）
 - 代码规范：pre-commit + editorconfig + ruff；缩进已统一 4 空格（ruff `W191` 已开启）
 
