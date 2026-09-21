@@ -12,6 +12,8 @@ class CreatePostSchema(Schema):
     )
     image_url = fields.Str(
         required=False,
+        allow_none=True,
+        load_default=None,
         validate=[validate.Length(max=500, error="图片URL长度不能超过500个字符")],
     )
 
@@ -34,6 +36,8 @@ class UpdatePostSchema(Schema):
     )
     image_url = fields.Str(
         required=False,
+        allow_none=True,
+        load_default=None,
         validate=[validate.Length(max=500, error="图片URL长度不能超过500个字符")],
     )
 
