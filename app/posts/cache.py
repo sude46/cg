@@ -116,22 +116,22 @@ class PostCache:
     @classmethod
     def update_hot_posts(cls,posts_data:list[dict],period:str='daily'):
         '''
-        批量更新热帖榜（定时任务调用）
-        posts_data:[{'post_id':1,'score':12345556},......]
+        重建热帖榜（定时任务调用）：先清空再写，避免已删/超出时间窗的帖子残留。
+        posts_data:[{'post_id':1,'score':12345556},......]；空列表表示本次无热帖。
         '''
 
         try:
-            if not posts_data:
-                return True
             key=f'hot:posts:{period}'
             pipe=redis_cache.pipeline(transaction=False,for_write=True)
 
-            #使用证书score
-            mapping={str(p['post_id']):p['score'] for p in posts_data}
-
-            pipe.zadd(key,mapping)
-            pipe.zremrangebyrank(key,0,-1001)      #只预留top1000
-            pipe.expire(key,cls.HOT_TTL)
+            #先清空，保证榜单与本次计算结果一致
+            pipe.delete(key)
+            if posts_data:
+                #使用整数score
+                mapping={str(p['post_id']):p['score'] for p in posts_data}
+                pipe.zadd(key,mapping)
+                pipe.zremrangebyrank(key,0,-1001)      #只预留top1000
+                pipe.expire(key,cls.HOT_TTL)
             pipe.execute()
 
             logger.info(f'[HotPosts]更新{period}榜，共{len(posts_data)}条')
