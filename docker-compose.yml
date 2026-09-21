@@ -273,6 +273,7 @@ services:
     environment:
       - FLASK_APP=wsgi.py
       - FLASK_ENV=development
+      - EVENT_BUS_ENABLED=0
     depends_on:
       mysql-master:
         condition: service_healthy

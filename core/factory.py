@@ -125,7 +125,8 @@ def create_app(config_name: str = None) -> Flask:
     register_notification_event_handlers()
     register_search_event_handlers()
     register_feed_handlers()
-    event_bus.start(app)
+    if app.config.get('EVENT_BUS_ENABLED', True):
+        event_bus.start(app)
 
     return app
 
