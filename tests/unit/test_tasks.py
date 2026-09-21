@@ -58,6 +58,42 @@ class TestFeedTasks:
             assert result["status"] == "success"
 
 
+class TestSearchTasks:
+    """搜索索引同步/对账任务单元测试"""
+
+    def test_reconcile_search_index_reindexes_dirty_post(self, app, db_session, mock_redis, monkeypatch):
+        from core.redis_cache import redis_cache
+        from services.search import PostSearchService
+        from tasks.search_reconcile import reconcile_search_index
+        from tests.unit.factories import PostFactory
+
+        captured = {}
+        monkeypatch.setattr(
+            PostSearchService, 'index_post',
+            lambda doc: captured.setdefault('doc', doc) or True
+        )
+        with app.app_context():
+            post = PostFactory()
+            redis_cache.sadd(PostSearchService.DIRTY_KEY, post.id)
+
+            result = reconcile_search_index(batch_size=10)
+
+            assert result['status'] == 'success'
+            assert result['fixed'] == 1
+            assert captured['doc']['id'] == post.id
+            assert post.id not in redis_cache.smembers(PostSearchService.DIRTY_KEY, for_write=True)
+
+    def test_on_post_deleted_marks_dirty_when_sync_fails(self, app, mock_redis, monkeypatch):
+        from core.redis_cache import redis_cache
+        from services.search import PostSearchService, event_handlers
+
+        monkeypatch.setattr(PostSearchService, 'delete_post', classmethod(lambda cls, pid: False))
+        with app.app_context():
+            event_handlers.on_post_deleted({'post_id': 123})
+
+            assert 123 in redis_cache.smembers(PostSearchService.DIRTY_KEY, for_write=True)
+
+
 class TestLikeTasks:
     """点赞相关Celery任务单元测试"""
 

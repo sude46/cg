@@ -287,6 +287,30 @@ services:
       retries: 3
       start_period: 30s
 
+  celery-beat:
+    image: weibo-platform-app:latest
+    container_name: weibo-celery-beat
+    env_file: .env
+    environment:
+      - FLASK_APP=wsgi.py
+      - FLASK_ENV=development
+    depends_on:
+      redis-master:
+        condition: service_healthy
+      redis-sentinel-1:
+        condition: service_healthy
+      redis-sentinel-2:
+        condition: service_healthy
+      redis-sentinel-3:
+        condition: service_healthy
+      redis-celery:
+        condition: service_started
+    networks:
+      - weibo-network
+    volumes:
+      - .:/app
+    command: celery -A core.celery_app.celery_app beat -l info -s /tmp/celerybeat-schedule
+
   elasticsearch-cn:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
     container_name: weibo-es-cn

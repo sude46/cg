@@ -28,6 +28,7 @@ def make_celery(app_name='weibo'):
             'tasks.comment_reconcile',
             'tasks.data_tasks',
             'tasks.search_tasks',
+            'tasks.search_reconcile',
         ]
     )
     celery.conf.update(
@@ -66,6 +67,11 @@ def make_celery(app_name='weibo'):
             'reconcile-user-cache': {
             'task': 'tasks.user_reconcile.reconcile_user_cache',
             'schedule': 600.0,  # 10 分钟
+            'args': (500,),
+            },
+            'reconcile-search-index': {
+            'task': 'tasks.search_reconcile.reconcile_search_index',
+            'schedule': 300.0,  # 5 分钟
             'args': (500,),
             },
 

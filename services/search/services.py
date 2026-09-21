@@ -17,6 +17,8 @@ class PostSearchService:
     HOT_SEARCH_KEY='hot:searches'
     HOT_SEARCH_TTL=7*86400
     HOT_SEARCH_MAX=1000
+    # 索引同步失败/疑似不一致的帖子ID集合，由 reconcile_search_index 定时回灌
+    DIRTY_KEY='search:dirty'
 
     # ==================== 搜索降级（熔断） ====================
     DEGRADE_KEY='search:es:degraded'          # 熔断标记（窗口内不再探测 ES）
@@ -54,6 +56,32 @@ class PostSearchService:
     def delete_post(cls,post_id:int):
         '''删除帖子'''
         return PostDocument.delete(post_id)
+
+    @classmethod
+    def mark_dirty(cls,post_id:int):
+        '''标记索引需重建（事件同步失败时调用，交由对账任务回灌）'''
+        if not post_id:
+            return
+        try:
+            redis_cache.sadd(cls.DIRTY_KEY,post_id)
+        except Exception as e:
+            logger.warning(f'[Search] 标记脏索引失败 post_id={post_id}: {e}')
+
+    @staticmethod
+    def post_to_doc(post)->dict[str,Any]:
+        '''ORM Post → ES 文档（索引/补索引/对账共用，避免字段漂移）'''
+        return {
+            'id':post.id,
+            'content':post.content,
+            'user_id':post.user_id,
+            'user_name':post.author.username if post.author else None,
+            'image_url':post.image_url,
+            'like_count':post.like_count,
+            'comment_count':post.comment_count,
+            'created_at':post.created_at.isoformat() if post.created_at else None,
+            'is_published':post.is_published,
+            'deleted_at':None,
+        }
     @staticmethod
     def search(query:str,page:int=1,per_page:int=20,user_id:int | None=None,sort_by:str='relevance'):
         '''搜索帖子（主接口）。
@@ -311,21 +339,7 @@ class PostSearchService:
 
         def fetch(offset,limit):
             posts=post_repository.list_posts_for_reindex(offset,limit)
-            return [
-                {
-                    'id':p.id,
-                    'content':p.content,
-                    'user_id':p.user_id,
-                    'user_name':p.author.username if p.author else None,
-                    'image_url':p.image_url,
-                    'like_count':p.like_count,
-                    'comment_count':p.comment_count,
-                    'created_at':p.created_at.isoformat() if p.created_at else None,
-                    'is_published':p.is_published,
-                    'deleted_at':None,
-                }
-                for p in posts
-            ]
+            return [cls.post_to_doc(p) for p in posts]
 
         return cls.reindex_all(fetch,batch_size)
 
