@@ -60,6 +60,11 @@ def app():
         celery.conf.task_always_eager = True
         celery.conf.task_eager_propagates = True
 
+    # 单元测试停掉后台事件消费者：它与测试线程共用 SQLite 内存库连接，
+    # 异步写通知会 detach 测试会话对象（事件处理逻辑本身由各测试直接调用验证）。
+    from app.common.events import event_bus
+    event_bus.stop()
+
     with app.app_context():
         yield app
         db.session.remove()

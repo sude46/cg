@@ -1,7 +1,8 @@
 import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios'
 import type { ApiEnvelope, ApiErrorBody } from '@/types'
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
+const BASE_URL = API_BASE_URL
 
 /** 统一错误对象：解包后端的 { code, error, request_id, retry_after } */
 export class ApiError extends Error {

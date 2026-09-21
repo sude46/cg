@@ -1,4 +1,4 @@
-from flask import current_app
+from flask import Response, current_app, stream_with_context
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from flask_restx import Api, Namespace, Resource, fields, reqparse
 from flask_restx.inputs import boolean
@@ -7,6 +7,7 @@ from utils.response import paginated_response, success_response
 
 from . import notifications_bp
 from .services import NotificationService
+from .stream import iter_events
 
 authorizations = {
     'Bearer': {
@@ -146,6 +147,27 @@ class NotificationReadAllResource(Resource):
         NotificationService.mark_all_as_read(current_user_id)
         current_app.logger.info(f'用户{current_user_id}成功标记所有通知为已读')
         return success_response(message='所有通知已标记为已读'), 200
+
+
+@api.route('/stream')
+class NotificationStreamResource(Resource):
+    @api.doc('stream_notifications')
+    @api.response(200, 'SSE 通知流（text/event-stream）')
+    @jwt_required()
+    def get(self):
+        '''实时通知流（SSE）。
+
+        EventSource 无法携带 Authorization 头，故前端用 fetch 读取本流并带 Bearer。
+        '''
+        current_user_id=get_jwt_identity()
+        resp=Response(
+            stream_with_context(iter_events(current_user_id)),
+            mimetype='text/event-stream'
+        )
+        resp.headers['Cache-Control']='no-cache'
+        resp.headers['X-Accel-Buffering']='no'
+        resp.headers['Connection']='keep-alive'
+        return resp
 
 
 api_restx.add_namespace(api)

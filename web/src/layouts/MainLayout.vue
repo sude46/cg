@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
 import { Bell, HomeFilled, Search, EditPen, User, SwitchButton, Setting } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 import { useUiStore } from '@/stores/ui'
+import { useNotificationStream } from '@/composables/useNotificationStream'
 import PostEditor from '@/components/PostEditor.vue'
 import UserAvatar from '@/components/UserAvatar.vue'
 import HotSearches from '@/components/HotSearches.vue'
@@ -13,6 +14,16 @@ const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
 const ui = useUiStore()
+const stream = useNotificationStream()
+
+onMounted(() => {
+  if (auth.user) stream.start()
+})
+watch(
+  () => auth.user,
+  (u) => (u ? stream.start() : stream.stop()),
+)
+onUnmounted(() => stream.stop())
 
 const active = computed(() => {
   if (route.path === '/') return 'home'

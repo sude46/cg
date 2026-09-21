@@ -63,6 +63,9 @@ class NotificationService:
         elif notif_type == 'like':
             resource_id = data.get('post_id') or data.get('comment_id')
             resource_type = 'post' if data.get('post_id') else 'comment'
+        elif notif_type == 'follow':
+            resource_id = None
+            resource_type = 'user'
         else:
             resource_id = data.get('post_id') or data.get('comment_id')
             resource_type = 'post' if data.get('post_id') else 'comment'
@@ -87,7 +90,21 @@ class NotificationService:
             NotificationCache.increment_unread(user_id)
             NotificationCache.mark_recently_modified(user_id)
             NOTIFICATION_OPERATIONS.labels(action='create', result='success').inc()
-            return notification_schema.dump(notif)
+
+            dumped = notification_schema.dump(notif)
+            # 实时推送给在线用户（SSE）；失败不影响通知创建。
+            # 未读数以主库为准（缓存可能未预热，且读从库有延迟）
+            try:
+                from app.notifications.stream import publish_notification
+                unread = notification_repository.count_unread(user_id, force_master=True)
+                publish_notification(user_id, {
+                    'type': notif_type,
+                    'unread_count': unread,
+                    'notification': dumped,
+                })
+            except Exception as e:
+                logger.warning(f'通知实时推送失败: {e}')
+            return dumped
         except IntegrityError:
             db.session.rollback()
             NOTIFICATION_OPERATIONS.labels(action='create', result='error').inc()
@@ -216,7 +233,48 @@ class NotificationService:
             raise DatabaseError(f'删除通知失败: {e}')
 
 
+def _handle_like_created(event_data: dict):
+    """点赞事件：给被点赞内容的作者建通知（帖子/评论）。
+
+    事件数据格式：{
+        'user_id': 被通知用户ID（帖子/评论作者）,
+        'actor_id': 点赞者ID,
+        'post_id' / 'comment_id': 目标ID,
+        'target_type': 'post' | 'comment'
+    }
+    """
+    try:
+        NotificationService.create_notification({
+            'user_id': event_data.get('user_id'),
+            'actor_id': event_data.get('actor_id'),
+            'type': 'like',
+            'post_id': event_data.get('post_id'),
+            'comment_id': event_data.get('comment_id'),
+            'content': '赞了你的评论' if event_data.get('target_type') == 'comment' else '赞了你的帖子',
+        })
+    except Exception as e:
+        logger.error(f"Failed to create notification for like: {e}")
+
+
+def _handle_follow_created(event_data: dict):
+    """关注事件：给被关注者建通知。
+
+    事件数据格式：{'user_id': 被关注用户ID, 'actor_id': 关注者ID}
+    """
+    try:
+        NotificationService.create_notification({
+            'user_id': event_data.get('user_id'),
+            'actor_id': event_data.get('actor_id'),
+            'type': 'follow',
+            'content': '关注了你',
+        })
+    except Exception as e:
+        logger.error(f"Failed to create notification for follow: {e}")
+
+
 def register_notification_event_handlers():
     """注册通知模块的事件订阅（由 factory.py 在 app 初始化时调用）"""
     event_bus.subscribe('comment.created', _handle_comment_created)
+    event_bus.subscribe('like.created', _handle_like_created)
+    event_bus.subscribe('follow.created', _handle_follow_created)
 

@@ -1,5 +1,7 @@
 from typing import Any
 
+from sqlalchemy.orm import joinedload
+
 from app.common.database import get_read_session, pagination_utils, utcnow
 from app.notifications.models import Notification
 from core import db
@@ -23,7 +25,9 @@ class NotificationRepository:
     @monitor_db("select", "notifications")
     def get_by_id(notification_id: int, user_id: int, force_master: bool = False) -> Notification | None:
         session = db.session if force_master else NotificationRepository._read_session()
-        return session.query(Notification).filter(
+        return session.query(Notification).options(
+            joinedload(Notification.actor)
+        ).filter(
             Notification.user_id == user_id,
             Notification.id == notification_id,
             Notification.deleted_at.is_(None)
@@ -33,7 +37,9 @@ class NotificationRepository:
     @monitor_db("select", "notifications")
     def list_by_user(user_id: int, page: int = 1, per_page: int = 20, unread_only: bool = False):
         session = NotificationRepository._read_session()
-        query = session.query(Notification).filter(
+        query = session.query(Notification).options(
+            joinedload(Notification.actor)
+        ).filter(
             Notification.user_id == user_id,
             Notification.deleted_at.is_(None)
         )

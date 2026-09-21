@@ -289,6 +289,44 @@ class TestNotificationEventHandlers:
                 "content": "测试"
             })
 
+    def test_handle_like_created_success(self, app, db_session, mock_redis):
+        """测试点赞事件处理函数创建通知（帖子）"""
+        from app.notifications.models import Notification
+        from app.notifications.services import _handle_like_created
+        from tests.unit.factories import PostFactory, UserFactory
+        with app.app_context():
+            owner = UserFactory()
+            actor = UserFactory()
+            post = PostFactory(author=owner)
+            _handle_like_created({
+                "user_id": owner.id,
+                "actor_id": actor.id,
+                "type": "like",
+                "post_id": post.id,
+                "target_type": "post",
+            })
+            notif = Notification.query.filter_by(user_id=owner.id, type="like").first()
+            assert notif is not None
+            assert notif.resource_type == "post"
+            assert notif.resource_id == post.id
+
+    def test_handle_follow_created_success(self, app, db_session, mock_redis):
+        """测试关注事件处理函数创建通知"""
+        from app.notifications.models import Notification
+        from app.notifications.services import _handle_follow_created
+        from tests.unit.factories import UserFactory
+        with app.app_context():
+            followed = UserFactory()
+            follower = UserFactory()
+            _handle_follow_created({
+                "user_id": followed.id,
+                "actor_id": follower.id,
+                "type": "follow",
+            })
+            notif = Notification.query.filter_by(user_id=followed.id, type="follow").first()
+            assert notif is not None
+            assert notif.resource_type == "user"
+
     def test_register_notification_event_handlers(self, app, mock_redis):
         """测试注册通知事件处理器"""
         from app.notifications.services import register_notification_event_handlers

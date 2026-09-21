@@ -35,10 +35,17 @@ class LikeService:
         # 校验主体与目标存在（避免给不存在的对象点赞）
         if not user_repository.get_by_id(user_id):
             raise ResourceNotFoundError('用户不存在')
-        if post_id and not post_repository.get_by_id(post_id):
-            raise ResourceNotFoundError('帖子不存在')
-        if comment_id and not comment_repository.get_by_id(comment_id):
-            raise ResourceNotFoundError('评论不存在')
+        target_owner_id=None
+        if post_id:
+            target_post=post_repository.get_by_id(post_id)
+            if not target_post:
+                raise ResourceNotFoundError('帖子不存在')
+            target_owner_id=target_post.user_id
+        if comment_id:
+            target_comment=comment_repository.get_by_id(comment_id)
+            if not target_comment:
+                raise ResourceNotFoundError('评论不存在')
+            target_owner_id=target_comment.user_id
 
         #分布式锁防并发重复点赞(10秒TTL)
         if not LikeCache.acquire_lock(user_id,target_id,target_type):
@@ -110,6 +117,21 @@ class LikeService:
                 })
                 LIKE_OPERATIONS.labels(action='create',result='success').inc()
                 logger.info(f'[LikeService]用户{user_id}点赞成功(redis秒返回),pending_id: {pending_id}')
+
+            # 通知模块订阅：给内容作者建通知（自己赞自己不通知）
+            if target_owner_id and target_owner_id!=user_id:
+                try:
+                    event_bus.publish('like.created',{
+                        'user_id':target_owner_id,
+                        'actor_id':user_id,
+                        'type':'like',
+                        'post_id':post_id,
+                        'comment_id':comment_id,
+                        'target_type':target_type,
+                    })
+                except Exception as e:
+                    logger.warning(f'发布点赞事件失败（不影响主流程）：{e}')
+
             return like_schema.dump({
                 'user_id': user_id,
                 'post_id': post_id,

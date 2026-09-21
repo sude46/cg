@@ -23,6 +23,11 @@ class NotificationSchema(Schema):
     content=fields.String(dump_only=True)
     is_read=fields.Boolean(dump_only=True)
     created_at=UTCDateTime(dump_only=True)
+    actor_name=fields.Method('get_actor_name',dump_only=True)
+
+    def get_actor_name(self,obj):
+        actor=getattr(obj,'actor',None)
+        return actor.username if actor else None
 
 
 notification_create_schema=NotificationCreateSchema()
