@@ -253,6 +253,19 @@ services:
       - .:/app
     command: flask run --host=0.0.0.0 --reload
 
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    image: weibo-platform-web:latest
+    container_name: weibo-web
+    ports:
+      - "8080:80"
+    depends_on:
+      - app
+    networks:
+      - weibo-network
+
   celery-worker:
     image: weibo-platform-app:latest
     container_name: weibo-celery-worker

@@ -1,0 +1,52 @@
+:root {
+  /* 暖纸色系：背景永不纯白，墨色永不纯黑 */
+  --paper: #fbfbf9;
+  --paper-2: #f6f4ee;
+  --paper-3: #efece3;
+  --ink: #1b1916;
+  --ink-2: #6b6359;
+  --ink-3: #9c9388;
+  --line: #eae4d9;
+  --line-soft: #f0ebe0;
+
+  /* 单一点缀色：赭红，克制使用（点赞、主按钮、激活态） */
+  --accent: #c05b34;
+  --accent-strong: #a84b28;
+  --accent-tint: #f7eae2;
+  --like: #c8485e;
+
+  /* 三字体系统：宋体标题 / 无衬线正文 / 等宽元数据 */
+  --font-serif: 'Noto Serif SC', 'Songti SC', 'STSong', 'SimSun', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
+
+  /* 暖调阴影 */
+  --shadow-sm: 0 1px 2px rgba(27, 25, 22, 0.04);
+  --shadow-md: 0 8px 24px rgba(27, 25, 22, 0.07);
+  --shadow-lg: 0 20px 48px rgba(27, 25, 22, 0.09);
+
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+
+  /* Element Plus 主题接管 */
+  --el-color-primary: var(--accent);
+  --el-color-primary-light-3: #cf7d5c;
+  --el-color-primary-light-5: #dd9c82;
+  --el-color-primary-light-7: #ecbfae;
+  --el-color-primary-light-8: #f3d5c7;
+  --el-color-primary-light-9: var(--accent-tint);
+  --el-color-primary-dark-2: var(--accent-strong);
+  --el-color-danger: var(--like);
+  --el-text-color-primary: var(--ink);
+  --el-text-color-regular: var(--ink-2);
+  --el-text-color-secondary: var(--ink-3);
+  --el-border-color: var(--line);
+  --el-border-color-light: var(--line);
+  --el-border-color-lighter: var(--line-soft);
+  --el-bg-color: #ffffff;
+  --el-fill-color-light: var(--paper-2);
+  --el-border-radius-base: var(--radius-sm);
+  --el-font-family: var(--font-sans);
+}
