@@ -92,7 +92,7 @@ async function publish() {
           accept="image/png,image/jpeg,image/webp,image/gif"
           hidden
           @change="onFileChange"
-        />
+        >
 
         <div v-if="showImageInput" class="image-row">
           <el-input
@@ -101,7 +101,7 @@ async function publish() {
             size="small"
             clearable
           />
-          <img v-if="imageUrl" :src="imageUrl" class="image-preview" alt="预览" />
+          <img v-if="imageUrl" :src="imageUrl" class="image-preview" alt="预览">
         </div>
 
         <div class="toolbar">

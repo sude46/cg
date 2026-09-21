@@ -19,12 +19,12 @@ const initial = computed(() => (props.name || '?').slice(0, 1))
 </script>
 
 <template>
-  <img v-if="src" class="avatar" :src="src" :alt="name" :style="{ width: size + 'px', height: size + 'px' }" />
+  <img v-if="src" class="avatar" :src="src" :alt="name" :style="{ width: size + 'px', height: size + 'px' }">
   <span
     v-else
     class="avatar initial"
     :style="{ width: size + 'px', height: size + 'px', background: bg, fontSize: size * 0.42 + 'px' }"
-    >{{ initial }}</span
+  >{{ initial }}</span
   >
 </template>
 
