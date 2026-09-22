@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useInfiniteQuery } from '@tanstack/vue-query'
-import { getTimeline } from '@/api/feeds'
+import { getExplore, getTimeline } from '@/api/feeds'
 import { useAuthStore } from '@/stores/auth'
 import { useUiStore } from '@/stores/ui'
 import PostCard from '@/components/PostCard.vue'
@@ -11,13 +11,19 @@ const auth = useAuthStore()
 const ui = useUiStore()
 const PER_PAGE = 10
 
+type FeedTab = 'follow' | 'explore'
+const tab = ref<FeedTab>('follow')
+
+// 单个无限查询，按 tab 切换 queryKey：切 tab 自动换缓存并按新 key 拉取
 const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, refetch } = useInfiniteQuery({
-  queryKey: ['timeline'],
-  queryFn: ({ pageParam }) => getTimeline({ cursor: pageParam, limit: PER_PAGE }),
+  queryKey: computed(() => ['feed', tab.value]),
+  queryFn: ({ pageParam }) =>
+    tab.value === 'follow'
+      ? getTimeline({ cursor: pageParam, limit: PER_PAGE })
+      : getExplore({ cursor: pageParam, limit: PER_PAGE }),
   initialPageParam: null as string | null,
   getNextPageParam: (last) => (last.has_more ? last.next_cursor ?? undefined : undefined),
 })
-
 /* 无限滚动：哨兵元素进入视口即加载下一页 */
 const sentinel = ref<HTMLElement | null>(null)
 let observer: IntersectionObserver | null = null
@@ -46,9 +52,12 @@ function onDeleted() {
   <div>
     <header class="page-head">
       <h1 class="serif">首页</h1>
+      <div class="tabs">
+        <button type="button" :class="{ on: tab === 'follow' }" @click="tab = 'follow'">关注</button>
+        <button type="button" :class="{ on: tab === 'explore' }" @click="tab = 'explore'">广场</button>
+      </div>
       <span class="mono text-3 sub">TIMELINE</span>
     </header>
-
     <!-- 迷你 composer：点击进入发帖弹窗 -->
     <div class="mini-composer" @click="ui.openComposer()">
       <UserAvatar :name="auth.user?.username || '?'" :size="38" />
@@ -96,6 +105,28 @@ function onDeleted() {
 .sub {
   font-size: 11px;
   letter-spacing: 0.18em;
+}
+
+.tabs {
+  display: flex;
+  gap: 6px;
+}
+
+.tabs button {
+  border: 1px solid var(--line-soft);
+  background: transparent;
+  color: var(--ink-3);
+  font-size: 12.5px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.tabs button.on {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
 }
 
 .mini-composer {

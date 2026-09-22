@@ -122,6 +122,45 @@ class TestFeedService:
             assert "loaded_posts" in result
 
 
+class TestExploreFeed:
+    """广场流单元测试"""
+
+    def test_explore_cache_add_and_cursor(self, app, mock_redis):
+        """广场缓存写入后可按游标拉取，最新的在前"""
+        from app.feeds.cache import ExploreCache
+        with app.app_context():
+            ExploreCache.add_post(100, 1719820800)
+            ExploreCache.add_post(101, 1719820801)
+            ids, cursor, has_more = ExploreCache.pull_by_cursor(None, limit=10)
+            assert ids == ["101", "100"]
+            assert cursor is None
+            assert has_more is False
+
+    def test_get_explore_db_fallback(self, app, db_session, mock_redis):
+        """广场缓存未命中，走数据库"""
+        with app.app_context():
+            author = UserFactory()
+            PostFactory(author=author)
+            PostFactory(author=author)
+            result = FeedService.get_explore(limit=10)
+            assert result["source"] == "db"
+            assert len(result["items"]) >= 2
+
+    def test_explore_publish_then_delete(self, app, db_session, mock_redis):
+        """发帖写入广场，删帖从广场移除"""
+        from app.feeds.cache import ExploreCache
+        with app.app_context():
+            author = UserFactory()
+            post = PostFactory(author=author)
+            FeedService.publish_post(post.id, author.id, 1719820800)
+            ids, _, _ = ExploreCache.pull_by_cursor(None, limit=10)
+            assert str(post.id) in ids
+
+            FeedService.delete_post(post.id, author.id)
+            after, _, _ = ExploreCache.pull_by_cursor(None, limit=10)
+            assert after is None or str(post.id) not in after
+
+
 class TestFeedCache:
     """Feed 缓存层单元测试"""
 

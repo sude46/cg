@@ -5,7 +5,7 @@ from app.follows.repositories import follow_repository
 from app.posts.schemas import posts_schema
 from core.metrics import FEED_OPERATIONS, REDIS_HIT_RATE
 
-from .cache import FeedCache
+from .cache import ExploreCache, FeedCache
 from .cursor import decode_cursor
 from .repository import FeedRepository
 
@@ -78,6 +78,48 @@ class FeedService:
             raise
 
 
+    @classmethod
+    def get_explore(cls,cursor=None,limit:int=20):
+        '''
+        获取广场（全站帖子，游标分页)
+        策略与关注流一致:Redis Zset优先->miss走DB keyset->回填缓存
+        '''
+        try:
+            limit=min(max(1,limit),cls.MAX_PRE_PAGE)
+            cur=decode_cursor(cursor)
+            result=ExploreCache.pull_by_cursor(cur,limit)
+            if result is not None:
+                cached_ids,next_cursor,has_more=result
+                REDIS_HIT_RATE.labels(cache_type='explore_feed').set(1)
+                if not cached_ids:
+                    FEED_OPERATIONS.labels(action='explore', result='success').inc()
+                    return {'items':[],'next_cursor':None,'has_more':False,'source':'empty'}
+                posts=cls._get_posts_by_ids(cached_ids)
+                FEED_OPERATIONS.labels(action='explore',result='success').inc()
+                return {
+                        'items':posts_schema.dump(posts),
+                        'next_cursor':next_cursor,
+                        'has_more':has_more,
+                        'source':'cache',
+                        }
+
+            posts,has_more,nc=FeedRepository.get_explore_posts_cursor(cur,limit)
+            REDIS_HIT_RATE.labels(cache_type='explore_feed').set(0)
+            if posts:
+                ExploreCache.batch_fill([
+                    {'id':p.id,'created_at':p.created_at} for p in posts
+                    ])
+            FEED_OPERATIONS.labels(action='explore', result='success').inc()
+            return {
+                    'items':posts_schema.dump(posts),
+                    'next_cursor':nc,
+                    'has_more':has_more,
+                    'source':'db',
+                    }
+        except Exception:
+            FEED_OPERATIONS.labels(action='explore',result='failed').inc()
+            raise
+
 
 
 
@@ -145,6 +187,8 @@ class FeedService:
         '''
         #作者加入自己的时间线
         FeedCache.add_post_to_feed(author_id,post_id,created_at)
+        #全站广场同步写入(失败不影响推粉丝主流程)
+        ExploreCache.add_post(post_id,created_at)
 
         # 先查缓存
         follower_ids = FollowCache.get_follower_ids(author_id)
@@ -196,6 +240,8 @@ class FeedService:
         '''
         #从做着自己的时间线移除
         FeedCache.remove_posts(author_id,post_id)
+
+        ExploreCache.remove_post(post_id)
 
         #获取粉丝列表（用于清理他们的缓存）
         followers=FeedRepository.get_followers(author_id)

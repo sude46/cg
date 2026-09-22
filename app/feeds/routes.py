@@ -59,6 +59,27 @@ class TimelineResource(Resource):
         )
         return success_response(data=result,message='获取时间线成功'),200
 
+@api.route('/explore')
+class ExploreResource(Resource):
+    @api.doc('get_explore_feed')
+    @api.expect(feed_parser)
+    @api.response(200,'获取广场成功')
+    @jwt_required()
+    def get(self):
+        '''获取广场(全站帖子，游标分页)'''
+        current_user_id=get_jwt_identity()
+        args=feed_parser.parse_args()
+        current_app.logger.info(
+                f'用户{current_user_id}获取广场,cursor={args.get("cursor")},limit={args.get("limit")}'
+                )
+        result=FeedService.get_explore(
+                cursor=args.get('cursor'),
+                limit=args.get('limit',20),
+                )
+        return success_response(data=result,message='获取广场成功'),200
+
+
+
 @api.route('/publish')
 class FeedPublishResource(Resource):
     @api.doc('publish_post_to_feed')

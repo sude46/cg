@@ -12,3 +12,8 @@ export function getTimeline(params: { cursor?: string | null; limit?: number }) 
 export function refreshTimeline() {
   return unwrap(http.post('/feeds/refresh')) as Promise<{ refreshed: boolean }>
 }
+
+/** 广场（全站帖子，游标分页，结构与 TimelineData 一致） */
+export function getExplore(params: { cursor?: string | null; limit?: number }) {
+  return unwrap(http.get('/feeds/explore', { params })) as Promise<TimelineData>
+}

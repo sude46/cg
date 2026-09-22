@@ -329,4 +329,91 @@ class FeedCache:
             return 0
 
 
+class ExploreCache:
+    '''
+    广场Feed缓存
+    数据结构:全局单个Sorted Set
+    -key:feed:explore
+    -score:score_for(sec,post_id)(与关注流同一套微偏移，同秒不重复)
+    -member:帖子ID
+    '''
+    KEY='feed:explore'
+    MAX_SIZE=2000       #广场只保留最近2000条，超出裁剪（比个人流大：服务所有人）
+    EXPIRE_DAYS=7
+
+    @classmethod
+    def add_post(cls,post_id:int,created_at)->bool:
+        '''发帖时写入广场(同步，失败仅记日志不影响发帖主流程)'''
+        if isinstance(created_at,datetime):
+            created_at=_to_timestamp(created_at)
+        try:
+            pipe=redis_cache.pipeline(transaction=False,for_write=True)
+            pipe.zadd(cls.KEY,{str(post_id):_score(int(created_at),int(post_id))})
+            pipe.zremrangebyrank(cls.KEY,0,-(cls.MAX_SIZE+1))
+            pipe.expire(cls.KEY,cls.EXPIRE_DAYS*86400)
+            pipe.execute()
+            return True
+        except Exception as e:
+            logger.error(f'写入广场缓存失败post_id={post_id}:{e}')
+            return False
+    @classmethod
+    def remove_post(cls,post_id:int)->bool:
+        '''删贴时从广场移除'''
+        try:
+            return bool(redis_cache.zrem(cls.KEY,str(post_id)))
+        except Exception as e:
+            logger.error(f'从广场移除帖子{post_id}失败:{e}')
+            return False
+    @classmethod
+    def pull_by_cursor(cls,cursor,limit:int=20):
+        '''游标拉取广场(与FeedCache.pull_feed_by_cursor同逻辑，无空缓存--全站key长期存在)'''
+        try:
+            if not redis_cache.exists(cls.KEY):
+                return None
+            max_score='+inf' if cursor is None else f'({float(cursor[0])}'
+            rows=redis_cache.zrevrangebyscore(
+                    cls.KEY,max_score,'-inf',start=0,num=limit+1,withscores=True
+                    )
+            has_more=len(rows)>limit
+            rows=rows[:limit]
+            if not rows:
+                return [],None,False
+            post_ids=[
+                    (m.decode() if isinstance(m,bytes) else str(m)) for m,_ in rows
+                    ]
+            next_cursor=(
+                encode_cursor(rows[-1][1],rows[-1][0]) if has_more else None
+            )
+            return post_ids,next_cursor,has_more
+        except Exception as e:
+            logger.error(f'游标拉取广场失败:{e}')
+            return None
+
+    @classmethod
+    def batch_fill(cls,posts:list):
+        '''DB兜底查询后回填(复用batch_fill_cache的写法)'''
+        if not posts:
+            return True
+        try:
+            mapping={}
+            for post in posts:
+                pid=str(post['id'])
+                ts=_to_timestamp(post['created_at'])
+                mapping[pid]=_score(int(ts),int(pid))
+
+            pipe=redis_cache.pipeline(transaction=False,for_write=True)
+            pipe.zadd(cls.KEY,mapping)
+            pipe.zremrangebyrank(cls.KEY,0,-(cls.MAX_SIZE+1))
+            pipe.expire(cls.KEY,cls.EXPIRE_DAYS*86400)
+            pipe.execute()
+            return True
+        except Exception as e:
+            logger.error(f'回填广场缓存失败:{e}')
+            return False
+
+
+
+
+
+
 

@@ -89,3 +89,36 @@ class FeedRepository:
             Post.deleted_at.is_(None),
             Post.is_published.is_(True)
         ).all()
+
+    @staticmethod
+    @monitor_db("select","feeds")
+    def get_explore_posts_cursor(cursor,limit:int=20):
+        '''广场keyset分页:全站帖子按(created_at,id)倒序，返回(posts,has_more,next_cursor)'''
+        from datetime import UTC, datetime
+        session=FeedRepository._read_session()
+        query=session.query(Post).options(
+                joinedload(Post.author)
+                ).filter(
+                        Post.deleted_at.is_(None),
+                        Post.is_published.is_(True)
+                        )
+        if cursor is not None:
+            score, id_low = cursor
+            sec = int(float(score))
+            sec_dt = datetime.fromtimestamp(sec, tz=UTC).replace(tzinfo=None)
+            query = query.filter(or_(
+                Post.created_at < sec_dt,
+                and_(Post.created_at == sec_dt, Post.id < int(id_low)),
+            ))
+        rows=query.order_by(Post.created_at.desc(), Post.id.desc()).limit(limit+1).all()
+        has_more=len(rows)>limit
+        rows=rows[:limit]
+        next_cursor=None
+        if has_more and rows:
+            last=rows[-1]
+            sec=int(last.created_at.replace(tzinfo=UTC).timestamp())
+            next_cursor=encode_cursor(score_for(sec, last.id), last.id)
+        return rows, has_more, next_cursor
+
+
+
