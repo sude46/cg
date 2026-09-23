@@ -25,6 +25,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from sqlalchemy import or_
 
 from app import create_app
+from app.chats.models import Conversation, ConversationUser, Message
 from app.common.database import utcnow
 from app.follows.models import Follow
 from app.likes.models import Like
@@ -111,8 +112,27 @@ def run(keep: set[str]) -> None:
             ).all()
             for f in follows:
                 f.deleted_at = utcnow()
+
+            # 4.5 私信：删除涉及测试用户的会话及其消息/参与者
+            conv_ids = [
+                c.id for c in db.session.query(Conversation.id).filter(or_(
+                    Conversation.user_low_id.in_(test_ids),
+                    Conversation.user_high_id.in_(test_ids),
+                )).all()
+            ]
+            if conv_ids:
+                db.session.query(Message).filter(
+                    Message.conversation_id.in_(conv_ids)
+                ).delete(synchronize_session=False)
+                db.session.query(ConversationUser).filter(
+                    ConversationUser.conversation_id.in_(conv_ids)
+                ).delete(synchronize_session=False)
+                db.session.query(Conversation).filter(
+                    Conversation.id.in_(conv_ids)
+                ).delete(synchronize_session=False)
+
             db.session.commit()
-            print(f'清理通知 {len(rows)} 条、点赞、关注 {len(follows)} 条')
+            print(f'清理通知 {len(rows)} 条、点赞、关注 {len(follows)} 条、私信会话 {len(conv_ids)} 个')
 
         # 5. 软删测试用户 + 清缓存
         for user in test_users:

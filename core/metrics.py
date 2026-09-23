@@ -87,6 +87,11 @@ USER_OPERATIONS = Counter(
     'User auth/account operations',
     ['action', 'result']
 )
+CHAT_OPERATIONS = Counter(
+    'weibo_chat_operations_total',
+    'Chat (private message) operations',
+    ['action', 'result']
+)
 RECONCILE_DIFF_COUNT = Gauge(
     'weibo_reconcile_diff_count',
     'Redis vs DB reconcile diff',

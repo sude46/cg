@@ -20,6 +20,8 @@ const router = createRouter({
         { path: 'user/:id', name: 'profile', component: () => import('@/views/Profile.vue') },
         { path: 'notifications', name: 'notifications', component: () => import('@/views/Notifications.vue') },
         { path: 'search', name: 'search', component: () => import('@/views/Search.vue') },
+        { path: 'chats', name: 'chats', component: () => import('@/views/ChatList.vue') },
+        { path: 'chats/:id', name: 'chat-room', component: () => import('@/views/ChatRoom.vue') },
         { path: 'settings', name: 'settings', component: () => import('@/views/Settings.vue') },
       ],
     },

@@ -2,10 +2,11 @@
 import { computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
-import { Bell, HomeFilled, Search, EditPen, User, SwitchButton, Setting } from '@element-plus/icons-vue'
+import { Bell, ChatDotRound, HomeFilled, Search, EditPen, User, SwitchButton, Setting } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 import { useUiStore } from '@/stores/ui'
 import { useNotificationStream } from '@/composables/useNotificationStream'
+import { useChatStream } from '@/composables/useChatStream'
 import PostEditor from '@/components/PostEditor.vue'
 import UserAvatar from '@/components/UserAvatar.vue'
 import HotSearches from '@/components/HotSearches.vue'
@@ -15,20 +16,36 @@ const router = useRouter()
 const auth = useAuthStore()
 const ui = useUiStore()
 const stream = useNotificationStream()
+const chatStream = useChatStream()
 
 onMounted(() => {
-  if (auth.user) stream.start()
+  if (auth.user) {
+    stream.start()
+    chatStream.start()
+  }
 })
 watch(
   () => auth.user,
-  (u) => (u ? stream.start() : stream.stop()),
+  (u) => {
+    if (u) {
+      stream.start()
+      chatStream.start()
+    } else {
+      stream.stop()
+      chatStream.stop()
+    }
+  },
 )
-onUnmounted(() => stream.stop())
+onUnmounted(() => {
+  stream.stop()
+  chatStream.stop()
+})
 
 const active = computed(() => {
   if (route.path === '/') return 'home'
   if (route.path.startsWith('/search')) return 'search'
   if (route.path.startsWith('/notifications')) return 'notifications'
+  if (route.path.startsWith('/chats')) return 'chats'
   if (route.path.startsWith('/settings')) return 'settings'
   if (route.path.startsWith('/user/')) return 'me'
   return ''
@@ -38,6 +55,7 @@ const navs = [
   { key: 'home', label: '首页', icon: HomeFilled, to: '/' },
   { key: 'search', label: '搜索', icon: Search, to: '/search' },
   { key: 'notifications', label: '通知', icon: Bell, to: '/notifications' },
+  { key: 'chats', label: '私信', icon: ChatDotRound, to: '/chats' },
   { key: 'settings', label: '设置', icon: Setting, to: '/settings' },
 ]
 
@@ -71,9 +89,9 @@ async function onLogout() {
           :class="{ active: active === n.key }"
         >
           <el-badge
-            v-if="n.key === 'notifications'"
-            :value="ui.unreadCount"
-            :hidden="ui.unreadCount === 0"
+            v-if="n.key === 'notifications' || n.key === 'chats'"
+            :value="n.key === 'notifications' ? ui.unreadCount : ui.chatUnreadCount"
+            :hidden="(n.key === 'notifications' ? ui.unreadCount : ui.chatUnreadCount) === 0"
             :max="99"
           >
             <el-icon :size="20"><component :is="n.icon" /></el-icon>

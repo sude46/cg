@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useInfiniteQuery, useQuery } from '@tanstack/vue-query'
 import { ElMessage } from 'element-plus'
+import { createConversation } from '@/api/chats'
 import { listPosts } from '@/api/posts'
 import { listUserFollowers, listUserFollowing, followUser, unfollowUser } from '@/api/follows'
 import { getUserProfile } from '@/api/users'
@@ -13,6 +14,7 @@ import UserAvatar from '@/components/UserAvatar.vue'
 import type { User } from '@/types'
 
 const route = useRoute()
+const router = useRouter()
 const auth = useAuthStore()
 const userId = computed(() => Number(route.params.id))
 const isSelf = computed(() => auth.user?.id === userId.value)
@@ -68,6 +70,16 @@ async function toggleFollow() {
     ElMessage.error(e instanceof Error ? e.message : '操作失败')
   }
 }
+
+async function onChat() {
+  try {
+    // 幂等：同对端重复点也只会拿到同一个会话
+    const { conversation_id } = await createConversation(userId.value)
+    router.push(`/chats/${conversation_id}`)
+  } catch (e) {
+    ElMessage.error(e instanceof Error ? e.message : '发起会话失败')
+  }
+}
 </script>
 
 <template>
@@ -89,15 +101,17 @@ async function toggleFollow() {
             <span><b>{{ profileUser?.following_count ?? '—' }}</b> 关注</span>
           </div>
         </div>
-        <el-button
-          v-if="!isSelf"
-          round
-          :type="following ? 'default' : 'primary'"
-          :plain="following"
-          @click="toggleFollow"
-        >
-          {{ following ? '已关注' : '关注' }}
-        </el-button>
+        <div v-if="!isSelf" class="actions">
+          <el-button
+            round
+            :type="following ? 'default' : 'primary'"
+            :plain="following"
+            @click="toggleFollow"
+          >
+            {{ following ? '已关注' : '关注' }}
+          </el-button>
+          <el-button round @click="onChat">发私信</el-button>
+        </div>
       </div>
     </section>
 
@@ -185,6 +199,12 @@ async function toggleFollow() {
 .bio {
   margin: 6px 0 10px;
   font-size: 13.5px;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .stats {

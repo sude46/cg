@@ -115,3 +115,36 @@ export interface HotSearch {
   keyword: string
   heat?: number
 }
+
+/** 私信消息（对齐后端 send_message / list_messages 返回） */
+export interface ChatMessage {
+  id: number
+  conversation_id: number
+  sender_id: number
+  receiver_id: number | null
+  content: string
+  created_at: string | null
+}
+
+/** 会话列表项（后端 list_conversations 的 item） */
+export interface ConversationItem {
+  conversation_id: number
+  peer_id: number
+  peer_username: string | null
+  peer_avatar: string | null
+  last_message_preview: string | null
+  last_message_at: string | null
+}
+
+/** 消息页数据（游标分页，与 TimelineData 同构） */
+export interface ChatMessageData {
+  items: ChatMessage[]
+  next_cursor: string | null
+  has_more: boolean
+}
+
+/** SSE 私信事件（后端 publish_chat_event 的 payload） */
+export interface ChatStreamEvent {
+  type: string
+  message: ChatMessage
+}
