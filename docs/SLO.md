@@ -132,11 +132,12 @@ rate(weibo_db_replica_failover_total[5m])
 
 1. **异步事件非投递保证**：自研事件总线为 Redis List **单消费者 BRPOP**，失败最多重试 3 次后丢弃；多进程下不广播（SSE 已改用 Pub/Sub）。→ 异步链路只承诺"尽力而为 + 对账兜底"。
 2. **私信未读数**：`chats` 用 `ConversationUser.unread_count` 求和（DB SELECT）；尚未做 Redis 计数与对账，热点会话量大时延迟会上升。
-3. **搜索依赖 ES**：ES 故障时降级为 DB `ILIKE`（短 TTL 缓存），召回与延迟都不能按 ES 目标承诺；重建索引期间结果可能暫缺。
-4. **缓存一致性**：Cache-Aside + 延迟双删 + 60s 强一致窗口，存在**最终一致**窗口，不接受强一致读承诺。
+3. **搜索依赖 ES**：ES 故障时降级为 DB `ILIKE`（短 TTL 缓存），召回与延迟都不能按 ES 目标承诺；重建索引期间结果可能暂缺。
+4. **缓存一致性**：Cache-Aside + 延迟双删（写后立即删缓存，再由 Celery `delayed_invalidate` 在约 2s 后二次删）；通知未读数另有 **60s 强一致标记**（`NotificationCache.RECENT_MODIFY_TTL=60`）：窗口内读强制走主库，避免主从延迟回跳旧值。整体为**最终一致**，不接受强一致读承诺。
 5. **无前端 RUM**：仅服务端指标，页面级可用性/交互延迟不在本 SLO 内。
 6. **无自动 Trace-SLO**：Jaeger 用于排障与人工核对，暂未用 trace 数据自动计算 SLO。
 7. **单实例 beat**：`beat_schedule` 依赖单个 `celery-beat`，多实例会重复触发；对账/热榜属幂等任务，可容忍。
+8. **SSE 并发上限**：生产镜像 `gunicorn -w4 -k gthread --threads 2` → 约 **8** 个工作线程，每条 SSE 长连接独占 1 个线程，故并发 SSE 上限约 8（通知流 + 私信流各占 1）；需更高并发应调大 `--threads` 或改用 gevent/eventlet。当前以宿主 nginx `proxy_read_timeout 3600s` + 后端 20s 心跳保活。
 
 ---
 
