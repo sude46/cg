@@ -342,12 +342,12 @@ class PostService:
             page = max(1, page)
 
             # 使用 ES 搜索
+            # 注意：这里是"全站搜索"，不能按当前用户过滤（user_id 过滤是"搜某人的帖子"用的）
             result = PostSearchService.search(
                 query=query,
                 page=page,
                 per_page=per_page,
                 sort_by=sort_by,
-                user_id=current_user_id
             )
 
             posts = result.get('items', [])

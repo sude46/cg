@@ -43,7 +43,15 @@ class PostDocument:
             'content':{
                 'type':'text',
                 'analyzer':'ik_max_word',
-                'search_analyzer':'ik_smart'
+                'search_analyzer':'ik_smart',
+                # 子字段：原文 n-gram，支持"部分内容"子串检索（IK 只能整词匹配）
+                'fields':{
+                    'ngram':{
+                        'type':'text',
+                        'analyzer':'ngram_analyzer',
+                        'search_analyzer':'ngram_analyzer'
+                    }
+                }
             },
             # 自动补全专用字段：IK + edge_ngram 建索引，ik_smart 查询
             'suggest':{
@@ -270,7 +278,8 @@ class PostDocument:
                 must_conditions.append({
                     "multi_match": {
                         "query": query,
-                        "fields": ["content^3", "user_name"],  # content权重更高
+                        # content 整词权重最高；content.ngram 兜底"部分内容"子串匹配
+                        "fields": ["content^3", "content.ngram^2", "user_name"],
                         "type": "best_fields",
                         "fuzziness": "AUTO"
                     }

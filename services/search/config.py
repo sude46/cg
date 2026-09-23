@@ -13,6 +13,8 @@ class SearchConfig:
         'settings':{
             'number_of_shards':1,
             'number_of_replicas':0,
+            # ngram tokenizer 要求 max_gram-min_gram <= 此值，默认仅 1
+            'max_ngram_diff':15,
             'analysis':{
                 'filter':{
                     # 自动补全用：对 IK 分出的词再切 edge n-gram
@@ -20,6 +22,15 @@ class SearchConfig:
                         'type':'edge_ngram',
                         'min_gram':1,
                         'max_gram':10
+                    }
+                },
+                'tokenizer':{
+                    # 子串检索用：对原文切 2~15 长度的 n-gram（支持任意"部分内容"）
+                    'ngram_tokenizer':{
+                        'type':'ngram',
+                        'min_gram':2,
+                        'max_gram':15,
+                        'token_chars':['letter','digit']
                     }
                 },
                 'analyzer':{
@@ -36,6 +47,12 @@ class SearchConfig:
                         'type':'custom',
                         'tokenizer':'ik_max_word',
                         'filter':['lowercase','edge_ngram_filter']
+                    },
+                    # 子串检索字段用：原文 n-gram（不依赖分词成词）
+                    'ngram_analyzer':{
+                        'type':'custom',
+                        'tokenizer':'ngram_tokenizer',
+                        'filter':['lowercase']
                     }
 
                 }
