@@ -41,7 +41,7 @@ from core.redis_cache import redis_cache
 
 logger = logging.getLogger(__name__)
 
-TEST_PREFIXES = ('smoke', 'sse', 'probe')
+TEST_PREFIXES = ('smoke', 'sse', 'probe', 'noti', 'chat', 'explore')
 DEFAULT_KEEP = ('zenith',)
 HOT_SEARCH_BLOCK = ('test', 'smoke')
 HOT_POST_KEYS = ('hot:posts:daily', 'hot:posts:weekly')

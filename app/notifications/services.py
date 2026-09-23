@@ -173,7 +173,8 @@ class NotificationService:
     @staticmethod
     def mark_as_read(notification_id: int, user_id: int):
         try:
-            notif = notification_repository.get_by_id(notification_id, user_id)
+            # 写路径必须走主库 session：从库 session 的对象不能 add 进 db.session
+            notif = notification_repository.get_by_id(notification_id, user_id, force_master=True)
             if not notif:
                 raise ResourceNotFoundError('通知不存在或无权访问')
             notification_repository.mark_as_read(notif)
@@ -213,7 +214,8 @@ class NotificationService:
     @staticmethod
     def delete_notification(notification_id: int, user_id: int):
         try:
-            notif = notification_repository.get_by_id(notification_id, user_id)
+            # 写路径必须走主库 session（同 mark_as_read）
+            notif = notification_repository.get_by_id(notification_id, user_id, force_master=True)
             if not notif:
                 raise ResourceNotFoundError('通知不存在或无权访问')
             notification_repository.delete(notif)
