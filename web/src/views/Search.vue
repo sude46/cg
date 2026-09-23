@@ -46,6 +46,8 @@ const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, refetch
   queryFn: ({ pageParam }) =>
     searchPosts({ q: committed.value, page: pageParam, per_page: 10, sort: sort.value }),
   initialPageParam: 1,
+  // vue-query v5 必须提供 getNextPageParam：否则渲染时读 hasNextPage 会抛 TypeError，结果区整块渲染失败
+  getNextPageParam: (last) => (last.pagination.has_next ? last.pagination.page + 1 : undefined),
   enabled: () => !!committed.value,
 })
 
