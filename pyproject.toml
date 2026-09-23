@@ -51,6 +51,14 @@ dependencies = [
     # 可观测性
     "prometheus-flask-exporter>=0.23.0",
     "sentry-sdk[flask]>=1.40.0",
+    # 分布式追踪（OpenTelemetry → OTLP → Jaeger）
+    "opentelemetry-api>=1.20",
+    "opentelemetry-sdk>=1.20",
+    "opentelemetry-exporter-otlp-proto-grpc>=1.20",
+    "opentelemetry-instrumentation-flask>=0.41b0",
+    "opentelemetry-instrumentation-sqlalchemy>=0.41b0",
+    "opentelemetry-instrumentation-celery>=0.41b0",
+    "opentelemetry-instrumentation-logging>=0.41b0",
 ]
 
 [project.optional-dependencies]

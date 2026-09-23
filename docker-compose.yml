@@ -228,6 +228,10 @@ services:
     environment:
       - FLASK_APP=wsgi.py
       - FLASK_ENV=development
+      - OTEL_ENABLED=true
+      - OTEL_SERVICE_NAME=weibo-api
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
+      - OTEL_TRACES_SAMPLER_ARG=1.0
     depends_on:
       mysql-master:
         condition: service_healthy
@@ -274,6 +278,10 @@ services:
       - FLASK_APP=wsgi.py
       - FLASK_ENV=development
       - EVENT_BUS_ENABLED=0
+      - OTEL_ENABLED=true
+      - OTEL_SERVICE_NAME=weibo-worker
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
+      - OTEL_TRACES_SAMPLER_ARG=1.0
     depends_on:
       mysql-master:
         condition: service_healthy

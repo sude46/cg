@@ -40,6 +40,15 @@ gunicorn==26.0.0
 prometheus-flask-exporter==0.23.2
 sentry-sdk[flask]==2.66.1
 
+# ---- 分布式追踪（OpenTelemetry → OTLP → Jaeger）----
+opentelemetry-api==1.44.0
+opentelemetry-sdk==1.44.0
+opentelemetry-exporter-otlp-proto-grpc==1.44.0
+opentelemetry-instrumentation-flask==0.65b0
+opentelemetry-instrumentation-sqlalchemy==0.65b0
+opentelemetry-instrumentation-celery==0.65b0
+opentelemetry-instrumentation-logging==0.65b0
+
 # ---- 测试（pyproject: [project.optional-dependencies].test）----
 pytest==7.4.2
 pytest-cov==4.1.0

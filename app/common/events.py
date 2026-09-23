@@ -48,6 +48,15 @@ class RedisEventBus:
             "timestamp":time.time(),
             "retry_count":0
         }
+        # 注入 trace context，消费端可续接同一条链路
+        try:
+            from opentelemetry.propagate import inject
+            carrier={}
+            inject(carrier)
+            if carrier:
+                event["_otel"]=carrier
+        except Exception:
+            pass
         try:
             conn=RedisClient.get_conn(for_write=True)
             if not conn:
@@ -57,6 +66,14 @@ class RedisEventBus:
             logger.debug(f"事件已入队：{event_name}")
         except Exception as e:
             logger.error(f'事件入队失败：{event_name},error:{e}')
+
+    def _call_handler(self,handler,payload):
+        '''在 app context 内执行订阅者。'''
+        if self._app is not None:
+            with self._app.app_context():
+                handler(payload)
+        else:
+            handler(payload)
 
     def _consume(self):
         """消费者线程：BRPOP取事件并分发"""
@@ -80,13 +97,23 @@ class RedisEventBus:
                 if not handlers:
                     logger.warning(f"无订阅者：{event_name}")
                     continue
+                # 续接发布端 trace context（无则视为新链路）
+                try:
+                    from opentelemetry.propagate import extract
+                    parent_ctx=extract(event.get("_otel") or {})
+                except Exception:
+                    parent_ctx=None
                 for handler in handlers:
                     try:
-                        if self._app is not None:
-                            with self._app.app_context():
-                                handler(payload)
+                        if parent_ctx is not None:
+                            from opentelemetry import trace
+                            tracer=trace.get_tracer('weibo-eventbus')
+                            with tracer.start_as_current_span(
+                                f'eventbus:{event_name}', context=parent_ctx
+                            ):
+                                self._call_handler(handler,payload)
                         else:
-                            handler(payload)
+                            self._call_handler(handler,payload)
                         logger.debug(f"事件处理成功：{event_name}->{handler.__name__}")
                     except Exception as e:
                         logger.error(f"事件处理失败:{event_name}->{handler.__name__}:{e}")

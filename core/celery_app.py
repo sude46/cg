@@ -1,7 +1,10 @@
 '''
 Celery应用实例配置
 '''
+import os
+
 from celery import Celery
+from celery.signals import worker_process_init
 
 from config import get_config
 from tasks.base_task import MonitoredTask
@@ -82,3 +85,10 @@ celery_app=make_celery()
 # 让 shared_task 在 Web 进程中解析到本应用；否则 .delay() 会落到 Celery 默认队列 "celery"，
 # 而 worker 监听的是 task_default_queue="default"，任务永远不会被执行。
 celery_app.set_default()
+
+
+@worker_process_init.connect
+def _init_worker_tracing(**_kwargs):
+    '''worker 子进程启动时开启追踪（web 进程由 wsgi.py 初始化）。'''
+    from core.tracing import init_tracing
+    init_tracing(os.getenv('OTEL_SERVICE_NAME', 'weibo-worker'))

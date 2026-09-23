@@ -15,7 +15,12 @@ logger = logging.getLogger(__name__)
 config_name = os.getenv("FLASK_CONFIG", "development")
 logger.info(f"当前加载的Flask配置: {config_name}")
 
-# 3. 初始化应用（显式传入配置名，确保配置加载生效）
+# 3. 初始化分布式追踪（必须在 create_app 之前，才能自动埋到 Flask/SQLAlchemy）
+from core.tracing import init_tracing  # noqa: E402
+
+init_tracing(os.getenv("OTEL_SERVICE_NAME", "weibo-api"))
+
+# 4. 初始化应用（显式传入配置名，确保配置加载生效）
 app = create_app(config_name)
 
 #=========prometheus指标端点==============

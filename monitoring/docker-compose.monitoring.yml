@@ -122,6 +122,20 @@ services:
       - weibo-network
     restart: unless-stopped
 
+  jaeger:
+    image: jaegertracing/all-in-one:1.60
+    container_name: weibo-jaeger
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    ports:
+      - "16686:16686"   # UI
+      - "4317:4317"     # OTLP gRPC（app/worker 从这里上报）
+      - "4318:4318"     # OTLP HTTP
+    networks:
+      - monitoring
+      - weibo-network
+    restart: unless-stopped
+
   loki:
     image: grafana/loki:2.9.0
     container_name: weibo-loki
