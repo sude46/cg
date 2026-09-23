@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { followUser, unfollowUser } from '@/api/follows'
@@ -11,8 +11,12 @@ const props = defineProps<{ user: User; following?: boolean }>()
 const auth = useAuthStore()
 const router = useRouter()
 
-const isFollowing = ref(!!props.following)
+// 优先用接口返回的 is_following（粉丝列表也能正确显示"已关注"）；否则回退 prop
+const isFollowing = ref(props.user.is_following ?? !!props.following)
+const isMutual = ref(!!props.user.is_mutual)
 const pending = ref(false)
+
+const label = computed(() => (isMutual.value ? '互相关注' : isFollowing.value ? '已关注' : '关注'))
 
 async function toggleFollow() {
   if (pending.value) return
@@ -20,8 +24,13 @@ async function toggleFollow() {
   const prev = isFollowing.value
   isFollowing.value = !prev
   try {
-    if (prev) await unfollowUser(props.user.id)
-    else await followUser(props.user.id)
+    if (prev) {
+      await unfollowUser(props.user.id)
+      isMutual.value = false
+    } else {
+      await followUser(props.user.id)
+      isMutual.value = false // 是否互关需对方回关，交给下次接口刷新
+    }
   } catch (e) {
     isFollowing.value = prev
     ElMessage.error(e instanceof Error ? e.message : '操作失败')
@@ -47,7 +56,7 @@ async function toggleFollow() {
       :loading="pending"
       @click.stop="toggleFollow"
     >
-      {{ isFollowing ? '已关注' : '关注' }}
+      {{ label }}
     </el-button>
   </div>
 </template>

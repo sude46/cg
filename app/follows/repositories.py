@@ -51,6 +51,17 @@ class FollowRepository:
 
 
     @staticmethod
+    @monitor_db("select", "follows")
+    def get_following_ids(follower_id: int):
+        '''获取某用户关注的人ID列表（对账/关系标注用）'''
+        session=FollowRepository._read_session()
+        rows=session.query(Follow.followed_id).filter(
+            Follow.follower_id==follower_id,
+            Follow.deleted_at.is_(None)
+        ).all()
+        return [r[0] for r in rows]
+
+    @staticmethod
     @monitor_db("insert", "follows")
     def create_follow(follower_id: int, followed_id: int) -> Follow:
         """创建关注关系（不提交事务，上层控制 commit/rollback）。"""

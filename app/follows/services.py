@@ -123,7 +123,23 @@ class FollowService:
             FollowCache.release_lock(follower_id, followed_id)
 
     @staticmethod
-    def get_following(user_id: int, page: int = 1, per_page: int = 20):
+    def _annotate_viewer_relation(items: list, viewer_id: int = None):
+        '''给用户列表补 is_following（我是否关注他）/ is_mutual（互关），供前端按钮显示。'''
+        if not viewer_id:
+            for it in items:
+                it['is_following'] = False
+                it['is_mutual'] = False
+            return
+        following_ids = set(follow_repository.get_following_ids(viewer_id))
+        follower_ids = set(follow_repository.get_follower_ids(viewer_id))
+        for it in items:
+            uid = it.get('id')
+            is_following = uid in following_ids
+            it['is_following'] = is_following
+            it['is_mutual'] = is_following and (uid in follower_ids)
+
+    @staticmethod
+    def get_following(user_id: int, page: int = 1, per_page: int = 20, viewer_id: int = None):
         try:
             user = user_repository.get_by_id(user_id)
             if not user or not getattr(user, 'is_active', True):
@@ -132,6 +148,7 @@ class FollowService:
             result = follow_repository.list_following(user_id, page=page, per_page=per_page)
             users = [f.followed for f in result.get('items', []) if f.followed]
             items = public_user_schema.dump(users, many=True)
+            FollowService._annotate_viewer_relation(items, viewer_id)
             FOLLOW_OPERATIONS.labels(action='list_following', result='success').inc()
             return {'items': items, 'pagination': result.get('pagination', {})}
         except Exception as e:
@@ -141,7 +158,7 @@ class FollowService:
             raise DatabaseError('获取关注列表失败，请稍后重试')
 
     @staticmethod
-    def get_followers(user_id: int, page: int = 1, per_page: int = 20):
+    def get_followers(user_id: int, page: int = 1, per_page: int = 20, viewer_id: int = None):
         try:
             user = user_repository.get_by_id(user_id)
             if not user or not getattr(user, 'is_active', True):
@@ -150,6 +167,7 @@ class FollowService:
             result = follow_repository.list_followers(user_id, page=page, per_page=per_page)
             users = [f.follower for f in result.get('items', []) if f.follower]
             items = public_user_schema.dump(users, many=True)
+            FollowService._annotate_viewer_relation(items, viewer_id)
             FOLLOW_OPERATIONS.labels(action='list_followers', result='success').inc()
             return {'items': items, 'pagination': result.get('pagination', {})}
         except Exception as e:

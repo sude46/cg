@@ -157,7 +157,9 @@ class UserFollowingList(Resource):
     @jwt_required(optional=True)
     def get(self, user_id):
         page, per_page = get_pagination_params()
-        result = FollowService.get_following(user_id=user_id, page=page, per_page=per_page)
+        result = FollowService.get_following(
+            user_id=user_id, page=page, per_page=per_page, viewer_id=get_jwt_identity()
+        )
         return paginated_response(result['items'], result['pagination'], message='获取成功'), 200
 
 
@@ -168,7 +170,9 @@ class UserFollowerList(Resource):
     @jwt_required(optional=True)
     def get(self, user_id):
         page, per_page = get_pagination_params()
-        result = FollowService.get_followers(user_id=user_id, page=page, per_page=per_page)
+        result = FollowService.get_followers(
+            user_id=user_id, page=page, per_page=per_page, viewer_id=get_jwt_identity()
+        )
         return paginated_response(result['items'], result['pagination'], message='获取成功'), 200
 
 

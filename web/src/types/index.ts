@@ -33,6 +33,7 @@ export interface User {
   post_count?: number
   created_at?: string
   is_following?: boolean
+  is_mutual?: boolean
   is_me?: boolean
 }
 
