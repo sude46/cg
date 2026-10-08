@@ -2,7 +2,7 @@
 set -e
 
 echo "[Sentinel] Waiting for redis-master..."
-until redis-cli -h weibo-redis-master -p 6379 ping 2>/dev/null | grep -q PONG; do
+until redis-cli -a "$REDIS_PASSWORD" --no-auth-warning -h weibo-redis-master -p 6379 ping 2>/dev/null | grep -q PONG; do
   sleep 1
 done
 
@@ -18,6 +18,7 @@ echo "[Sentinel] Preparing config..."
 mkdir -p /usr/local/etc/redis
 cp /tmp/sentinel.conf /usr/local/etc/redis/sentinel.conf
 sed -i "s/weibo-redis-master/$REDIS_IP/g" /usr/local/etc/redis/sentinel.conf
-
+echo "sentinel auth-pass mymaster $REDIS_PASSWORD" >> /usr/local/etc/redis/sentinel.conf
 echo "[Sentinel] Starting..."
 exec redis-sentinel /usr/local/etc/redis/sentinel.conf
+

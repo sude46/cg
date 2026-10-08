@@ -2,6 +2,7 @@ services:
   prometheus:
     image: prom/prometheus:v2.47.0
     container_name: weibo-prometheus
+    restart: unless-stopped
     volumes:
       - ./prometheus:/etc/prometheus
       - prometheus_data:/prometheus
@@ -21,6 +22,7 @@ services:
   grafana:
     image: grafana/grafana:10.1.0
     container_name: weibo-grafana
+    restart: unless-stopped
     volumes:
       - grafana_data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning
@@ -38,6 +40,7 @@ services:
   alertmanager:
     image: prom/alertmanager:v0.26.0
     container_name: weibo-alertmanager
+    restart: unless-stopped
     volumes:
       - ./alertmanager:/etc/alertmanager
       - alertmanager_data:/alertmanager
@@ -82,8 +85,10 @@ services:
   redis-exporter:
     image: oliver006/redis_exporter:v1.54.0
     container_name: weibo-redis-exporter
+    restart: unless-stopped
     environment:
       - REDIS_ADDR=redis://weibo-redis-master:6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
     ports:
       - "9121:9121"
     networks:
@@ -139,6 +144,7 @@ services:
   loki:
     image: grafana/loki:2.9.0
     container_name: weibo-loki
+    restart: unless-stopped
     ports:
       - "3100:3100"
     volumes:
@@ -151,6 +157,7 @@ services:
   promtail:
     image: grafana/promtail:2.9.0
     container_name: weibo-promtail
+    restart: unless-stopped
     volumes:
       - ../logs:/var/log/weibo:ro
       - ./promtail:/etc/promtail

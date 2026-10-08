@@ -10,6 +10,7 @@ def register_all_blueprints(app):
         ("app.feeds", "feeds_bp", ""),
         ("app.uploads", "uploads_bp", ""),
         ("app.chats", "chats_bp", ""),
+        ("app.common.health","health_bp",""),
     ]
 
     for module_path, bp_name, url_prefix in blueprint_configs:
