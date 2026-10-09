@@ -61,8 +61,6 @@ services:
       - DINGTALK_WEBHOOK=${DINGTALK_WEBHOOK}
       - DINGTALK_SECRET=${DINGTALK_SECRET:-}
       - AT_CRITICAL_MOBILES=${AT_CRITICAL_MOBILES:-}
-    ports:
-      - "5011:5001"
     networks:
       - monitoring
     restart: unless-stopped
