@@ -26,3 +26,4 @@ app/static/uploads/
 
 # 系统垃圾
 .DS_Store
+.env.bak*

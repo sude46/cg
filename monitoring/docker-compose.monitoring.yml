@@ -99,7 +99,7 @@ services:
     image: prom/mysqld-exporter:v0.15.0
     container_name: weibo-mysqld-exporter
     environment:
-      - MYSQLD_EXPORTER_PASSWORD=exporter123
+      - MYSQLD_EXPORTER_PASSWORD=${MYSQL_EXPORTER_PASSWORD}
     command:
       - '--mysqld.username=exporter'
       - '--mysqld.address=weibo-mysql-master:3306'
