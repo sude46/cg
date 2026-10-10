@@ -9,21 +9,18 @@ __pycache__/
 *.pyo
 *.egg-info/
 .pytest_cache/
-
 # 编辑器 / AI 工具
 .cursor
 .opencode/
 .vscode/
 .idea/
-
 # 运行时数据与二进制
 logs/
 elasticsearch/
 *.zip
-
 # 上传的图片（本地存储，运行时生成，不入库）
 app/static/uploads/
-
 # 系统垃圾
 .DS_Store
 .env.bak*
+instance/
