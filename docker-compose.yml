@@ -241,12 +241,20 @@ services:
     build: .
     image: weibo-platform-app:latest
     container_name: weibo-app
+    entrypoint: ["/bin/sh", "/app/scripts/docker-entrypoint.sh"]
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request;urllib.request.urlopen('http://localhost:5000/health')\" || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
     restart: unless-stopped
     ports:
       - "5000:5000"
     env_file: .env
     environment:
       - FLASK_APP=wsgi.py
+      - FLASK_CONFIG=production
       - OTEL_ENABLED=true
       - OTEL_SERVICE_NAME=weibo-api
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
