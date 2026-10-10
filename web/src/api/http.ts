@@ -63,9 +63,17 @@ async function refreshAccessToken(): Promise<string> {
   return data.access_token
 }
 
+/* 认证失效回调：由 auth store 注册，用于清空登录态（http 不能直接 import store，避免循环依赖） */
+let onAuthFailure: (() => void) | null = null
+export const setAuthFailureHandler = (fn: (() => void) | null) => {
+  onAuthFailure = fn
+}
+
 function forceLogout() {
   setAccessToken(null)
   setRefreshToken(null)
+  // 必须同步清空 auth.user，否则路由守卫会把 /login 又重定向回首页
+  onAuthFailure?.()
   if (!window.location.hash.includes('/login')) {
     window.location.hash = '#/login'
   }

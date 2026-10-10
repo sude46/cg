@@ -6,6 +6,8 @@ import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import 'element-plus/dist/index.css'
 import App from './App.vue'
 import router from './router'
+import { setAuthFailureHandler } from './api/http'
+import { useAuthStore } from './stores/auth'
 import './styles/tokens.css'
 import './styles/main.css'
 
@@ -17,7 +19,12 @@ async function bootstrap() {
   }
 
   const app = createApp(App)
-  app.use(createPinia())
+  const pinia = createPinia()
+  app.use(pinia)
+  // 认证失效（refresh 失败）时清空登录态，否则守卫会把 /login 弹回首页
+  setAuthFailureHandler(() => {
+    useAuthStore().user = null
+  })
   app.use(VueQueryPlugin, {
     queryClientConfig: {
       defaultOptions: {

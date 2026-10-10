@@ -13,6 +13,7 @@ export function useNotificationStream() {
   const qc = useQueryClient()
   let controller: AbortController | null = null
   let stopped = false
+  let running = false
   let backoff = 1000
   let pollTimer: number | null = null
 
@@ -36,44 +37,51 @@ export function useNotificationStream() {
   }
 
   async function loop() {
-    while (!stopped) {
-      controller = new AbortController()
-      try {
-        await streamNotifications({
-          signal: controller.signal,
-          onOpen: () => {
-            backoff = 1000
-            stopPolling()
-          },
-          onEvent: (e) => {
-            if (typeof e.unread_count === 'number') ui.setUnread(e.unread_count)
-            qc.invalidateQueries({ queryKey: ['notifications'] })
-          },
-        })
-      } catch {
-        if (stopped) return
-        // 会话失效或 token 过期：借 /users/me 走 axios 静默刷新；失败则停止
+    try {
+      while (!stopped) {
+        controller = new AbortController()
         try {
-          await getMe()
+          await streamNotifications({
+            signal: controller.signal,
+            onOpen: () => {
+              backoff = 1000
+              stopPolling()
+            },
+            onEvent: (e) => {
+              if (typeof e.unread_count === 'number') ui.setUnread(e.unread_count)
+              qc.invalidateQueries({ queryKey: ['notifications'] })
+            },
+          })
         } catch {
-          stopped = true
-          break
+          if (stopped) return
+          // 会话失效或 token 过期：借 /users/me 走 axios 静默刷新；失败则停止
+          try {
+            await getMe()
+          } catch {
+            stopped = true
+            break
+          }
         }
+        if (stopped) return
+        startPolling()
+        await new Promise((r) => window.setTimeout(r, backoff))
+        backoff = Math.min(backoff * 2, 15000)
       }
-      if (stopped) return
-      startPolling()
-      await new Promise((r) => window.setTimeout(r, backoff))
-      backoff = Math.min(backoff * 2, 15000)
+    } finally {
+      running = false
     }
   }
 
   function start() {
+    if (running) return
+    running = true
     stopped = false
     backoff = 1000
     void loop()
   }
 
   function stop() {
+    running = false
     stopped = true
     controller?.abort()
     controller = null
