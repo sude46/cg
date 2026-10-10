@@ -85,6 +85,15 @@ class BaseConfig:
     REDIS_DECODE_RESPONSES=True
     REDIS_POOL_SIZE=10
 
+    # ==================== 限流配置 ====================
+    # 存储后端：生产务必用 Redis，多 worker/多实例共享计数；内存仅适合开发
+    RATE_LIMIT_STORAGE = os.getenv('RATE_LIMIT_STORAGE') or 'memory://'
+    # 默认限流规则，支持逗号分隔多条，如 "100 per minute,1000 per hour"
+    RATE_LIMIT_DEFAULT = [
+        s.strip() for s in os.getenv('RATE_LIMIT_DEFAULT', '100 per minute').split(',')
+        if s.strip()
+    ]
+
     # Celery 配置（与业务缓存分库，避免 key 冲突）
     #   DB 0: 业务缓存（RedisCache）
     #   DB 1: Celery result backend
