@@ -1,5 +1,6 @@
 
 from flask import Flask
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from app.common.error_handlers import register_error_handlers
 from app.common.events import event_bus
@@ -25,6 +26,7 @@ from services.search.event_handlers import register_search_event_handlers
 
 def create_app(config_name: str = None) -> Flask:
     app = Flask(__name__)
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
     # 获取配置类
     config_class = get_config(config_name)
