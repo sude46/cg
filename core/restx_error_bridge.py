@@ -11,9 +11,11 @@ flask-restx 会拦截它自己端点的 404/405（``Api._should_use_fr_error_han
 import json
 import logging
 
-from flask import g
+from flask import current_app, g, request
 from flask_restx.api import Api
 from werkzeug.exceptions import HTTPException
+
+from app.common.exceptions import BaseError
 
 logger = logging.getLogger(__name__)
 
@@ -64,6 +66,22 @@ def install_restx_error_bridge():
 
     def handle_error(self, e):
         handlers = getattr(self, "_own_and_child_error_handlers", {})
+
+        # 自定义业务异常（BaseError 及其子类）：flask-restx 的 handle_error 不会
+        # 走 Flask @app.errorhandler。生产环境 PROPAGATE_EXCEPTIONS=False 时，
+        # restx 会把 AuthenticationError 等直接吞成通用 500（而非 401），
+        # 导致前端拿不到正确状态码。这里显式转交给 Flask 注册的处理器，
+        # 保持统一 {code, message, request_id} 契约。
+        if isinstance(e, BaseError) and not any(
+            isinstance(e, exc_type) for exc_type in handlers
+        ):
+            try:
+                handler = current_app._find_error_handler(e, request.blueprints)
+                if handler is not None:
+                    return current_app.ensure_sync(handler)(e)
+            except Exception as inner:  # 桥接失败则回退 restx 默认处理
+                logger.error(f'restx 业务异常桥接失败，回退默认处理: {inner}')
+
         if isinstance(e, HTTPException) and not any(
             isinstance(e, exc_type) for exc_type in handlers
         ):
