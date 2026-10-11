@@ -1,4 +1,4 @@
-# Weibo Platform
+# Weibo DemoDemo
 
 基于 Flask + Vue 3 的微博类社交平台，覆盖发帖、关注、点赞、评论、通知、私信、全文搜索与异步任务，并附带完整的可观测性方案。
 
