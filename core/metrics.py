@@ -108,6 +108,18 @@ DB_REPLICA_FAILOVER = Counter(
     ['bind']
 )
 
+#==================主从延迟/强一致窗口==================
+RECENT_MODIFY_MARKED = Counter(
+    'weibo_recent_modify_marked_total',
+    '强一致窗口开启次数（写入后打 recent_modify 标记）',
+    ['resource']  # post/user/notif
+)
+READ_FORCED_MASTER = Counter(
+    'weibo_read_forced_master_total',
+    '强一致窗口内强制走主库的读次数（主从延迟的直接代价）',
+    ['resource']
+)
+
 #=================装饰器==================================
 def monitor_db(operation: str, table: str):
     """

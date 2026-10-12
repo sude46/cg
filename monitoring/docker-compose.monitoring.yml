@@ -112,6 +112,52 @@ services:
       - monitoring
       - weibo-network
     restart: unless-stopped
+
+  mysqld-exporter-replica:
+    image: prom/mysqld-exporter:v0.15.0
+    container_name: weibo-mysqld-exporter-replica
+    environment:
+      - MYSQLD_EXPORTER_PASSWORD=${MYSQL_EXPORTER_PASSWORD}
+    command:
+      - '--mysqld.username=exporter'
+      - '--mysqld.address=weibo-mysql-replica-1:3306'
+      - '--collect.slave_status'
+      - '--collect.global_status'
+      - '--collect.global_variables'
+      - '--no-collect.info_schema.innodb_metrics'
+    ports:
+      - "9105:9104"
+    networks:
+      - monitoring
+      - weibo-network
+    restart: unless-stopped
+
+  redis-exporter-replica-1:
+    image: oliver006/redis_exporter:v1.54.0
+    container_name: weibo-redis-exporter-replica-1
+    restart: unless-stopped
+    environment:
+      - REDIS_ADDR=redis://weibo-redis-replica-1:6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    ports:
+      - "9122:9121"
+    networks:
+      - monitoring
+      - weibo-network
+
+  redis-exporter-replica-2:
+    image: oliver006/redis_exporter:v1.54.0
+    container_name: weibo-redis-exporter-replica-2
+    restart: unless-stopped
+    environment:
+      - REDIS_ADDR=redis://weibo-redis-replica-2:6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    ports:
+      - "9123:9121"
+    networks:
+      - monitoring
+      - weibo-network
+
   celery-exporter:
     image: docker.1ms.run/danihodovic/celery-exporter:latest
     container_name: weibo-celery-exporter

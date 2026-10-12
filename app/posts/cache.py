@@ -5,6 +5,7 @@ import time
 from datetime import UTC, datetime
 from typing import Any
 
+from core.metrics import READ_FORCED_MASTER, RECENT_MODIFY_MARKED
 from core.redis_cache import redis_cache
 
 logger = logging.getLogger(__name__)
@@ -51,10 +52,10 @@ class PostCache:
 
     @classmethod
     def invalidate(cls, post_id: int) -> bool:
-        """删帖子详情（主库），同时清理强一致标记"""
+        """删帖子详情（主库）。不删 recent_modify 标记：该标记由 TTL 自然过期，
+        若在此删除会让延迟双删的第二次删除（delayed_invalidate）提前结束强一致窗口。"""
         try:
             key = cls._detail_key(post_id)
-            redis_cache.delete(cls._recent_key(post_id))
             return redis_cache.delete(key)
         except Exception as e:
             logger.error(f'删除帖子{post_id}缓存失败: {e}')
@@ -79,7 +80,10 @@ class PostCache:
         ttl=ttl or cls.RECENT_MODIFY_TTL
         key=cls._recent_key(post_id)
         try:
-            return redis_cache.set(key,"1",expire=ttl,for_write=True)
+            ok = redis_cache.set(key,"1",expire=ttl,for_write=True)
+            if ok:
+                RECENT_MODIFY_MARKED.labels(resource='post').inc()
+            return ok
         except Exception as e:
             logger.error(f'标记帖子{post_id}最近修改失败:{e}')
             return False
@@ -89,7 +93,10 @@ class PostCache:
         """检查帖子是否在强一致窗口内"""
         key=cls._recent_key(post_id)
         try:
-            return redis_cache.exists(key, for_write=True)>0
+            hit = redis_cache.exists(key, for_write=True)>0
+            if hit:
+                READ_FORCED_MASTER.labels(resource='post').inc()
+            return hit
         except Exception as e:
             logger.error(f'检查帖子{post_id}最近修改失败:{e}')
             return False

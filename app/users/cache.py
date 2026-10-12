@@ -3,6 +3,7 @@ import threading
 import time
 from typing import Any
 
+from core.metrics import READ_FORCED_MASTER, RECENT_MODIFY_MARKED
 from core.redis_cache import redis_cache
 
 logger=logging.getLogger(__name__)
@@ -118,12 +119,15 @@ class UserCache:
         '''标记用户最近被修改，后续读强制走主库'''
         ttl=ttl or cls.RECENT_MODIFY_TTL
         try:
-            return redis_cache.set(
+            ok = redis_cache.set(
                 cls._recent_key(user_id),
                 "1",
                 expire=ttl,
                 for_write=True
             )
+            if ok:
+                RECENT_MODIFY_MARKED.labels(resource='user').inc()
+            return ok
         except Exception as e:
             logger.error(f'标记用户{user_id}最近修改失败:{e}')
             return False
@@ -132,7 +136,10 @@ class UserCache:
     def is_recently_modified(cls,user_id:int):
         '''检查用户是否在强一致窗口内'''
         try:
-            return redis_cache.exists(cls._recent_key(user_id), for_write=True)>0
+            hit = redis_cache.exists(cls._recent_key(user_id), for_write=True)>0
+            if hit:
+                READ_FORCED_MASTER.labels(resource='user').inc()
+            return hit
         except Exception as e:
             logger.error(f'检查用户{user_id}最近修改失败:{e}')
             return False

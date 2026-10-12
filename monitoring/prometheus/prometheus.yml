@@ -37,6 +37,23 @@ scrape_configs:
       - targets: ['mysqld-exporter:9104']
     scrape_interval: 15s
 
+  # 4.1 MySQL Exporter（从库，采集主从复制延迟）
+  - job_name: 'mysql-replica'
+    static_configs:
+      - targets: ['mysqld-exporter-replica:9104']
+    scrape_interval: 15s
+
+  # 4.2 Redis Exporter（从库，采集主从复制延迟）
+  - job_name: 'redis-replica-1'
+    static_configs:
+      - targets: ['redis-exporter-replica-1:9121']
+    scrape_interval: 15s
+
+  - job_name: 'redis-replica-2'
+    static_configs:
+      - targets: ['redis-exporter-replica-2:9121']
+    scrape_interval: 15s
+
   # 5. Celery Exporter（监控 broker 队列/任务）
   - job_name: 'celery'
     static_configs:

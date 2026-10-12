@@ -346,6 +346,8 @@ docker compose -f monitoring/docker-compose.monitoring.yml up -d
 
 指标来自应用 `/metrics`，链路来自 OpenTelemetry。SLI / SLO 与告警规则定义见 [`docs/SLO.md`](docs/SLO.md)。
 
+主从延迟指标：MySQL 走从库 exporter（`mysql_slave_status_seconds_behind_master`），Redis 走从库 exporter（`redis_master_last_io_seconds_ago` / `redis_master_link_up`）；Grafana `weibo-overview` 含对应面板，告警见 `weibo_rules.yml` 的 `weibo-replication-alerts`。
+
 ## 常见问题 / 排障
 
 - **中文搜索无效**：确认 IK 插件已解压到 `elasticsearch/plugins/analysis-ik/`，并重启 ES。

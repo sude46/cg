@@ -64,6 +64,61 @@ groups:
           summary: "MySQL/MariaDB 主库不可用"
           description: "mysqld-exporter 无法连接 MySQL 主库，实例 {{ $labels.instance }} 已下线"
 
+  - name: weibo-replication-alerts
+    rules:
+      - alert: WeiboMysqlReplicationLag
+        expr: mysql_slave_status_seconds_behind_master{job="mysql-replica"} > 1
+        for: 2m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "MySQL 主从复制延迟过高"
+          description: "从库延迟 {{ $value }}s（阈值 1s），延迟双删窗口可能不足"
+
+      - alert: WeiboMysqlReplicationLagCritical
+        expr: mysql_slave_status_seconds_behind_master{job="mysql-replica"} > 3
+        for: 1m
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: "MySQL 主从复制延迟严重"
+          description: "从库延迟 {{ $value }}s（阈值 3s），读一致性风险高"
+
+      - alert: WeiboMysqlReplicaNotRunning
+        expr: |
+          mysql_slave_status_slave_io_running{job="mysql-replica"} == 0
+          or
+          mysql_slave_status_slave_sql_running{job="mysql-replica"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: "MySQL 从库复制线程停止"
+          description: "Slave_IO_Running 或 Slave_SQL_Running 不为 Yes"
+
+      - alert: WeiboRedisReplicationLag
+        expr: redis_master_last_io_seconds_ago{job=~"redis-replica-.*"} > 1
+        for: 2m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "Redis 主从复制延迟过高"
+          description: "master_last_io_seconds_ago {{ $value }}s（阈值 1s）"
+
+      - alert: WeiboRedisReplicaLinkDown
+        expr: redis_master_link_up{job=~"redis-replica-.*"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: "Redis 从库复制链路断开"
+          description: "master_link_up=0，从库已与主库失联"
+
   - name: weibo-business-alerts
     rules:
       - alert: WeiboReconcileDiff

@@ -31,6 +31,9 @@
 | DB 延迟 | P99（`weibo_db_query_duration_seconds`） | **≤ 200ms** | — |
 | 从库健康 | `weibo_db_replica_healthy == 1` | **≥ 99.9%** | — |
 | 读回落率 | `rate(weibo_db_replica_failover_total[5m])` | **≈ 0**（< 1/s） | — |
+| MySQL 主从延迟 | `mysql_slave_status_seconds_behind_master` P99 | **≤ 1s**（严重 > 3s） | — |
+| Redis 主从延迟 | `redis_master_last_io_seconds_ago` P99 | **≤ 1s** | — |
+| 强一致窗口代价 | `rate(weibo_read_forced_master_total[5m])` | 观察项（无硬目标） | — |
 | 数据一致性 | `weibo_reconcile_diff_count` | **= 0** | 0 |
 | 异步成功率 | Celery `success/(success+failure)`（`weibo_celery_tasks_total`） | **≥ 99%** | 7h12m |
 | 异步积压 | `celery_queue_length` | **< 500**（瞬时 < 1000） | — |
@@ -74,6 +77,10 @@
 - `WeiboDbSlowQuery`（DB P99>500ms, 3m）
 - `WeiboMysqlDown`（`up{job="mysql-master"}==0`, 1m）
 - `WeiboReconcileDiff`（`weibo_reconcile_diff_count>0`, 1m）
+- `WeiboMysqlReplicationLag`（从库延迟>1s, 2m）/ `WeiboMysqlReplicationLagCritical`（>3s, 1m）
+- `WeiboMysqlReplicaNotRunning`（`Slave_IO/SQL_Running` 非 1, 1m）
+- `WeiboRedisReplicationLag`（`redis_master_last_io_seconds_ago>1`, 2m）
+- `WeiboRedisReplicaLinkDown`（`redis_master_link_up==0`, 1m）
 
 **待补**：从库不健康（`weibo_db_replica_healthy==0`）、Celery 失败率、搜索对账差异（可用现有 `WeiboReconcileDiff` 覆盖，因它不区分 label）。
 
@@ -108,6 +115,13 @@ weibo_reconcile_diff_count
 # 从库健康 / 回落
 weibo_db_replica_healthy
 rate(weibo_db_replica_failover_total[5m])
+
+# 主从延迟（MySQL / Redis 从库 exporter）
+mysql_slave_status_seconds_behind_master{job="mysql-replica"}
+redis_master_last_io_seconds_ago{job=~"redis-replica-.*"}
+
+# 强一致窗口代价（窗口内强制读主库的速率）
+sum(rate(weibo_read_forced_master_total[5m])) by (resource)
 ```
 
 ---
@@ -123,7 +137,7 @@ rate(weibo_db_replica_failover_total[5m])
 | Loki | `:3100` | 日志（含 `request_id`/`trace_id` 关联） |
 | Jaeger | `:16686` | 分布式追踪（`weibo-api` / `weibo-worker`） |
 
-抓取目标见 `monitoring/prometheus/prometheus.yml`：`weibo-api(app:5000)`、node、redis-business、mysql-master、celery、alert-webhook。
+抓取目标见 `monitoring/prometheus/prometheus.yml`：`weibo-api(app:5000)`、node、redis-business、mysql-master、mysql-replica、redis-replica-1/2、celery、alert-webhook。
 追踪：HTTP → SQL → 自研事件总线 → Celery → ES 已贯通（见 `core/tracing.py`）。
 
 ---
@@ -133,7 +147,7 @@ rate(weibo_db_replica_failover_total[5m])
 1. **异步事件非投递保证**：自研事件总线为 Redis List **单消费者 BRPOP**，失败最多重试 3 次后丢弃；多进程下不广播（SSE 已改用 Pub/Sub）。→ 异步链路只承诺"尽力而为 + 对账兜底"。
 2. **私信未读数**：`chats` 用 `ConversationUser.unread_count` 求和（DB SELECT）；尚未做 Redis 计数与对账，热点会话量大时延迟会上升。
 3. **搜索依赖 ES**：ES 故障时降级为 DB `ILIKE`（短 TTL 缓存），召回与延迟都不能按 ES 目标承诺；重建索引期间结果可能暂缺。
-4. **缓存一致性**：Cache-Aside + 延迟双删（写后立即删缓存，再由 Celery `delayed_invalidate` 在约 2s 后二次删）；通知未读数另有 **60s 强一致标记**（`NotificationCache.RECENT_MODIFY_TTL=60`）：窗口内读强制走主库，避免主从延迟回跳旧值。整体为**最终一致**，不接受强一致读承诺。
+4. **缓存一致性**：Cache-Aside + 延迟双删（写后立即删缓存，再由 Celery `delayed_invalidate` 在约 2s 后二次删）；帖子 `recent_modify` 强一致标记窗口默认 5s，通知未读数为 **60s**（`NotificationCache.RECENT_MODIFY_TTL=60`）：窗口内读强制走主库，避免主从延迟回跳旧值。整体为**最终一致**，不接受强一致读承诺。延迟双删的 `countdown=2s` 与窗口 TTL 目前是工程默认值，**应依据 `mysql_slave_status_seconds_behind_master` / `redis_master_last_io_seconds_ago` 的实测 P99 校准**（建议 `countdown = max(2s, 2×P99)`，`窗口 TTL = countdown + P99`）。
 5. **无前端 RUM**：仅服务端指标，页面级可用性/交互延迟不在本 SLO 内。
 6. **无自动 Trace-SLO**：Jaeger 用于排障与人工核对，暂未用 trace 数据自动计算 SLO。
 7. **单实例 beat**：`beat_schedule` 依赖单个 `celery-beat`，多实例会重复触发；对账/热榜属幂等任务，可容忍。
