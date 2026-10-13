@@ -73,9 +73,9 @@ class TestFollowFeedFlow:
 
             FeedService.publish_post(post.id, author["id"], post.created_at)
 
-            timeline = FeedService.get_timeline(follower["id"], page=1, per_page=10)
+            timeline = FeedService.get_timeline(follower["id"], limit=10)
 
-            assert len(timeline["items"]) >= 0
+            assert any(it["id"] == post.id for it in timeline["items"])
 
 
 class TestNotificationFlow:

@@ -1,3 +1,5 @@
+from datetime import UTC, datetime
+
 from app.feeds.cache import FeedCache
 from app.feeds.services import FeedService
 from app.follows.services import FollowService
@@ -83,6 +85,72 @@ class TestFeedService:
             result = FeedService.publish_post(999, author.id, 1719820800)
             assert result["mode"] == "pull"
             assert result["pushed"] == 0
+
+    def test_big_v_post_visible_in_follower_timeline(self, app, db_session, mock_redis, monkeypatch):
+        """推拉结合回归：大V发帖后，粉丝刷新时间线能看到（改前会丢失）"""
+        with app.app_context():
+            monkeypatch.setitem(app.config, 'BIG_V_THRESHOLD', 1)
+            author = UserFactory()
+            follower = UserFactory()
+            FollowService.follow_user(follower.id, author.id)
+
+            t1 = datetime.fromtimestamp(1719820800, tz=UTC).replace(tzinfo=None)
+            t2 = datetime.fromtimestamp(1719820801, tz=UTC).replace(tzinfo=None)
+            p1 = PostFactory(author=author, created_at=t1)
+            r1 = FeedService.publish_post(p1.id, author.id, 1719820800)
+            assert r1["mode"] == "pull"
+
+            # 首次读：feed 未命中 -> DB 兜底，能看到 p1
+            first = FeedService.get_timeline(follower.id, limit=10)
+            assert first["source"] == "db"
+            assert p1.id in [it["id"] for it in first["items"]]
+
+            # 大V再发帖：不 fanout，但写 outbox
+            p2 = PostFactory(author=author, created_at=t2)
+            FeedService.publish_post(p2.id, author.id, 1719820801)
+
+            # 再次读：feed 命中(含 p1) + 拉大V outbox -> 合流后能看到 p2
+            second = FeedService.get_timeline(follower.id, limit=10)
+            assert second["source"] == "hybrid"
+            ids = [it["id"] for it in second["items"]]
+            assert p2.id in ids
+            assert ids[0] == p2.id  # 最新在前
+
+    def test_too_many_big_v_falls_back_to_db(self, app, db_session, mock_redis, monkeypatch):
+        """关注的大V超过归并上限时，退化为DB兜底而不是截断丢失内容"""
+        with app.app_context():
+            monkeypatch.setitem(app.config, 'BIG_V_THRESHOLD', 1)
+            monkeypatch.setattr(FeedCache, 'MAX_MERGE_BIGV', 1)
+            follower = UserFactory()
+            a1, a2 = UserFactory(), UserFactory()
+            FollowService.follow_user(follower.id, a1.id)
+            FollowService.follow_user(follower.id, a2.id)
+
+            p1 = PostFactory(author=a1)
+            p2 = PostFactory(author=a2)
+            FeedService.publish_post(p1.id, a1.id, 1719820800)
+            FeedService.publish_post(p2.id, a2.id, 1719820801)
+
+            # 预热缓存
+            FeedService.get_timeline(follower.id, limit=10)
+            # 关注2个大V > 上限1 -> 退化为DB兜底
+            res = FeedService.get_timeline(follower.id, limit=10)
+            assert res["source"] == "db"
+            ids = {it["id"] for it in res["items"]}
+            assert {p1.id, p2.id} <= ids
+
+    def test_big_v_not_pushed_to_followers(self, app, db_session, mock_redis, monkeypatch):
+        """大V发帖不 fanout 到粉丝 feed（改走 outbox 拉取）"""
+        with app.app_context():
+            monkeypatch.setitem(app.config, 'BIG_V_THRESHOLD', 1)
+            author = UserFactory()
+            follower = UserFactory()
+            FollowService.follow_user(follower.id, author.id)
+
+            FeedService.publish_post(999, author.id, 1719820800)
+
+            assert FeedCache.pull_feed(follower.id, 1, 10) is None
+            assert FeedCache.pull_outbox_scored_by_cursor(author.id, None, 10)
 
     def test_delete_post_remove_from_feed(self, app, db_session, mock_redis):
         """删除帖子后从Feed移除"""

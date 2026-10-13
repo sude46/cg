@@ -178,4 +178,9 @@ class BaseConfig:
         os.makedirs(cls().UPLOAD_FOLDER, exist_ok=True)
         os.makedirs(cls.LOG_DIR, exist_ok=True)
 
+    #========================Feed配置(业务规则)=====================
+    #大V判定阈值：粉丝>=该值走拉模式，按压测反推：4*阈值<=redis可承受单帖突发写
+    BIG_V_THRESHOLD=int(os.getenv('BIG_V_THRESHOLD','1000'))
+
+
 

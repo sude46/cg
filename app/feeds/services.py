@@ -6,7 +6,7 @@ from app.posts.schemas import posts_schema
 from core.metrics import FEED_OPERATIONS, REDIS_HIT_RATE
 
 from .cache import ExploreCache, FeedCache
-from .cursor import decode_cursor
+from .cursor import decode_cursor, encode_cursor
 from .repository import FeedRepository
 
 logger=logging.getLogger(__name__)
@@ -29,49 +29,58 @@ class FeedService:
     @classmethod
     def get_timeline(cls,user_id:int,cursor=None,limit:int=20):
         '''
-        获取用户时间线（游标分页）
+        获取用户时间线（游标分页，推拉结合）
         策略：
-        1.先读 redis 缓存（按 score 游标）
-        2.缓存命中 -> 批量查库按序返回
-        3.缓存未命中 -> DB keyset 拉取 -> 回填缓存
+        1.推来的：读用户 feed ZSet（普通作者 fanout + 自己的帖），带 score
+        2.拉来的：读用户关注的大V outbox，与上面做多源归并
+        3.feed 缓存未命中 -> DB keyset 兜底（JOIN Follow 已含大V）-> 回填
         cursor: 上一页返回的 next_cursor；首页传 None
         '''
         try:
             limit=min(max(1,limit),cls.MAX_PRE_PAGE)
             cur=decode_cursor(cursor)
 
-            #===========第一步：尝试从Redis拉取============
-            result=FeedCache.pull_feed_by_cursor(user_id,cur,limit)
+            #===========第一步：读"推"来的 feed（带 score）============
+            pushed=FeedCache.pull_feed_scored_by_cursor(user_id,cur,limit)
 
-            #情况1：缓存命中
-            if result is not None:
-                cached_ids,next_cursor,has_more=result
-                REDIS_HIT_RATE.labels(cache_type='feed').set(1)
-                if not cached_ids:
-                    FEED_OPERATIONS.labels(action='timeline', result='success').inc()
-                    return {'items':[],'next_cursor':None,'has_more':False,'source':'empty'}
-                posts=cls._get_posts_by_ids(cached_ids)
+            #情况:feed 缓存未命中，走数据库 keyset 兜底
+            if pushed is None:
+                return cls._timeline_from_db(user_id,cur,limit)
+
+            #===========第二步：读"拉"来的大V outbox============
+            bigv_ids=cls._following_big_v_ids(user_id)
+
+            #关注的大V过多时多路归并代价过大 -> 退化为DB兜底(JOIN已含全部大V),避免漏内容
+            if len(bigv_ids)>FeedCache.MAX_MERGE_BIGV:
+                logger.info(
+                    f'用户{user_id}关注{len(bigv_ids)}个大V，超过归并上限'
+                    f'{FeedCache.MAX_MERGE_BIGV}，本次退化为DB兜底'
+                )
+                return cls._timeline_from_db(user_id,cur,limit)
+
+            pulled=[FeedCache.pull_outbox_scored_by_cursor(aid,cur,limit) for aid in bigv_ids]
+
+            REDIS_HIT_RATE.labels(cache_type='feed').set(1)
+
+            #===========第三步：多源归并去重、按 score 倒序============
+            merged=cls._merge_scored(pushed,*pulled)
+            if not merged:
                 FEED_OPERATIONS.labels(action='timeline', result='success').inc()
-                return {
-                        'items':posts_schema.dump(posts),
-                        'next_cursor':next_cursor,
-                        'has_more':has_more,
-                        'source':'cache'
-                    }
+                return {'items':[],'next_cursor':None,'has_more':False,'source':'empty'}
 
-            #情况2：缓存未命中，走数据库 keyset
-            posts,has_more,nc=FeedRepository.get_following_posts_cursor(user_id,cur,limit)
-            REDIS_HIT_RATE.labels(cache_type='feed').set(0)
-            if posts:
-                    cls._backfill_cache(user_id,posts)
-            else:
-                    FeedCache.set_empty_cache(user_id)
+            has_more=len(merged)>limit
+            page=merged[:limit]
+            post_ids=[pid for pid,_ in page]
+            next_cursor=(
+                encode_cursor(page[-1][1],page[-1][0]) if has_more else None
+            )
+            posts=cls._get_posts_by_ids(post_ids)
             FEED_OPERATIONS.labels(action='timeline', result='success').inc()
             return {
                     'items':posts_schema.dump(posts),
-                    'next_cursor':nc,
+                    'next_cursor':next_cursor,
                     'has_more':has_more,
-                    'source':'db'
+                    'source':'hybrid' if any(pulled) else 'cache'
                 }
         except Exception:
             FEED_OPERATIONS.labels(action='timeline', result='failed').inc()
@@ -158,6 +167,51 @@ class FeedService:
             raise
 
 
+    @staticmethod
+    def _merge_scored(*sources):
+        '''
+        多源 (member, score) 归并：按帖子ID去重后，按 score 倒序。
+        各源都已按游标取到 limit+1 条，合并后 len>limit 即说明还有下一页。
+        '''
+        seen=set()
+        merged=[]
+        for rows in sources:
+            for member,score in rows:
+                if member in seen:
+                    continue
+                seen.add(member)
+                merged.append((member,score))
+        merged.sort(key=lambda item:item[1],reverse=True)
+        return merged
+
+    @classmethod
+    def _following_big_v_ids(cls,user_id:int)->list[int]:
+        '''用户关注的大V作者ID（读时据此拉取 outbox）'''
+        following=FollowCache.get_following_ids(user_id)
+        if following is None:
+            following=follow_repository.get_following_ids(user_id)
+        return FeedCache.filter_big_v(following)
+
+    @classmethod
+    def _timeline_from_db(cls,user_id:int,cur,limit:int):
+        '''
+        DB keyset 兜底：查关注流（JOIN Follow 已包含大V的帖）并回填缓存。
+        用于 feed 缓存未命中、或关注大V过多触发归并降级两种场景。
+        '''
+        posts,has_more,nc=FeedRepository.get_following_posts_cursor(user_id,cur,limit)
+        REDIS_HIT_RATE.labels(cache_type='feed').set(0)
+        if posts:
+            cls._backfill_cache(user_id,posts)
+        elif cur is None:
+            FeedCache.set_empty_cache(user_id)
+        FEED_OPERATIONS.labels(action='timeline', result='success').inc()
+        return {
+                'items':posts_schema.dump(posts),
+                'next_cursor':nc,
+                'has_more':has_more,
+                'source':'db'
+            }
+
     @classmethod
     def _backfill_cache(cls,user_id:int,posts):
         '''
@@ -166,12 +220,7 @@ class FeedService:
         if not posts:
             return False
          #转换为缓存需要的格式
-        cache_data=[]
-        for post in posts:
-              cache_data.append({
-                   'id':post.id,
-                   'created_at':post.created_at
-              })
+        cache_data=[{'id':p.id,'created_at':p.created_at} for p in posts]
         #批量写入缓存
         FeedCache.batch_fill_cache(user_id,cache_data)
     @classmethod
@@ -181,12 +230,15 @@ class FeedService:
 
          流程：
          加入作者自己的时间线
-         如果作者时普通股用户，推送所有粉丝时间线
-         如果是大V，跳过推送（粉丝都是走拉模式）
+         写入作者 outbox（拉模式数据源，所有作者都写，与粉丝数无关）
+         如果作者是普通用户，推送所有粉丝时间线
+         如果是大V，跳过推送（粉丝读首页时从 outbox 拉取）
 
-        '''
+         '''
         #作者加入自己的时间线
         FeedCache.add_post_to_feed(author_id,post_id,created_at)
+        #作者 outbox：所有作者都写，供关注他的大V走拉模式
+        FeedCache.add_to_outbox(author_id,post_id,created_at)
         #全站广场同步写入(失败不影响推粉丝主流程)
         ExploreCache.add_post(post_id,created_at)
 
@@ -206,7 +258,8 @@ class FeedService:
         is_big_v=FeedCache.is_big_v(follower_count)
 
         if is_big_v:
-             # 大V：不发推，直接返回
+            # 大V：不发推，登记到大V集合，粉丝读首页时从 outbox 拉取
+            FeedCache.mark_big_v(author_id)
             logger.info(
                 f'作者{author_id}是大V({follower_count}粉丝)，'
                 f'帖子{post_id}使用拉模式'
@@ -217,7 +270,8 @@ class FeedService:
                 'followers': follower_count,
                 'pushed': 0
             }
-        # 普通用户：推送到所有粉丝
+        # 普通用户：粉丝数掉回阈值以下则取消大V标记，再推送到所有粉丝
+        FeedCache.unmark_big_v(author_id)
         result = FeedCache.push_to_followers(
             post_id=post_id,
             created_at=created_at,
@@ -238,10 +292,21 @@ class FeedService:
 
         **注意**：粉丝缓存清理是异步操作，可能有几秒延迟
         '''
-        #从做着自己的时间线移除
+        #从作者自己的时间线移除，并清作者 outbox
         FeedCache.remove_posts(author_id,post_id)
+        FeedCache.remove_from_outbox(author_id,post_id)
 
         ExploreCache.remove_post(post_id)
+
+        # 大V的帖从未 fanout 进粉丝 feed，无需遍历粉丝（回填产生的历史ID由读时软删过滤兜底）
+        if FeedCache.filter_big_v([author_id]):
+            logger.info(f'帖子{post_id}作者{author_id}为大V，跳过粉丝时间线清理')
+            return {
+                'post_id': post_id,
+                'removed_from_author': True,
+                'removed_from_followers': 'skipped_big_v',
+                'total_followers': 0
+            }
 
         #获取粉丝列表（用于清理他们的缓存）
         followers=FeedRepository.get_followers(author_id)

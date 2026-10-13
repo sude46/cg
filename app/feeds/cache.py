@@ -6,10 +6,15 @@ Feed流Redis缓存
 import logging
 from datetime import UTC, datetime
 
+from config import get_config
 from core.redis_cache import redis_cache
 
 from .cursor import encode_cursor
 from .cursor import score_for as _score
+
+_BIG_V_THRESHOLD=get_config()().BIG_V_THRESHOLD
+
+
 
 logger=logging.getLogger(__name__)
 
@@ -33,9 +38,11 @@ class FeedCache:
     #配置常量(便于集中管理和动态调整)
     MAX_FEED_SIZE=500 #每个用户时间线保留的最大贴子数
     FEED_EXPIRE_DAYS=7  #缓存过期天数
-    BIG_V_THRESHOLD=1000 #大V判定阈值:粉丝数超过次数用拉模式
     EMPTY_CACHE_TTL=60   #空缓存防穿透过期时间(秒)
     PUSH_BATCH_SIZE=1000   #推模式分批大小(避免Ppeline过大阻塞Redis)
+    MAX_AUTHOR_OUTBOX=500  #每个作者 outbox 保留的最大帖子数(拉模式数据源)
+    MAX_MERGE_BIGV=50      #读时参与K路归并的大V上限,超过则退化为DB兜底
+    BIGV_SET_KEY='feed:bigv'    #大V作者集合，发帖时自动维护
 
     @classmethod
     def _feed_key(cls,user_id:int):
@@ -44,10 +51,26 @@ class FeedCache:
     def _empty_key(cls,user_id:int):
         '''空缓存标记键，用于防缓存穿透'''
         return f'feed:user:{user_id}:empty'
+    @classmethod
+    def _author_key(cls,author_id:int):
+        '''作者 outbox: 该作者最近发布的帖子(拉模式读取源)'''
+        return f'feed:author:{author_id}'
+
+    @classmethod
+    def threshold(cls) -> int:
+        '''大V阈值:优先取运行时配置,无 app 上下文时回退到导入期值'''
+        try:
+            from flask import current_app
+            value=current_app.config.get('BIG_V_THRESHOLD')
+            if value is not None:
+                return int(value)
+        except Exception:
+            pass
+        return _BIG_V_THRESHOLD
 
     @classmethod
     def is_big_v(cls, follower_count: int) -> bool:
-        return follower_count >= cls.BIG_V_THRESHOLD
+        return follower_count >= cls.threshold()
 
     @classmethod
     def push_to_followers(cls,post_id:int,created_at:float,follower_ids:list[int],follower_count=None):
@@ -105,7 +128,7 @@ class FeedCache:
             }
         except Exception as e:
             logger.error(f"推送帖子{post_id}到粉丝时间线失败: {e}")
-            return {"post_id": post_id, "pushed": 0, "mode": "error", "reason": str(e)}
+            raise
 
 
     @classmethod
@@ -183,6 +206,80 @@ class FeedCache:
         except Exception as e:
             logger.error(f"游标拉取用户{user_id}时间线失败: {e}")
             return None
+
+    @classmethod
+    def pull_feed_scored_by_cursor(cls,user_id:int,cursor,limit:int=20):
+        '''
+        与 pull_feed_by_cursor 同语义,但返回带 score 的 [(member, score), ...],
+        供"推来的feed + 关注的大V outbox"多源归并排序使用。
+        返回 None：缓存未命中(需走DB)；[]：空缓存标记；否则为候选列表(最多 limit+1 条)
+        '''
+        key = cls._feed_key(user_id)
+        empty_key = cls._empty_key(user_id)
+        try:
+            if redis_cache.exists(empty_key):
+                return []
+            if not redis_cache.exists(key):
+                return None
+            max_score='+inf' if cursor is None else f'({float(cursor[0])}'
+            rows=redis_cache.zrevrangebyscore(
+                key,max_score,'-inf',start=0,num=limit+1,withscores=True
+            )
+            return [
+                (m.decode() if isinstance(m,bytes) else str(m),float(s))
+                for m,s in rows
+            ]
+        except Exception as e:
+            logger.error(f"游标拉取用户{user_id}时间线(带score)失败: {e}")
+            return None
+
+    @classmethod
+    def add_to_outbox(cls,author_id:int,post_id:int,created_at:float)->bool:
+        '''作者 outbox: 每个作者发帖都写一份(只写1次,与粉丝数无关),拉模式读取源'''
+        if isinstance(created_at,datetime):
+            created_at=_to_timestamp(created_at)
+        try:
+            key=cls._author_key(author_id)
+            pipe=redis_cache.pipeline(transaction=False,for_write=True)
+            pipe.zadd(key,{str(post_id):_score(int(created_at),int(post_id))})
+            pipe.zremrangebyrank(key,0,-(cls.MAX_AUTHOR_OUTBOX+1))
+            pipe.expire(key,cls.FEED_EXPIRE_DAYS*86400)
+            pipe.execute()
+            return True
+        except Exception as e:
+            logger.error(f'写入作者{author_id} outbox失败 post_id={post_id}:{e}')
+            return False
+
+    @classmethod
+    def remove_from_outbox(cls,author_id:int,post_id:int)->bool:
+        '''删帖时从作者 outbox 移除'''
+        try:
+            return bool(redis_cache.zrem(cls._author_key(author_id),str(post_id)))
+        except Exception as e:
+            logger.error(f'从作者{author_id} outbox移除帖子{post_id}失败:{e}')
+            return False
+
+    @classmethod
+    def pull_outbox_scored_by_cursor(cls,author_id:int,cursor,limit:int=20):
+        '''
+        按游标读取作者 outbox,返回 [(member, score), ...] (最多 limit+1 条)。
+        outbox 不存在时返回 [] (没有可拉的帖,不视为缓存未命中)。
+        '''
+        key=cls._author_key(author_id)
+        try:
+            if not redis_cache.exists(key):
+                return []
+            max_score='+inf' if cursor is None else f'({float(cursor[0])}'
+            rows=redis_cache.zrevrangebyscore(
+                key,max_score,'-inf',start=0,num=limit+1,withscores=True
+            )
+            return [
+                (m.decode() if isinstance(m,bytes) else str(m),float(s))
+                for m,s in rows
+            ]
+        except Exception as e:
+            logger.error(f'拉取作者{author_id} outbox失败:{e}')
+            return []
 
     @classmethod
     def add_post_to_feed(cls,user_id:int,post_id:int,created_at:float):
@@ -283,7 +380,44 @@ class FeedCache:
             return False
 
     @classmethod
-    def batch_fill_cache(cls,user_id:int,posts:list[dict]):
+    def mark_big_v(cls,author_id:int)->None:
+        """大V发帖时登记(幂等)"""
+        try:
+            redis_cache.sadd(cls.BIGV_SET_KEY,str(author_id))
+        except Exception as e:
+            logger.error(f"登记大V失败{author_id}:{e}")
+
+    @classmethod
+    def unmark_big_v(cls,author_id:int)->None:
+        """粉丝掉回阈值以下时取消登记(幂等)"""
+        try:
+            redis_cache.srem(cls.BIGV_SET_KEY,str(author_id))
+        except Exception as e:
+            logger.error(f"取消登记大V失败{author_id}:{e}")
+
+    @classmethod
+    def filter_big_v(cls,author_ids:list[int])->list[int]:
+        """从关注列表里筛出大V(pipeline批量SISMEMBER),顺序保留"""
+        if not author_ids:
+            return []
+        try:
+            pipe=redis_cache.pipeline(transaction=False,for_write=False)
+            for aid in author_ids:
+                pipe.sismember(cls.BIGV_SET_KEY,str(aid))
+            flags=pipe.execute()
+            return [aid for aid,ok in zip(author_ids,flags) if ok]
+        except Exception as e:
+            logger.error(f"筛选大V关注失败:{e}")
+            return []
+
+    @classmethod
+    def followed_any_big_v(cls,author_ids:list[int])->bool:
+        """用户关注的人里有没有大V(pipeline批量SISMEMBER)"""
+        return bool(cls.filter_big_v(author_ids))
+
+
+    @classmethod
+    def batch_fill_cache(cls,user_id:int,posts:list[dict],expire:int=None):
         '''
         批量填充用户时间线缓存（数据库查询后回填）
         Args:
@@ -307,7 +441,7 @@ class FeedCache:
             pipe = redis_cache.pipeline(transaction=False,for_write=True)
             pipe.zadd(key, mapping)
             pipe.zremrangebyrank(key, 0, -(cls.MAX_FEED_SIZE + 1))
-            pipe.expire(key, cls.FEED_EXPIRE_DAYS * 86400)
+            pipe.expire(key,expire or cls.FEED_EXPIRE_DAYS * 86400)
             pipe.delete(cls._empty_key(user_id))
             pipe.execute()
 

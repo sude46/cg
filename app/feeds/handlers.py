@@ -9,19 +9,18 @@ _registered=False
 
 
 def on_post_created(payload:dict):
-    '''发帖后自动推Feed(推/拉 由FeedService内部按粉丝数决定)'''
-    try:
-        dt=datetime.fromisoformat(payload['created_at'])
-        if dt.tzinfo is None:
-            dt=dt.replace(tzinfo=UTC)
-        FeedService.publish_post(
-                post_id=payload['id'],
-                author_id=payload['user_id'],
-                created_at=dt.timestamp(),
-                )
-    except Exception as e:
-        logger.error(f'Feed 推送失败 post_id={payload.get("id")}:{e}')
-
+    '''
+    发帖后自动推Feed(推/拉 由FeedService内部按粉丝数决定)
+    异常直接上抛：事件总线会自动重试(retry_count<3),handler自己吞掉会导致推送静默丢失
+    '''
+    dt=datetime.fromisoformat(payload['created_at'])
+    if dt.tzinfo is None:
+        dt=dt.replace(tzinfo=UTC)
+    FeedService.publish_post(
+            post_id=payload['id'],
+            author_id=payload['user_id'],
+            created_at=dt.timestamp(),
+            )
 def on_post_deleted(payload:dict):
     '''删贴后清理Feed时间线(作者+粉丝)'''
     try:
