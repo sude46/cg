@@ -64,16 +64,40 @@ class TestFeedService:
             assert ids1 | ids2 == {p1.id, p2.id, p3.id}, "翻页不可遗漏"
 
     def test_publish_post_push_mode(self, app, db_session, mock_redis):
-        """普通用户发帖，推模式推送粉丝"""
+        """普通用户发帖，fanout 下沉 Celery（测试 eager 模式同步执行）"""
         with app.app_context():
             author = UserFactory()
             follower = UserFactory()
             FollowService.follow_user(follower.id, author.id)
             result = FeedService.publish_post(999, author.id, 1719820800)
 
-            assert result["mode"] == "push"
+            assert result["mode"] == "push_async"
             assert result["followers"] == 1
+            # eager 模式下任务已同步执行，粉丝 feed 应已写入
+            assert "999" in (FeedCache.pull_feed(follower.id, 1, 10) or [])
+
+    def test_publish_post_enqueue_failure_falls_back_sync(self, app, db_session, mock_redis, monkeypatch):
+        """入队失败时降级为同步推送，保证帖子不丢"""
+        from types import SimpleNamespace
+
+        import tasks.feed_tasks as feed_tasks
+
+        def boom(*args, **kwargs):
+            raise RuntimeError("broker down")
+
+        monkeypatch.setattr(
+            feed_tasks, "async_push_to_followers", SimpleNamespace(apply_async=boom)
+        )
+        with app.app_context():
+            author = UserFactory()
+            follower = UserFactory()
+            FollowService.follow_user(follower.id, author.id)
+
+            result = FeedService.publish_post(888, author.id, 1719820800)
+
+            assert result["mode"] == "push_fallback"
             assert result["pushed"] == 1
+            assert "888" in (FeedCache.pull_feed(follower.id, 1, 10) or [])
 
     def test_publish_post_pull_mode(self, app, db_session, mock_redis):
         """大V用户发帖，拉模式（粉丝>=1000）"""

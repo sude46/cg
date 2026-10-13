@@ -45,6 +45,7 @@ def make_celery(app_name='weibo'):
         task_default_queue='default',
         task_routes={
             'tasks.like_tasks.*':{'queue':'like'},
+            'tasks.feed_tasks.*':{'queue':'feed'},
         },
         beat_schedule={
             'reconcile-likes': {

@@ -270,21 +270,41 @@ class FeedService:
                 'followers': follower_count,
                 'pushed': 0
             }
-        # 普通用户：粉丝数掉回阈值以下则取消大V标记，再推送到所有粉丝
+        # 普通用户：粉丝数掉回阈值以下则取消大V标记；fanout 下沉 Celery feed 队列
         FeedCache.unmark_big_v(author_id)
-        result = FeedCache.push_to_followers(
-            post_id=post_id,
-            created_at=created_at,
-            follower_ids=follower_ids,
-            follower_count=follower_count
-        )
-
-        return {
-            'post_id': post_id,
-            'mode': 'push',
-            'followers': follower_count,
-            'pushed': result['pushed']
-        }
+        # 延迟导入：tasks.feed_tasks 顶层 import app.feeds.cache，顶层导入会形成循环
+        from tasks.feed_tasks import async_push_to_followers
+        try:
+            async_push_to_followers.apply_async(
+                args=(post_id, author_id, created_at),
+                queue='feed',
+                retry=True,
+                retry_policy={'max_retries': 2, 'interval_start': 0.2, 'interval_step': 0.2},
+            )
+            return {
+                'post_id': post_id,
+                'mode': 'push_async',
+                'followers': follower_count,
+                'pushed': 0
+            }
+        except Exception as exc:
+            # 入队失败兜底：降级为同步推送（宁可阻塞事件总线也不丢内容），并打指标告警
+            FEED_OPERATIONS.labels(action='fanout', result='enqueue_failed').inc()
+            logger.error(
+                f'feed fanout 入队失败，降级同步推送 post={post_id},author={author_id}:{exc}'
+            )
+            result = FeedCache.push_to_followers(
+                post_id=post_id,
+                created_at=created_at,
+                follower_ids=follower_ids,
+                follower_count=follower_count
+            )
+            return {
+                'post_id': post_id,
+                'mode': 'push_fallback',
+                'followers': follower_count,
+                'pushed': result['pushed']
+            }
     @classmethod
     def delete_post(cls,post_id:int,author_id:int):
         '''

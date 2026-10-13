@@ -327,7 +327,7 @@ services:
         condition: service_healthy
     networks:
       - weibo-network
-    command: celery -A core.celery_app.celery_app worker -l info -Q default,like -c 4
+    command: celery -A core.celery_app.celery_app worker -l info -Q default,like,feed -c 4
     healthcheck:
       test: ["CMD-SHELL", "celery -A core.celery_app.celery_app inspect ping --timeout 5 >/dev/null 2>&1 || exit 1"]
       interval: 30s

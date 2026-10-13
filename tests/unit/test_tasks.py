@@ -49,6 +49,21 @@ class TestFeedTasks:
             assert result["invalidated"] is True
             assert FeedCache.pull_feed(1, 1, 10) is None
 
+    def test_async_push_to_followers(self, app, db_session, mock_redis):
+        from app.feeds.cache import FeedCache
+        from app.follows.services import FollowService
+        from tasks.feed_tasks import async_push_to_followers
+        from tests.unit.factories import UserFactory
+        with app.app_context():
+            author = UserFactory()
+            follower = UserFactory()
+            FollowService.follow_user(follower.id, author.id)
+
+            result = async_push_to_followers(100, author.id, 1719820800)
+
+            assert result["pushed"] == 1
+            assert "100" in (FeedCache.pull_feed(follower.id, 1, 10) or [])
+
     def test_async_remove_post_from_followers(self, app, mock_redis):
         from app.feeds.cache import FeedCache
         from tasks.feed_tasks import async_remove_post_from_followers

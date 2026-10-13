@@ -6,6 +6,8 @@ import logging
 from celery import shared_task
 
 from app.feeds.cache import FeedCache
+from app.follows.cache import FollowCache
+from app.follows.repositories import follow_repository
 
 logger = logging.getLogger(__name__)
 
@@ -34,23 +36,36 @@ def async_remove_post_from_followers(self, post_id: int, follower_ids: list[int]
 
 
 @shared_task(bind=True, max_retries=3, default_retry_delay=5)
-def async_push_to_followers(self, post_id: int, created_at: float, follower_ids: list[int]):
+def async_push_to_followers(self, post_id: int, author_id: int, created_at: float):
     '''
-    异步推送到粉丝时间线（用于超大粉丝量的分批推送）
-    当粉丝数极大时，同步推送会阻塞请求，改为异步任务分批执行
+    异步 fanout：帖子创建后推送到作者的所有粉丝时间线。
+
+    任务体只接收 author_id（不接收粉丝列表）：粉丝列表在 worker 内查询并分批推送，
+    避免把几十万粉丝 id 序列化进消息体撑爆 broker。
+    粉丝缓存 miss 时回源从库并回填。
     '''
     try:
+        follower_ids = FollowCache.get_follower_ids(author_id)
+        if follower_ids is None:
+            follower_ids = follow_repository.get_follower_ids(author_id)
+            if follower_ids:
+                FollowCache.preload_followers(author_id, follower_ids)
+            logger.info(f'作者{author_id}粉丝缓存miss，从DB加载{len(follower_ids)}人')
+
+        if not follower_ids:
+            logger.info(f'作者{author_id}无粉丝，帖子{post_id}无需fanout')
+            return {'post_id': post_id, 'pushed': 0, 'mode': 'push', 'follower_count': 0}
+
         result = FeedCache.push_to_followers(
             post_id=post_id,
             created_at=created_at,
-            follower_ids=follower_ids
+            follower_ids=follower_ids,
+            follower_count=len(follower_ids),
         )
-        logger.info(
-            f"异步推送完成：帖子{post_id}已推送到{result['pushed']}个粉丝"
-        )
+        logger.info(f"异步fanout完成：帖子{post_id}已推送到{result['pushed']}个粉丝")
         return result
     except Exception as exc:
-        logger.error(f'异步推送失败: {exc}')
+        logger.error(f'异步fanout失败，准备重试: {exc}')
         raise self.retry(exc=exc)
 
 
