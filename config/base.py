@@ -68,6 +68,13 @@ class BaseConfig:
     # celery worker/beat 设 false，避免与 web 重复消费同一队列。
     EVENT_BUS_ENABLED = os.getenv('EVENT_BUS_ENABLED', 'true').lower() == 'true'
 
+    # 事件总线可靠性参数
+    EVENT_BUS_MAX_RETRY = int(os.getenv('EVENT_BUS_MAX_RETRY', '3'))              # 单条事件最大重试次数
+    EVENT_BUS_PUBLISH_RETRIES = int(os.getenv('EVENT_BUS_PUBLISH_RETRIES', '3'))  # 入队失败重试次数
+    EVENT_BUS_CLAIM_TIMEOUT = int(os.getenv('EVENT_BUS_CLAIM_TIMEOUT', '1'))      # BLMOVE 阻塞超时(秒)
+    # processing 条目视为滞留可回收的时间(秒)，必须大于最慢 handler，否则会被 reaper 重复投递
+    EVENT_BUS_VISIBILITY_TIMEOUT = int(os.getenv('EVENT_BUS_VISIBILITY_TIMEOUT', '60'))
+
     # ==================== Redis 配置 ====================
     REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
     REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))

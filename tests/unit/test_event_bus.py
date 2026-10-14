@@ -104,6 +104,20 @@ class TestEventBusReliableQueue:
             assert event_bus._reap_stale(mock_redis) == 0
             assert mock_redis.llen('event_bus:processing') == 1
 
+    def test_visibility_timeout_configurable(self, app, mock_redis, monkeypatch):
+        import time as _t
+
+        from app.common.events import event_bus
+        monkeypatch.setitem(app.config, 'EVENT_BUS_VISIBILITY_TIMEOUT', 3600)
+        with app.app_context():
+            raw = '{"id":"z","event":"t.cfg","payload":{},"retry_count":0}'
+            mock_redis.lpush('event_bus:processing', raw)
+            mock_redis.hset('event_bus:processing:ts', raw, _t.time() - 120)
+
+            # 默认(60s)会判定超时回收，这里配置为 3600s -> 不回收
+            assert event_bus._reap_stale(mock_redis) == 0
+            assert mock_redis.llen('event_bus:processing') == 1
+
 
 class TestEventBusLifecycle:
     def _patch_thread(self, monkeypatch, alive, started):

@@ -36,11 +36,23 @@ class RedisEventBus:
     _instance=None
     _lock=threading.Lock()
 
-    MAX_RETRY=3              #同一条事件最多重试次数
-    PUBLISH_RETRIES=3        #生产端入队失败重试次数
+    MAX_RETRY=3              #同一条事件最多重试次数(默认,可用 EVENT_BUS_MAX_RETRY 覆盖)
+    PUBLISH_RETRIES=3        #生产端入队失败重试次数(默认,可用 EVENT_BUS_PUBLISH_RETRIES 覆盖)
     PUBLISH_RETRY_DELAY=0.05
-    CLAIM_TIMEOUT=1          #BLMOVE 阻塞超时(秒)
-    VISIBILITY_TIMEOUT=60    #processing 条目视为滞留/可回收的时间(秒)，需大于最慢 handler
+    CLAIM_TIMEOUT=1          #BLMOVE 阻塞超时(秒)(默认,可用 EVENT_BUS_CLAIM_TIMEOUT 覆盖)
+    VISIBILITY_TIMEOUT=60    #processing 滞留可回收时间(秒)(默认,可用 EVENT_BUS_VISIBILITY_TIMEOUT 覆盖)
+
+    @classmethod
+    def _cfg(cls,key:str,default:int)->int:
+        '''读运行时配置,无 app 上下文或未配置时回退默认值'''
+        try:
+            from flask import current_app
+            value=current_app.config.get(key)
+            if value is not None:
+                return int(value)
+        except Exception:
+            pass
+        return default
 
     def __new__(cls):
         if cls._instance is None:
@@ -87,8 +99,9 @@ class RedisEventBus:
         except Exception:
             pass
 
+        publish_retries=self._cfg('EVENT_BUS_PUBLISH_RETRIES',self.PUBLISH_RETRIES)
         last_exc=None
-        for attempt in range(self.PUBLISH_RETRIES):
+        for attempt in range(publish_retries):
             try:
                 conn=RedisClient.get_conn(for_write=True)
                 if not conn:
@@ -102,7 +115,7 @@ class RedisEventBus:
                 time.sleep(self.PUBLISH_RETRY_DELAY*(attempt+1))
         EVENT_BUS_EVENTS.labels(event=event_name,result='publish_failed').inc()
         logger.error(
-            f'事件入队失败(已重试{self.PUBLISH_RETRIES}次),事件可能丢失:{event_name},error:{last_exc}'
+            f'事件入队失败(已重试{publish_retries}次),事件可能丢失:{event_name},error:{last_exc}'
         )
         return False
 
@@ -173,7 +186,8 @@ class RedisEventBus:
 
         EVENT_BUS_EVENTS.labels(event=event_name,result='handler_failed').inc()
         event["retry_count"]=event.get("retry_count",0)+1
-        if event["retry_count"]<self.MAX_RETRY:
+        max_retry=self._cfg('EVENT_BUS_MAX_RETRY',self.MAX_RETRY)
+        if event["retry_count"]<max_retry:
             try:
                 conn.lpush(self._redis_key,json.dumps(event,ensure_ascii=False))
                 EVENT_BUS_EVENTS.labels(event=event_name,result='retried').inc()
@@ -192,10 +206,11 @@ class RedisEventBus:
         原子领取一条事件：BLMOVE 从 queue 右端取出、放入 processing 左端，
         并登记领取时间（用于 reaper 判断滞留）。返回原始事件 JSON 或 None。
         '''
+        claim_timeout=self._cfg('EVENT_BUS_CLAIM_TIMEOUT',self.CLAIM_TIMEOUT)
         try:
             raw=conn.blmove(
                 self._redis_key,self._processing_key,
-                timeout=self.CLAIM_TIMEOUT,src='RIGHT',dest='LEFT'
+                timeout=claim_timeout,src='RIGHT',dest='LEFT'
             )
         except Exception as e:
             logger.error(f'事件领取失败:{e}')
@@ -221,6 +236,7 @@ class RedisEventBus:
 
     def _reap_stale(self,conn)->int:
         '''回收 processing 中滞留超过 VISIBILITY_TIMEOUT 或缺失时间戳的条目。'''
+        visibility=self._cfg('EVENT_BUS_VISIBILITY_TIMEOUT',self.VISIBILITY_TIMEOUT)
         now=time.time()
         try:
             entries=conn.lrange(self._processing_key,0,-1) or []
@@ -235,7 +251,7 @@ class RedisEventBus:
         for raw in entries:
             t=ts_map.get(raw)
             try:
-                stale=(t is None) or (now-float(t)>self.VISIBILITY_TIMEOUT)
+                stale=(t is None) or (now-float(t)>visibility)
             except (TypeError,ValueError):
                 stale=True
             if not stale:
