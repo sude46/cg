@@ -48,6 +48,19 @@ class TestEventBusDispatch:
         finally:
             event_bus._subscribers.pop('t.fail', None)
 
+    def test_dead_letter_length_capped(self, app, mock_redis, monkeypatch):
+        import json
+
+        from app.common.events import event_bus
+        monkeypatch.setitem(app.config, 'EVENT_BUS_DLQ_MAX', 2)
+        with app.app_context():
+            for i in range(3):
+                event_bus._dead_letter(
+                    mock_redis, 'test', event_name='t.cap',
+                    event_json=json.dumps({'i': i}),
+                )
+            assert mock_redis.llen('event_bus:dead_letter') == 2
+
     def test_success_marks_handled(self, app, mock_redis):
         from app.common.events import event_bus
         seen = []

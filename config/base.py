@@ -74,6 +74,7 @@ class BaseConfig:
     EVENT_BUS_CLAIM_TIMEOUT = int(os.getenv('EVENT_BUS_CLAIM_TIMEOUT', '1'))      # BLMOVE 阻塞超时(秒)
     # processing 条目视为滞留可回收的时间(秒)，必须大于最慢 handler，否则会被 reaper 重复投递
     EVENT_BUS_VISIBILITY_TIMEOUT = int(os.getenv('EVENT_BUS_VISIBILITY_TIMEOUT', '60'))
+    EVENT_BUS_DLQ_MAX = int(os.getenv('EVENT_BUS_DLQ_MAX', '10000'))  # 死信队列最大长度(0=不限)
 
     # ==================== Redis 配置 ====================
     REDIS_HOST = os.getenv("REDIS_HOST", "localhost")

@@ -41,6 +41,7 @@ class RedisEventBus:
     PUBLISH_RETRY_DELAY=0.05
     CLAIM_TIMEOUT=1          #BLMOVE 阻塞超时(秒)(默认,可用 EVENT_BUS_CLAIM_TIMEOUT 覆盖)
     VISIBILITY_TIMEOUT=60    #processing 滞留可回收时间(秒)(默认,可用 EVENT_BUS_VISIBILITY_TIMEOUT 覆盖)
+    DLQ_MAX=10000            #死信队列最大长度(默认,可用 EVENT_BUS_DLQ_MAX 覆盖；0=不限)
 
     @classmethod
     def _cfg(cls,key:str,default:int)->int:
@@ -137,6 +138,9 @@ class RedisEventBus:
         label=event_name or 'unknown'
         try:
             conn.lpush(self._dead_letter_key,json.dumps(item,ensure_ascii=False))
+            dlq_max=self._cfg('EVENT_BUS_DLQ_MAX',self.DLQ_MAX)
+            if dlq_max>0:
+                conn.ltrim(self._dead_letter_key,0,dlq_max-1)
             EVENT_BUS_EVENTS.labels(event=label,result='dead_letter').inc()
             try:
                 EVENT_BUS_DEAD_LETTER_LENGTH.set(conn.llen(self._dead_letter_key))

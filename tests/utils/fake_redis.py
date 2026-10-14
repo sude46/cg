@@ -319,6 +319,18 @@ class FakeRedisClient:
             self.store[key] = out
         return removed
 
+    def ltrim(self, key, start, end):
+        lst = self.store.get(key)
+        if not lst:
+            return True
+        n = len(lst)
+        if start < 0:
+            start = max(0, n + start)
+        if end < 0:
+            end = n + end
+        self.store[key] = lst[start:end + 1] if end >= start else []
+        return True
+
     def blmove(self, first_list, second_list, timeout=0, src='LEFT', dest='RIGHT'):
         src_lst = self.store.get(first_list)
         if not src_lst:
