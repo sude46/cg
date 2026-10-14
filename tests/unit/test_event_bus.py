@@ -48,6 +48,21 @@ class TestEventBusDispatch:
         finally:
             event_bus._subscribers.pop('t.fail', None)
 
+    def test_duplicate_event_id_skipped(self, app, mock_redis):
+        """同一 event.id 重复投递只处理一次（幂等）"""
+        from app.common.events import event_bus
+        calls = []
+        event_bus._subscribers['t.dedup'] = [lambda p: calls.append(1)]
+        try:
+            with app.app_context():
+                ev = {'id': 'abc123', 'event': 't.dedup', 'payload': {}, 'retry_count': 0}
+                event_bus._dispatch(mock_redis, 't.dedup', {}, ev)
+                event_bus._dispatch(mock_redis, 't.dedup', {}, dict(ev))
+                assert len(calls) == 1
+                assert mock_redis.exists('event_bus:done:abc123') == 1
+        finally:
+            event_bus._subscribers.pop('t.dedup', None)
+
     def test_dead_letter_length_capped(self, app, mock_redis, monkeypatch):
         import json
 

@@ -42,6 +42,12 @@ class RedisEventBus:
     CLAIM_TIMEOUT=1          #BLMOVE 阻塞超时(秒)(默认,可用 EVENT_BUS_CLAIM_TIMEOUT 覆盖)
     VISIBILITY_TIMEOUT=60    #processing 滞留可回收时间(秒)(默认,可用 EVENT_BUS_VISIBILITY_TIMEOUT 覆盖)
     DLQ_MAX=10000            #死信队列最大长度(默认,可用 EVENT_BUS_DLQ_MAX 覆盖；0=不限)
+    DEDUP_TTL=86400          #事件幂等去重窗口(秒)(默认,可用 EVENT_BUS_DEDUP_TTL 覆盖；0=关闭)
+
+    @classmethod
+    def _done_key(cls,event_id:str)->str:
+        '''事件幂等标记键(处理成功后写入,带 TTL)'''
+        return f'event_bus:done:{event_id}'
 
     @classmethod
     def _cfg(cls,key:str,default:int)->int:
@@ -151,7 +157,21 @@ class RedisEventBus:
             logger.error(f'死信入队失败 reason={reason} event={label}:{e}')
 
     def _dispatch(self,conn,event_name:str,payload:dict,event:dict):
-        '''分发一条事件给所有订阅者；无订阅者入死信，有 handler 失败则整条事件重试。'''
+        '''
+        分发一条事件给所有订阅者；无订阅者入死信，有 handler 失败则整条事件重试。
+        幂等：同一 event.id 在去重窗口内只处理一次（覆盖 at-least-once 重复投递/死信重放）。
+        '''
+        event_id=event.get('id')
+        dedup_ttl=self._cfg('EVENT_BUS_DEDUP_TTL',self.DEDUP_TTL)
+        if event_id and dedup_ttl>0:
+            try:
+                if conn.exists(self._done_key(event_id)):
+                    EVENT_BUS_EVENTS.labels(event=event_name,result='duplicate').inc()
+                    logger.info(f'事件重复投递，跳过：{event_name},id={event_id}')
+                    return
+            except Exception as e:
+                logger.error(f'事件幂等检查失败:{e}')
+
         handlers=self._subscribers.get(event_name,[])
         if not handlers:
             self._dead_letter(
@@ -186,6 +206,11 @@ class RedisEventBus:
 
         if not failed:
             EVENT_BUS_EVENTS.labels(event=event_name,result='handled').inc()
+            if event_id and dedup_ttl>0:
+                try:
+                    conn.setex(self._done_key(event_id),dedup_ttl,'1')
+                except Exception as e:
+                    logger.error(f'写事件幂等标记失败:{e}')
             return
 
         EVENT_BUS_EVENTS.labels(event=event_name,result='handler_failed').inc()

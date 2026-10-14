@@ -75,6 +75,9 @@ class BaseConfig:
     # processing 条目视为滞留可回收的时间(秒)，必须大于最慢 handler，否则会被 reaper 重复投递
     EVENT_BUS_VISIBILITY_TIMEOUT = int(os.getenv('EVENT_BUS_VISIBILITY_TIMEOUT', '60'))
     EVENT_BUS_DLQ_MAX = int(os.getenv('EVENT_BUS_DLQ_MAX', '10000'))  # 死信队列最大长度(0=不限)
+    # 事件幂等去重窗口(秒)：同一 event.id 在窗口内只处理一次；0=关闭。
+    # 覆盖 at-least-once 的重复投递(reaper 回收/死信重放)，防止重复通知等副作用
+    EVENT_BUS_DEDUP_TTL = int(os.getenv('EVENT_BUS_DEDUP_TTL', '86400'))
 
     # ==================== Redis 配置 ====================
     REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
