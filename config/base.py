@@ -63,8 +63,9 @@ class BaseConfig:
     # 开发环境是否自动建表（运行 alembic 迁移时需显式设 AUTO_CREATE_TABLES=false）
     AUTO_CREATE_TABLES = os.getenv('AUTO_CREATE_TABLES', 'true').lower() == 'true'
 
-    # 是否启动 Redis 事件总线消费者（只有 web 进程需要；celery worker/beat 设 false，
-    # 否则多进程消费同一 List 会抢事件，且 worker 缓存的旧 app 可能无对应订阅者而丢事件）
+    # 是否启动 Redis 事件总线消费者。只有 web 进程需要：每个 gunicorn worker 一个消费
+    # 线程，多进程共享 queue/processing，at-least-once + reaper 回收 -> 多消费者安全。
+    # celery worker/beat 设 false，避免与 web 重复消费同一队列。
     EVENT_BUS_ENABLED = os.getenv('EVENT_BUS_ENABLED', 'true').lower() == 'true'
 
     # ==================== Redis 配置 ====================

@@ -22,14 +22,16 @@ class RedisEventBus:
     基于 Redis List 的事件总线（at-least-once）
 
     - 生产者：LPUSH 事件到 event_bus:queue，立即返回
-    - 消费者：后台线程用 BLMOVE 把事件原子地从 queue 移到 event_bus:processing，
-      处理完成后 LREM ack；处理中进程崩溃则事件仍留在 processing
+    - 消费者：每个进程一个后台线程，用 BLMOVE 把事件原子地从 queue 移到
+      event_bus:processing，处理完成后 LREM ack；处理中进程崩溃则事件仍留在 processing
     - 恢复：周期性 reaper 扫描 processing，把滞留超过 VISIBILITY_TIMEOUT 的条目
       重新放回 queue（可能重复投递，故 handler 必须幂等）
     - 失败处理：整条事件重试(最多 MAX_RETRY 次)；无订阅者/解析失败/重试耗尽 -> 死信队列
 
-    语义：at-least-once（可能重复，不会静默丢）。多进程(gunicorn -w N)共享同一
-    queue/processing，reaper 按领取时间戳回收，因此多消费者是安全的。
+    消费模型：每个进程一个消费线程（gunicorn -w N 即有 N 个消费者），它们共享同一
+    queue/processing，reaper 按领取时间戳回收，因此多消费者是安全的；事件由哪个
+    进程处理不确定（handler 只应依赖 Redis/DB，不依赖进程内状态）。
+    语义：at-least-once（可能重复，不会静默丢）。
     '''
     _instance=None
     _lock=threading.Lock()
@@ -298,8 +300,14 @@ class RedisEventBus:
                 time.sleep(1)
 
     def start(self, app=None):
-        '''启动消费者线程'''
-        if self._running:
+        '''
+        启动消费者线程（每进程一个）。
+
+        以"线程是否存活"为准，而非只看 _running：gunicorn --preload 会 fork 出继承
+        _running=True、但线程并未被复制的子进程，若只看 _running 会直接跳过启动，
+        导致没有消费者、事件静默堆积。
+        '''
+        if self._running and self._consumer_thread is not None and self._consumer_thread.is_alive():
             return
         self._app=app
         self._consumer_id=f'{socket.gethostname()}:{os.getpid()}'
@@ -313,5 +321,6 @@ class RedisEventBus:
         self._running = False
         if self._consumer_thread:
             self._consumer_thread.join(timeout=5)
+            self._consumer_thread=None
             logger.info("EventBus 消费者线程已停止")
 event_bus = RedisEventBus()

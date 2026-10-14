@@ -103,3 +103,52 @@ class TestEventBusReliableQueue:
 
             assert event_bus._reap_stale(mock_redis) == 0
             assert mock_redis.llen('event_bus:processing') == 1
+
+
+class TestEventBusLifecycle:
+    def _patch_thread(self, monkeypatch, alive, started):
+        from app.common import events as events_mod
+
+        class DummyThread:
+            def __init__(self, target=None, daemon=None):
+                self.target = target
+
+            def start(self):
+                started['started'] = True
+
+            def is_alive(self):
+                return alive
+
+            def join(self, timeout=None):
+                pass
+
+        monkeypatch.setattr(events_mod.threading, 'Thread', DummyThread)
+
+    def test_start_after_preload_fork_restarts_consumer(self, app, monkeypatch):
+        """fork 后继承 _running=True 但线程不存在，start 必须重新启动消费者"""
+        from app.common.events import event_bus
+        started = {}
+        self._patch_thread(monkeypatch, alive=False, started=started)
+        event_bus._running = True
+        event_bus._consumer_thread = None
+        try:
+            event_bus.start(app)
+            assert started.get('started') is True
+        finally:
+            event_bus._running = False
+            event_bus._consumer_thread = None
+
+    def test_start_noop_when_thread_alive(self, app, monkeypatch):
+        """已有存活消费线程时，start 不重复启动"""
+        from app.common import events as events_mod
+        from app.common.events import event_bus
+        started = {}
+        self._patch_thread(monkeypatch, alive=True, started=started)
+        event_bus._running = True
+        event_bus._consumer_thread = events_mod.threading.Thread()
+        try:
+            event_bus.start(app)
+            assert 'started' not in started
+        finally:
+            event_bus._running = False
+            event_bus._consumer_thread = None
