@@ -64,6 +64,26 @@ groups:
           summary: "事件总线在途事件积压"
           description: "event_bus:processing 有 {{ $value }} 条在途事件，handler 可能过慢或卡住"
 
+      - alert: WeiboEventBusHandlerFailures
+        expr: sum(rate(weibo_event_bus_events_total{result="handler_failed"}[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "事件总线 handler 持续失败"
+          description: "handler 失败速率 {{ $value }}/s，可能有事件在重试/进死信"
+
+      - alert: WeiboEventBusReclaimStorm
+        expr: sum(rate(weibo_event_bus_events_total{result="reclaimed"}[5m])) > 0.2
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "事件总线重复回收偏高"
+          description: "滞留事件回收 {{ $value }}/s，可能 handler 过慢(超过 VISIBILITY_TIMEOUT)或 ack 失败"
+
       - alert: WeiboRedisMemoryHigh
         expr: (redis_memory_used_bytes / redis_memory_max_bytes > 0.8) and (redis_memory_max_bytes > 0)
         for: 5m
