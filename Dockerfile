@@ -7,6 +7,11 @@ WORKDIR /build
 COPY pyproject.toml ./
 COPY README.md* ./
 
+# 网络不稳时更耐受：加大超时并重试（配合下面的 pip cache mount，重试可从已下载处续上）
+ENV PIP_DEFAULT_TIMEOUT=100 \
+    PIP_RETRIES=10 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
 # BuildKit pip cache mount：复用已下载的 wheel/构建依赖，层失效时也无需重新下载全部依赖
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip install -e .
