@@ -64,7 +64,21 @@ class TestFeedService:
             assert ids1 | ids2 == {p1.id, p2.id, p3.id}, "翻页不可遗漏"
 
     def test_publish_post_push_mode(self, app, db_session, mock_redis):
-        """普通用户发帖，fanout 下沉 Celery（测试 eager 模式同步执行）"""
+        """小粉丝量(<异步阈值)：直接同步 fanout"""
+        with app.app_context():
+            author = UserFactory()
+            follower = UserFactory()
+            FollowService.follow_user(follower.id, author.id)
+            result = FeedService.publish_post(999, author.id, 1719820800)
+
+            assert result["mode"] == "push"
+            assert result["followers"] == 1
+            assert result["pushed"] == 1
+            assert "999" in (FeedCache.pull_feed(follower.id, 1, 10) or [])
+
+    def test_publish_post_async_threshold(self, app, db_session, mock_redis, monkeypatch):
+        """粉丝数达异步阈值：fanout 下沉 Celery（测试 eager 模式同步执行）"""
+        monkeypatch.setitem(app.config, 'FEED_FANOUT_ASYNC_THRESHOLD', 1)
         with app.app_context():
             author = UserFactory()
             follower = UserFactory()
@@ -85,6 +99,7 @@ class TestFeedService:
         def boom(*args, **kwargs):
             raise RuntimeError("broker down")
 
+        monkeypatch.setitem(app.config, 'FEED_FANOUT_ASYNC_THRESHOLD', 1)
         monkeypatch.setattr(
             feed_tasks, "async_push_to_followers", SimpleNamespace(apply_async=boom)
         )

@@ -242,27 +242,14 @@ class FeedService:
         #全站广场同步写入(失败不影响推粉丝主流程)
         ExploreCache.add_post(post_id,created_at)
 
-        # 先查缓存
-        follower_ids = FollowCache.get_follower_ids(author_id)
+        # 粉丝数用权威计数(users.follower_count)，不再为算个数把整份粉丝集合载入内存
+        follower_count = follow_repository.get_follower_count(author_id)
 
-        if follower_ids is None:
-            # Cache miss：查 DB 从库 → 回填
-            follower_ids = follow_repository.get_follower_ids(author_id)
-            if follower_ids:
-                FollowCache.preload_followers(author_id, follower_ids)
-            logger.info(f'作者{author_id}粉丝缓存miss，从DB加载{len(follower_ids)}人')
-
-        follower_count = len(follower_ids)
-
-        #判断是否是大V，决定推/拉模式
-        is_big_v=FeedCache.is_big_v(follower_count)
-
-        if is_big_v:
-            # 大V：不发推，登记到大V集合，粉丝读首页时从 outbox 拉取
+        # 一段(>=BIG_V)：大V不 fanout，只写 outbox，粉丝读首页时归并
+        if FeedCache.is_big_v(follower_count):
             FeedCache.mark_big_v(author_id)
             logger.info(
-                f'作者{author_id}是大V({follower_count}粉丝)，'
-                f'帖子{post_id}使用拉模式'
+                f'作者{author_id}是大V({follower_count}粉丝)，帖子{post_id}使用拉模式'
             )
             return {
                 'post_id': post_id,
@@ -270,41 +257,75 @@ class FeedService:
                 'followers': follower_count,
                 'pushed': 0
             }
-        # 普通用户：粉丝数掉回阈值以下则取消大V标记；fanout 下沉 Celery feed 队列
+
+        # 普通作者：粉丝掉回阈值以下则取消大V标记
         FeedCache.unmark_big_v(author_id)
-        # 延迟导入：tasks.feed_tasks 顶层 import app.feeds.cache，顶层导入会形成循环
-        from tasks.feed_tasks import async_push_to_followers
-        try:
-            async_push_to_followers.apply_async(
-                args=(post_id, author_id, created_at),
-                queue='feed',
-                retry=True,
-                retry_policy={'max_retries': 2, 'interval_start': 0.2, 'interval_step': 0.2},
-            )
-            return {
-                'post_id': post_id,
-                'mode': 'push_async',
-                'followers': follower_count,
-                'pushed': 0
-            }
-        except Exception as exc:
-            # 入队失败兜底：降级为同步推送（宁可阻塞事件总线也不丢内容），并打指标告警
-            FEED_OPERATIONS.labels(action='fanout', result='enqueue_failed').inc()
-            logger.error(
-                f'feed fanout 入队失败，降级同步推送 post={post_id},author={author_id}:{exc}'
-            )
-            result = FeedCache.push_to_followers(
-                post_id=post_id,
-                created_at=created_at,
-                follower_ids=follower_ids,
-                follower_count=follower_count
-            )
-            return {
-                'post_id': post_id,
-                'mode': 'push_fallback',
-                'followers': follower_count,
-                'pushed': result['pushed']
-            }
+
+        # 二段(>=ASYNC 且 <BIG_V)：fanout 下沉 Celery feed 队列
+        if follower_count >= FeedCache.fanout_async_threshold():
+            # 延迟导入：tasks.feed_tasks 顶层 import app.feeds.cache，顶层导入会形成循环
+            from tasks.feed_tasks import async_push_to_followers
+            try:
+                async_push_to_followers.apply_async(
+                    args=(post_id, author_id, created_at),
+                    queue='feed',
+                    retry=True,
+                    retry_policy={'max_retries': 2, 'interval_start': 0.2, 'interval_step': 0.2},
+                )
+                return {
+                    'post_id': post_id,
+                    'mode': 'push_async',
+                    'followers': follower_count,
+                    'pushed': 0
+                }
+            except Exception as exc:
+                # 入队失败兜底：降级为同步推送（宁可阻塞事件总线也不丢内容），并打指标告警
+                FEED_OPERATIONS.labels(action='fanout', result='enqueue_failed').inc()
+                logger.error(
+                    f'feed fanout 入队失败，降级同步推送 post={post_id},author={author_id}:{exc}'
+                )
+                follower_ids = cls._load_follower_ids(author_id, follower_count)
+                result = FeedCache.push_to_followers(
+                    post_id=post_id,
+                    created_at=created_at,
+                    follower_ids=follower_ids,
+                    follower_count=follower_count
+                )
+                return {
+                    'post_id': post_id,
+                    'mode': 'push_fallback',
+                    'followers': follower_count,
+                    'pushed': result['pushed']
+                }
+
+        # 三段(<ASYNC)：粉丝量小，直接同步 fanout
+        follower_ids = cls._load_follower_ids(author_id, follower_count)
+        result = FeedCache.push_to_followers(
+            post_id=post_id,
+            created_at=created_at,
+            follower_ids=follower_ids,
+            follower_count=follower_count
+        )
+        return {
+            'post_id': post_id,
+            'mode': 'push',
+            'followers': follower_count,
+            'pushed': result['pushed']
+        }
+
+    @classmethod
+    def _load_follower_ids(cls,author_id:int,expected_count:int=None)->list[int]:
+        '''
+        取作者粉丝ID列表。注意 FollowCache 对"key 不存在"返回空集合而非 None，
+        所以当已知粉丝数>0 却取到空列表时，判定为缓存未命中，回源DB并回填。
+        '''
+        follower_ids=FollowCache.get_follower_ids(author_id)
+        if (not follower_ids) and (expected_count is None or expected_count>0):
+            follower_ids=follow_repository.get_follower_ids(author_id)
+            if follower_ids:
+                FollowCache.preload_followers(author_id,follower_ids)
+            logger.info(f'作者{author_id}粉丝缓存未命中，从DB加载{len(follower_ids)}人')
+        return follower_ids or []
     @classmethod
     def delete_post(cls,post_id:int,author_id:int):
         '''

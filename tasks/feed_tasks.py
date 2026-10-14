@@ -45,12 +45,14 @@ def async_push_to_followers(self, post_id: int, author_id: int, created_at: floa
     粉丝缓存 miss 时回源从库并回填。
     '''
     try:
+        # FollowCache 对 key 不存在返回空集合而非 None；本任务只对"粉丝>=异步阈值"的作者触发，
+        # 因此取到空列表必是缓存未命中 -> 回源DB（否则会把帖子推给 0 个人）
         follower_ids = FollowCache.get_follower_ids(author_id)
-        if follower_ids is None:
+        if not follower_ids:
             follower_ids = follow_repository.get_follower_ids(author_id)
             if follower_ids:
                 FollowCache.preload_followers(author_id, follower_ids)
-            logger.info(f'作者{author_id}粉丝缓存miss，从DB加载{len(follower_ids)}人')
+            logger.info(f'作者{author_id}粉丝缓存未命中，从DB加载{len(follower_ids)}人')
 
         if not follower_ids:
             logger.info(f'作者{author_id}无粉丝，帖子{post_id}无需fanout')

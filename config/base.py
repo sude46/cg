@@ -181,6 +181,9 @@ class BaseConfig:
     #========================Feed配置(业务规则)=====================
     #大V判定阈值：粉丝>=该值走拉模式，按压测反推：4*阈值<=redis可承受单帖突发写
     BIG_V_THRESHOLD=int(os.getenv('BIG_V_THRESHOLD','1000'))
+    #fanout 异步阈值：粉丝>=该值走 Celery feed 队列异步推送，以下同步推送。
+    #约束：FEED_FANOUT_ASYNC_THRESHOLD < BIG_V_THRESHOLD
+    FEED_FANOUT_ASYNC_THRESHOLD=int(os.getenv('FEED_FANOUT_ASYNC_THRESHOLD','500'))
 
 
 

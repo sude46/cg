@@ -73,6 +73,18 @@ class FeedCache:
         return follower_count >= cls.threshold()
 
     @classmethod
+    def fanout_async_threshold(cls) -> int:
+        '''fanout 异步阈值:粉丝>=该值走 Celery 异步推送,以下同步推送'''
+        try:
+            from flask import current_app
+            value=current_app.config.get('FEED_FANOUT_ASYNC_THRESHOLD')
+            if value is not None:
+                return int(value)
+        except Exception:
+            pass
+        return 500
+
+    @classmethod
     def push_to_followers(cls,post_id:int,created_at:float,follower_ids:list[int],follower_count=None):
         '''
         推模式：帖子创建后，推送到所有粉丝的时间线

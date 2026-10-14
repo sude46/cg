@@ -51,6 +51,17 @@ class FollowRepository:
 
 
     @staticmethod
+    @monitor_db("select", "users")
+    def get_follower_count(followed_id: int) -> int:
+        '''
+        获取粉丝数（users.follower_count 权威计数）。
+        用于 feed 推/拉分层判定：避免为算个数把整份粉丝集合加载进内存。
+        '''
+        session=FollowRepository._read_session()
+        row=session.query(User.follower_count).filter(User.id==followed_id).first()
+        return int(row[0]) if row and row[0] is not None else 0
+
+    @staticmethod
     @monitor_db("select", "follows")
     def get_following_ids(follower_id: int):
         '''获取某用户关注的人ID列表（对账/关系标注用）'''
