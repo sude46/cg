@@ -152,7 +152,10 @@ class TestJWTAuthFlow:
             login["refresh_token"]
             assert access_token is not None
 
-            refresh = AuthService.refresh_token(user["id"])
+            from flask_jwt_extended import decode_token
+
+            claims = decode_token(login["refresh_token"])
+            refresh = AuthService.refresh_tokens(user["id"], claims)
             assert "access_token" in refresh
 
             current = AuthService.get_current_user(user["id"])
