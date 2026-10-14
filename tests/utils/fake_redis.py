@@ -285,6 +285,52 @@ class FakeRedisClient:
     def llen(self, key):
         return len(self.store.get(key, []))
 
+    def lrange(self, key, start, end):
+        lst = self.store.get(key, [])
+        if start < 0:
+            start = max(0, len(lst) + start)
+        if end == -1 or end >= len(lst):
+            return list(lst[start:])
+        return list(lst[start:end + 1])
+
+    def lrem(self, key, count, value):
+        lst = self.store.get(key)
+        if not lst:
+            return 0
+        removed = 0
+        if count == 0:
+            new = [x for x in lst if x != value]
+            removed = len(lst) - len(new)
+            self.store[key] = new
+        elif count > 0:
+            out = []
+            for x in lst:
+                if x == value and removed < count:
+                    removed += 1
+                    continue
+                out.append(x)
+            self.store[key] = out
+        else:
+            out = list(lst)
+            for i in range(len(out) - 1, -1, -1):
+                if out[i] == value and removed < -count:
+                    del out[i]
+                    removed += 1
+            self.store[key] = out
+        return removed
+
+    def blmove(self, first_list, second_list, timeout=0, src='LEFT', dest='RIGHT'):
+        src_lst = self.store.get(first_list)
+        if not src_lst:
+            return None
+        value = src_lst.pop(0) if src == 'LEFT' else src_lst.pop()
+        dst_lst = self.store.setdefault(second_list, [])
+        if dest == 'LEFT':
+            dst_lst.insert(0, value)
+        else:
+            dst_lst.append(value)
+        return value
+
     # --- Scan ---
     def scan_iter(self, match=None, count=None):
         if match is None:

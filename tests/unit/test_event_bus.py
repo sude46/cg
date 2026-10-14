@@ -1,4 +1,4 @@
-"""事件总线 P0 行为测试：入队失败可见、无订阅者/重试耗尽进死信。"""
+"""事件总线测试：入队失败可见、无订阅者/重试耗尽进死信、BLMOVE+ack+reaper 可靠队列。"""
 
 
 class TestEventBusPublish:
@@ -63,3 +63,43 @@ class TestEventBusDispatch:
                 assert mock_redis.llen('event_bus:dead_letter') == 0
         finally:
             event_bus._subscribers.pop('t.ok', None)
+
+
+class TestEventBusReliableQueue:
+    def test_claim_and_ack(self, app, mock_redis):
+        from app.common.events import event_bus
+        with app.app_context():
+            event_bus.publish('t.claim', {'n': 1})
+            raw = event_bus._claim(mock_redis)
+            assert raw is not None
+            assert mock_redis.llen('event_bus:queue') == 0
+            assert mock_redis.llen('event_bus:processing') == 1
+            assert mock_redis.hgetall('event_bus:processing:ts')
+
+            event_bus._ack(mock_redis, raw)
+            assert mock_redis.llen('event_bus:processing') == 0
+            assert mock_redis.hgetall('event_bus:processing:ts') == {}
+
+    def test_reap_stale_requeues(self, app, mock_redis):
+        from app.common.events import event_bus
+        with app.app_context():
+            raw = '{"id":"x","event":"t.stale","payload":{},"retry_count":0}'
+            mock_redis.lpush('event_bus:processing', raw)
+            mock_redis.hset('event_bus:processing:ts', raw, 0)
+
+            assert event_bus._reap_stale(mock_redis) == 1
+            assert mock_redis.llen('event_bus:processing') == 0
+            assert mock_redis.llen('event_bus:queue') == 1
+            assert mock_redis.hgetall('event_bus:processing:ts') == {}
+
+    def test_reap_keeps_fresh(self, app, mock_redis):
+        import time as _t
+
+        from app.common.events import event_bus
+        with app.app_context():
+            raw = '{"id":"y","event":"t.fresh","payload":{},"retry_count":0}'
+            mock_redis.lpush('event_bus:processing', raw)
+            mock_redis.hset('event_bus:processing:ts', raw, _t.time())
+
+            assert event_bus._reap_stale(mock_redis) == 0
+            assert mock_redis.llen('event_bus:processing') == 1

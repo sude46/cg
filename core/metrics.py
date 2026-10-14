@@ -61,6 +61,10 @@ EVENT_BUS_QUEUE_LENGTH = Gauge(
     'weibo_event_bus_queue_length',
     'Event bus queue backlog (LLEN)'
 )
+EVENT_BUS_PROCESSING_LENGTH = Gauge(
+    'weibo_event_bus_processing_length',
+    'Event bus in-flight (processing) entries (LLEN)'
+)
 EVENT_BUS_DEAD_LETTER_LENGTH = Gauge(
     'weibo_event_bus_dead_letter_length',
     'Event bus dead-letter backlog (LLEN)'

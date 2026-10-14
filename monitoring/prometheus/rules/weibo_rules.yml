@@ -54,6 +54,16 @@ groups:
           summary: "事件总线出现死信"
           description: "event_bus:dead_letter 有 {{ $value }} 条无法处理的事件，需人工介入"
 
+      - alert: WeiboEventBusProcessingStuck
+        expr: weibo_event_bus_processing_length > 100
+        for: 2m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "事件总线在途事件积压"
+          description: "event_bus:processing 有 {{ $value }} 条在途事件，handler 可能过慢或卡住"
+
       - alert: WeiboRedisMemoryHigh
         expr: (redis_memory_used_bytes / redis_memory_max_bytes > 0.8) and (redis_memory_max_bytes > 0)
         for: 5m
