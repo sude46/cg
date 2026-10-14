@@ -249,14 +249,16 @@ class TestPostCache:
         cache.mark_recently_modified(1, ttl=5)
         assert cache.is_recently_modified(1) is True
 
-    def test_recently_modified_after_invalidation(self, app, mock_redis):
-        """测试失效后不再标记强一致"""
+    def test_recently_modified_survives_invalidation(self, app, mock_redis):
+        """invalidate 只删详情缓存，不清理强一致标记（由 TTL 自然过期，
+        否则会提前结束延迟双删的强一致窗口）"""
         from app.posts.cache import PostCache as cache
 
         cache.mark_recently_modified(1, ttl=5)
         assert cache.is_recently_modified(1) is True
         cache.invalidate(1)
-        assert cache.is_recently_modified(1) is False
+        assert cache.get(1) is None
+        assert cache.is_recently_modified(1) is True
 
     def test_null_penetration_protection(self, app, mock_redis):
         """测试 None 值缓存空标记，重复 get 仍返回 None"""
