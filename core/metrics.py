@@ -51,6 +51,21 @@ CELERY_TASK_LATENCY = Histogram(
     buckets=[0.01, 0.05, 0.1, 0.5, 1.0, 5.0, 10.0, 30.0, 60.0]
 )
 
+#==================事件总线====================
+EVENT_BUS_EVENTS = Counter(
+    'weibo_event_bus_events_total',
+    'Event bus events by result',
+    ['event', 'result']  # published/handled/retried/handler_failed/dead_letter/dropped/publish_failed/parse_error/no_subscriber
+)
+EVENT_BUS_QUEUE_LENGTH = Gauge(
+    'weibo_event_bus_queue_length',
+    'Event bus queue backlog (LLEN)'
+)
+EVENT_BUS_DEAD_LETTER_LENGTH = Gauge(
+    'weibo_event_bus_dead_letter_length',
+    'Event bus dead-letter backlog (LLEN)'
+)
+
 #=========================业务层========================
 LIKE_OPERATIONS = Counter(
     'weibo_like_operations_total',

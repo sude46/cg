@@ -34,6 +34,26 @@ groups:
           summary: "Celery 队列堆积"
           description: "队列 {{ $labels.queue }} 堆积 {{ $value }} 个任务"
 
+      - alert: WeiboEventBusBacklog
+        expr: weibo_event_bus_queue_length > 1000
+        for: 2m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "事件总线积压"
+          description: "event_bus:queue 积压 {{ $value }} 条，消费速度跟不上生产"
+
+      - alert: WeiboEventBusDeadLetter
+        expr: weibo_event_bus_dead_letter_length > 0
+        for: 1m
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: "事件总线出现死信"
+          description: "event_bus:dead_letter 有 {{ $value }} 条无法处理的事件，需人工介入"
+
       - alert: WeiboRedisMemoryHigh
         expr: (redis_memory_used_bytes / redis_memory_max_bytes > 0.8) and (redis_memory_max_bytes > 0)
         for: 5m
