@@ -147,6 +147,25 @@ class TestEventBusReliableQueue:
             assert mock_redis.llen('event_bus:processing') == 1
 
 
+class TestEventBusConfigInConsumerThread:
+    def test_cfg_reads_stored_app_config_without_context(self, app):
+        """消费线程没有 app context，_cfg 必须能从 start() 保存的 app 读到运行时配置"""
+        import threading
+
+        from app.common.events import event_bus
+        app.config['EVENT_BUS_VISIBILITY_TIMEOUT'] = 999
+        event_bus._app = app
+        result = {}
+
+        def worker():  # 新线程没有 Flask app context（thread-local）
+            result['v'] = event_bus._cfg('EVENT_BUS_VISIBILITY_TIMEOUT', 60)
+
+        t = threading.Thread(target=worker)
+        t.start()
+        t.join()
+        assert result['v'] == 999
+
+
 class TestEventBusLifecycle:
     def _patch_thread(self, monkeypatch, alive, started):
         from app.common import events as events_mod

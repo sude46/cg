@@ -49,9 +49,20 @@ class RedisEventBus:
         '''事件幂等标记键(处理成功后写入,带 TTL)'''
         return f'event_bus:done:{event_id}'
 
-    @classmethod
-    def _cfg(cls,key:str,default:int)->int:
-        '''读运行时配置,无 app 上下文或未配置时回退默认值'''
+    def _cfg(self,key:str,default:int)->int:
+        '''
+        读运行时配置。优先用 start() 保存的 app.config：
+        消费线程跑在 app context 之外，current_app 在那里不可用，只有 self._app 能读到配置。
+        回退顺序：self._app.config -> current_app.config(生产端请求内) -> 类默认值。
+        '''
+        app=getattr(self,'_app',None)
+        if app is not None:
+            value=app.config.get(key)
+            if value is not None:
+                try:
+                    return int(value)
+                except (TypeError,ValueError):
+                    return default
         try:
             from flask import current_app
             value=current_app.config.get(key)
