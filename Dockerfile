@@ -1,15 +1,17 @@
 # syntax=docker/dockerfile:1
-FROM python:3.11-slim AS builder
+# 固定基础镜像 digest：避免上游 slim tag 漂移导致依赖层缓存失效（升级需手动更新这两个 digest）
+FROM python:3.11-slim@sha256:db3ff2e1800a8581e2c48a27c3995339d47bdf046da21c7627accd3d51053a93 AS builder
 
 WORKDIR /build
 
 COPY pyproject.toml ./
 COPY README.md* ./
 
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -e .
+# BuildKit pip cache mount：复用已下载的 wheel/构建依赖，层失效时也无需重新下载全部依赖
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install -e .
 
-FROM python:3.11-slim
+FROM python:3.11-slim@sha256:db3ff2e1800a8581e2c48a27c3995339d47bdf046da21c7627accd3d51053a93
 
 WORKDIR /app
 
