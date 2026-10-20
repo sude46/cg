@@ -42,6 +42,9 @@
 | 搜索一致性 | `weibo_reconcile_diff_count{resource_type="search"}` | **= 0** | 0 |
 
 > 说明：`reconcile_diff_count` 由对账任务写入（like/post/feed/comment/user/search）。`search` 维度来自 `reconcile_search_index`。
+>
+> **实测基线（2 vCPU / 7.7GiB 单机、全依赖同机，2026-10-20）**：Feed 读路径**单请求 47–83ms**；并发 10/20/40 时吞吐约 **7 / 12 / 9 req/s**（P95 0.9s / 1.7s / 8.4s），**0 失败**。
+> 瓶颈是单机 2 vCPU 的 CPU/线程竞争，**不作为生产容量承诺**；详见 [`PERF_REPORT.md`](PERF_REPORT.md)。
 
 ---
 
@@ -81,6 +84,11 @@
 - `WeiboMysqlReplicaNotRunning`（`Slave_IO/SQL_Running` 非 1, 1m）
 - `WeiboRedisReplicationLag`（`redis_master_last_io_seconds_ago>1`, 2m）
 - `WeiboRedisReplicaLinkDown`（`redis_master_link_up==0`, 1m）
+- `WeiboEventBusBacklog`（`weibo_event_bus_queue_length>1000`, 2m）
+- `WeiboEventBusDeadLetter`（`weibo_event_bus_dead_letter_length>0`, 1m）
+- `WeiboEventBusProcessingStuck`（`weibo_event_bus_processing_length>100`, 2m）
+- `WeiboEventBusHandlerFailures`（handler 失败速率>1/s, 5m）
+- `WeiboEventBusReclaimStorm`（滞留回收速率>0.2/s, 5m）
 
 **待补**：从库不健康（`weibo_db_replica_healthy==0`）、Celery 失败率、搜索对账差异（可用现有 `WeiboReconcileDiff` 覆盖，因它不区分 label）。
 
@@ -144,7 +152,7 @@ sum(rate(weibo_read_forced_master_total[5m])) by (resource)
 
 ## 6. 已知限制（SLO 不承诺的部分）
 
-1. **异步事件非投递保证**：自研事件总线为 Redis List **单消费者 BRPOP**，失败最多重试 3 次后丢弃；多进程下不广播（SSE 已改用 Pub/Sub）。→ 异步链路只承诺"尽力而为 + 对账兜底"。
+1. **异步事件为 at-least-once，非 exactly-once**：自研事件总线用 `LPUSH` + `BLMOVE(queue→processing)` + 处理完 `LREM` ack，reaper 回收超时在途事件；失败最多重试 `EVENT_BUS_MAX_RETRY` 次后进死信队列（可用 `scripts/replay_event_dlq.py` 重放）。因此**可能重复投递**，handler 必须幂等（总线按 `event.id` 做幂等去重，TTL 默认 24h）。多进程（`gunicorn -w N`）共享队列，事件由哪个进程处理不确定。SSE 走 Pub/Sub，不在此列。
 2. **私信未读数**：`chats` 用 `ConversationUser.unread_count` 求和（DB SELECT）；尚未做 Redis 计数与对账，热点会话量大时延迟会上升。
 3. **搜索依赖 ES**：ES 故障时降级为 DB `ILIKE`（短 TTL 缓存），召回与延迟都不能按 ES 目标承诺；重建索引期间结果可能暂缺。
 4. **缓存一致性**：Cache-Aside + 延迟双删（写后立即删缓存，再由 Celery `delayed_invalidate` 在约 2s 后二次删）；帖子 `recent_modify` 强一致标记窗口默认 5s，通知未读数为 **60s**（`NotificationCache.RECENT_MODIFY_TTL=60`）：窗口内读强制走主库，避免主从延迟回跳旧值。整体为**最终一致**，不接受强一致读承诺。延迟双删的 `countdown=2s` 与窗口 TTL 目前是工程默认值，**应依据 `mysql_slave_status_seconds_behind_master` / `redis_master_last_io_seconds_ago` 的实测 P99 校准**（建议 `countdown = max(2s, 2×P99)`，`窗口 TTL = countdown + P99`）。

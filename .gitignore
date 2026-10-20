@@ -24,3 +24,7 @@ app/static/uploads/
 .DS_Store
 .env.bak*
 instance/
+
+# 压测产物：保留汇总 CSV，忽略 HTML/历史大文件
+tests/performance/results/*.html
+tests/performance/results/*_stats_history.csv

@@ -154,7 +154,7 @@ migrations/             数据库迁移（Alembic）
 monitoring/             Prometheus / Grafana / Loki / Jaeger / Alertmanager
 scripts/                启动入口、ES 初始化、依赖校验、排障脚本
 web/                    前端（Vue 3 + Vite）
-docs/                   设计与运维文档（SLO、ES 搭建、数据库优化）
+docs/                   设计与运维文档（SLO、压测报告、ES 搭建、数据库优化）
 tests/                  单元 / 集成 / 冒烟 / 性能测试
 ```
 
@@ -299,7 +299,13 @@ npm run build             # 产物输出到 web/dist
 pytest tests/unit -q                       # 单元测试（SQLite + FakeRedis，CI 使用）
 pytest tests/integration -q                # 集成测试
 pytest tests/smoke -q                      # 冒烟测试
-locust -f tests/performance/locustfile.py  # 性能测试
+
+# 性能测试（先造数据/发 token，再压测；实测结果见 docs/PERF_REPORT.md）
+docker exec -i -e PYTHONPATH=/app -e PERF_USERS=40 -e PERF_POSTS=10 \
+  weibo-app python - < tests/performance/seed_tokens.py \
+  | grep -o 'PERF_TOKENS_JSON=.*' | sed 's/^PERF_TOKENS_JSON=//' > /tmp/perf_tokens.json
+PERF_TOKENS_FILE=/tmp/perf_tokens.json locust -f tests/performance/locustfile.py \
+  --headless -u 40 -r 8 -t 60s --host http://127.0.0.1:5000
 ```
 
 静态检查与依赖校验：

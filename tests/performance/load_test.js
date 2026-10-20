@@ -1,62 +1,37 @@
 // tests/performance/load_test.js
+// Feed 读路径 k6 压测（与 locustfile.py 场景一致）。
+// token 用 seed_tokens.py 预生成：
+//   PERF_TOKEN=<access_token> k6 run tests/performance/load_test.js
 import http from 'k6/http';
-import { sleep, check, trend } from 'k6';
+import { check, sleep } from 'k6';
 
-// 定义SLA趋势
-const P95_LATENCY = trend('p95_latency');
-const THROUGHPUT = trend('throughput');
-
-// 配置压测参数
 export const options = {
-  vus: 100, // 并发用户数
-  duration: '60s', // 压测时长
+  vus: 40,
+  duration: '60s',
   thresholds: {
-    // SLA阈值
-    'p95_latency': ['p(95)<500'], // p95≤500ms
-    'http_req_failed': ['rate<0.001'], // 错误率≤0.1%
-    'http_reqs': ['rate>100'], // 吞吐量≥100 QPS
+    http_req_failed: ['rate<0.001'],       // 错误率 <= 0.1%
+    'http_req_duration{name:timeline}': ['p(95)<500'],
+    'http_req_duration{name:explore}': ['p(95)<500'],
+    'http_req_duration{name:posts}': ['p(95)<500'],
   },
 };
 
-// 测试数据
-const TEST_USERNAME = 'performance_test_user';
-const TEST_PASSWORD = '12345678';
-const TEST_POST_CONTENT = '性能测试：批量创建帖子的测试内容';
+const BASE = __ENV.BASE_URL || 'http://127.0.0.1:5000';
+const TOKEN = __ENV.PERF_TOKEN || '';
+const HEADERS = { Authorization: `Bearer ${TOKEN}` };
 
 export default function () {
-  let token = '';
-  const baseUrl = 'http://localhost:5000/api';
+  const timeline = http.get(`${BASE}/feeds/timeline?limit=20`,
+    { headers: HEADERS, tags: { name: 'timeline' } });
+  check(timeline, { 'timeline 200/304': (r) => r.status === 200 || r.status === 304 });
 
-  // 1. 登录获取token
-  const loginRes = http.post(`${baseUrl}/auth/login`, JSON.stringify({
-    username: TEST_USERNAME,
-    password: TEST_PASSWORD,
-  }), { headers: { 'Content-Type': 'application/json' } });
-  check(loginRes, { '登录成功': (r) => r.status === 200 });
-  if (loginRes.status === 200) {
-    token = loginRes.json().token;
-  }
+  const explore = http.get(`${BASE}/feeds/explore?limit=20`,
+    { headers: HEADERS, tags: { name: 'explore' } });
+  check(explore, { 'explore 200': (r) => r.status === 200 });
 
-  // 2. 创建帖子
-  if (token) {
-    const createPostRes = http.post(`${baseUrl}/posts/create`, JSON.stringify({
-      content: TEST_POST_CONTENT,
-    }), {
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-    });
-    check(createPostRes, { '创建帖子成功': (r) => r.status === 200 });
-    P95_LATENCY.add(createPostRes.timings.duration);
-  }
+  const posts = http.get(`${BASE}/posts?page=1&per_page=20`,
+    { headers: HEADERS, tags: { name: 'posts' } });
+  check(posts, { 'posts 200': (r) => r.status === 200 });
 
-  // 3. 查询帖子列表
-  const listRes = http.get(`${baseUrl}/posts/list?page=1&page_size=10`);
-  check(listRes, { '查询帖子列表成功': (r) => r.status === 200 });
-  P95_LATENCY.add(listRes.timings.duration);
-  THROUGHPUT.add(1);
-
-  // 操作间隔
   sleep(1);
 }
