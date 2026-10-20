@@ -154,7 +154,7 @@ migrations/             数据库迁移（Alembic）
 monitoring/             Prometheus / Grafana / Loki / Jaeger / Alertmanager
 scripts/                启动入口、ES 初始化、依赖校验、排障脚本
 web/                    前端（Vue 3 + Vite）
-docs/                   设计与运维文档（SLO、压测报告、ES 搭建、数据库优化）
+docs/                   设计与运维文档（全链路解析与面试题库、SLO、压测报告、ES 搭建、数据库优化）
 tests/                  单元 / 集成 / 冒烟 / 性能测试
 ```
 
