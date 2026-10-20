@@ -207,5 +207,3 @@ sum(rate(weibo_read_forced_master_total[5m])) by (resource)
 5. 日志 `trace_id` 更正为尚未加入格式（当前只有 `request_id`）。
 6. 缓存命中率指标标注为 Gauge 最后值，不能直接作为 SLO；补充 Prometheus 多进程未聚合的限制。
 7. 补充点赞缓存冷启动、搜索评论数滞后两个一致性风险。
-
-更完整的架构/数据/缓存/主从/面试题解析见 [`PROJECT_DEEP_DIVE_INTERVIEW.md`](PROJECT_DEEP_DIVE_INTERVIEW.md)。
