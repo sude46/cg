@@ -43,6 +43,18 @@ class MasterSlaveRouter:
         }
         logger.info(f'DB路由初始化：主库*1，从库*{len(self.replica_binds)}')
 
+        if hasattr(app, 'teardown_appcontext'):
+            @app.teardown_appcontext
+            def _release_read_session(exc=None):
+                """请求结束归还从库连接：不 close 会把连接池(5+10)耗尽。"""
+                from flask import g
+                session = g.pop('_read_db_session', None)
+                if session is not None:
+                    try:
+                        session.close()
+                    except Exception as e:
+                        logger.warning('关闭读会话失败: %s', e)
+
     def _probe(self, bind: str) -> bool:
         """探测从库连通性（每次读都探测，保证绝不把请求打到已挂从库）。"""
         try:
@@ -75,9 +87,21 @@ class MasterSlaveRouter:
         DB_REPLICA_HEALTHY.labels(bind=bind).set(0)
 
     def get_read_session(self):
-        """返回读会话：优选健康从库；无可用从库时回落主库。"""
+        """返回读会话：优选健康从库；无可用从库时回落主库。
+
+        同一请求内复用一个 Session（缓存在 flask.g），并在 teardown 时 close：
+        否则每次 repository 调用都新建 Session 且迟迟不归还连接，高并发下会耗尽
+        QueuePool(默认 size=5 + overflow=10)。
+        """
         if not self.replica_binds:
             return db.session
+
+        from flask import g, has_app_context
+
+        if has_app_context():
+            cached = g.get('_read_db_session')
+            if cached is not None:
+                return cached
 
         now = time.time()
         for _ in range(len(self.replica_binds)):
@@ -87,7 +111,10 @@ class MasterSlaveRouter:
             if not state['healthy'] and now < state['down_until']:
                 continue
             if self._probe(bind):
-                return Session(db, bind=db.get_engine(bind=bind))
+                session = Session(db, bind=db.get_engine(bind=bind))
+                if has_app_context():
+                    g._read_db_session = session
+                return session
 
         DB_REPLICA_FAILOVER.labels(bind='all').inc()
         logger.warning('没有健康的从库，读操作回落主库')
