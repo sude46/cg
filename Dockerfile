@@ -32,4 +32,4 @@ EXPOSE 5000
 
 CMD ["gunicorn", "-w", "4", "-k", "gthread", "--threads", "8", \
      "-b", "0.0.0.0:5000", "--access-logfile", "-", "--error-logfile", "-", \
-     "wsgi:app"]
+     "-c", "gunicorn.conf.py", "wsgi:app"]

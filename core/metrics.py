@@ -34,7 +34,8 @@ REDIS_LATENCY = Histogram(
 REDIS_HIT_RATE = Gauge(
     'weibo_redis_cache_hit_rate',
     'Redis cache hit rate(1=hit,0=miss)',
-    ['cache_type']
+    ['cache_type'],
+    multiprocess_mode='livemax'
 )
 
 #==================celery层=====================
@@ -59,15 +60,18 @@ EVENT_BUS_EVENTS = Counter(
 )
 EVENT_BUS_QUEUE_LENGTH = Gauge(
     'weibo_event_bus_queue_length',
-    'Event bus queue backlog (LLEN)'
+    'Event bus queue backlog (LLEN)',
+    multiprocess_mode='livemax'
 )
 EVENT_BUS_PROCESSING_LENGTH = Gauge(
     'weibo_event_bus_processing_length',
-    'Event bus in-flight (processing) entries (LLEN)'
+    'Event bus in-flight (processing) entries (LLEN)',
+    multiprocess_mode='livemax'
 )
 EVENT_BUS_DEAD_LETTER_LENGTH = Gauge(
     'weibo_event_bus_dead_letter_length',
-    'Event bus dead-letter backlog (LLEN)'
+    'Event bus dead-letter backlog (LLEN)',
+    multiprocess_mode='livemax'
 )
 
 #=========================业务层========================
@@ -114,12 +118,14 @@ CHAT_OPERATIONS = Counter(
 RECONCILE_DIFF_COUNT = Gauge(
     'weibo_reconcile_diff_count',
     'Redis vs DB reconcile diff',
-    ['resource_type']  # like, follow, feed, comment
+    ['resource_type'],  # like, follow, feed, comment
+    multiprocess_mode='livemax'
 )
 DB_REPLICA_HEALTHY = Gauge(
     'weibo_db_replica_healthy',
     '从库健康状态(1健康/0不健康)',
-    ['bind']
+    ['bind'],
+    multiprocess_mode='livemin'
 )
 DB_REPLICA_FAILOVER = Counter(
     'weibo_db_replica_failover_total',

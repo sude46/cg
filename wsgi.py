@@ -25,13 +25,24 @@ app = create_app(config_name)
 
 #=========prometheus指标端点==============
 from flask import Response
-from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
+from prometheus_client import (
+    CONTENT_TYPE_LATEST,
+    CollectorRegistry,
+    generate_latest,
+    multiprocess,
+)
 
 
 @app.route('/metrics')
 def prometheus_metrics():
-    '''Prometheus拉去端点'''
-    return Response(generate_latest(),mimetype=CONTENT_TYPE_LATEST)
+    '''Prometheus拉取端点（多 worker 时汇总所有进程指标）'''
+    if os.getenv('PROMETHEUS_MULTIPROC_DIR'):
+        registry = CollectorRegistry()
+        multiprocess.MultiProcessCollector(registry)
+        data = generate_latest(registry)
+    else:
+        data = generate_latest()
+    return Response(data, mimetype=CONTENT_TYPE_LATEST)
 
 
 # 4. 从环境变量动态读取主机/端口，提升部署灵活性

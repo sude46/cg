@@ -259,6 +259,7 @@ services:
       - OTEL_SERVICE_NAME=weibo-api
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
       - OTEL_TRACES_SAMPLER_ARG=1.0
+      - PROMETHEUS_MULTIPROC_DIR=/tmp/prometheus-multiproc
     depends_on:
       mysql-master:
         condition: service_healthy
