@@ -52,12 +52,13 @@ class FollowRepository:
 
     @staticmethod
     @monitor_db("select", "users")
-    def get_follower_count(followed_id: int) -> int:
+    def get_follower_count(followed_id: int, force_master: bool = False) -> int:
         '''
         获取粉丝数（users.follower_count 权威计数）。
         用于 feed 推/拉分层判定：避免为算个数把整份粉丝集合加载进内存。
+        阈值判定建议 force_master=True，避免主从延迟造成短暂误判。
         '''
-        session=FollowRepository._read_session()
+        session = db.session if force_master else FollowRepository._read_session()
         row=session.query(User.follower_count).filter(User.id==followed_id).first()
         return int(row[0]) if row and row[0] is not None else 0
 

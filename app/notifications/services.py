@@ -167,12 +167,13 @@ class NotificationService:
 
     @staticmethod
     def get_unread_count(user_id: int) -> int:
-        """未读数：缓存 → miss 查 DB 回填（强一致窗口走主库，空值防穿透）。"""
-        count = NotificationCache.get_unread_count(user_id)
-        if count is not None:
-            return count
-        # 刚创建/已读通知的 60s 强一致窗口内，强制走主库，避免主从延迟旧值回跳
+        """未读数：强一致窗口优先主库，否则缓存 → miss 查 DB 回填。"""
+        # 刚创建/已读通知的 60s 强一致窗口内，缓存可能仍是旧值，不能先信缓存
         force_master = NotificationCache.is_recently_modified(user_id)
+        if not force_master:
+            count = NotificationCache.get_unread_count(user_id)
+            if count is not None:
+                return count
         total = notification_repository.count_unread(user_id, force_master=force_master)
         if total == 0:
             NotificationCache.set_empty(user_id)

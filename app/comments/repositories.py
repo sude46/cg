@@ -67,9 +67,9 @@ class CommentRepository:
 
     @staticmethod
     @monitor_db("select", "comments")
-    def list_top_by_likes(post_id: int, limit: int = 100):
-        """按点赞数倒序获取帖子的热门评论（对账重建用）"""
-        session = CommentRepository._read_session()
+    def list_top_by_likes(post_id: int, limit: int = 100, force_master: bool = False):
+        """按点赞数倒序获取帖子的热门评论（对账重建用，建议走主库）"""
+        session = db.session if force_master else CommentRepository._read_session()
         return session.query(Comment).filter(
             Comment.post_id == post_id,
             Comment.deleted_at.is_(None)
