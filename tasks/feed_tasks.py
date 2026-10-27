@@ -71,6 +71,42 @@ def async_push_to_followers(self, post_id: int, author_id: int, created_at: floa
         raise self.retry(exc=exc)
 
 
+BACKFILL_LIMIT = 50
+
+
+@shared_task(bind=True, max_retries=3, default_retry_delay=5)
+def backfill_demoted_author(self, author_id: int, limit: int = BACKFILL_LIMIT):
+    '''
+    大V降级：把最近 N 条 outbox 帖子补推给粉丝，成功后再解除大V标记。
+    失败时保留标记，读者继续走拉模式，历史内容不会消失。
+    '''
+    limit = min(max(1, int(limit)), FeedCache.MAX_AUTHOR_OUTBOX)
+    try:
+        follower_ids = FollowCache.get_follower_ids(author_id)
+        if not follower_ids:
+            follower_ids = follow_repository.get_follower_ids(author_id)
+            if follower_ids:
+                FollowCache.preload_followers(author_id, follower_ids)
+            logger.info(f'作者{author_id}粉丝缓存未命中，从DB加载{len(follower_ids)}人')
+
+        posts = FeedCache.pull_outbox_scored_by_cursor(author_id, None, limit)[:limit]
+        result = FeedCache.push_posts_to_followers(posts, follower_ids or [])
+        FeedCache.unmark_big_v(author_id)
+        logger.info(
+            f'大V降级回填完成 author={author_id} posts={len(posts)} '
+            f'followers={len(follower_ids or [])}'
+        )
+        return {
+            'author_id': author_id,
+            'posts': len(posts),
+            'pushed': result['pushed'],
+            'status': 'success',
+        }
+    except Exception as exc:
+        logger.error(f'大V降级回填失败 author={author_id}: {exc}')
+        raise self.retry(exc=exc)
+
+
 @shared_task(bind=True, max_retries=3)
 def async_invalidate_user_feed(self, user_id: int):
     '''
