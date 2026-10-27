@@ -9,6 +9,15 @@ class TestEventBusPublish:
             assert ok is True
             assert mock_redis.llen('event_bus:queue') == 1
 
+    def test_publish_honors_explicit_event_id(self, app, mock_redis):
+        import json
+
+        from app.common.events import event_bus
+        with app.app_context():
+            assert event_bus.publish('t.fixed', {'a': 1}, event_id='fixed-id') is True
+            raw = mock_redis.lrange('event_bus:queue', 0, -1)[0]
+            assert json.loads(raw)['id'] == 'fixed-id'
+
     def test_publish_failure_returns_false(self, app, monkeypatch):
         from app.common.events import event_bus
         monkeypatch.setattr(

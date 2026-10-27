@@ -4,13 +4,13 @@ from sqlalchemy.exc import IntegrityError
 
 from app.comments.repositories import comment_repository
 from app.common.database import utcnow
-from app.common.events import event_bus
 from app.common.exceptions import (
     DatabaseError,
     PermissionError,
     ResourceNotFoundError,
     ValidationError,
 )
+from app.common.outbox import enqueue_event
 from app.posts.repositories import post_repository
 from app.users.cache import UserCache
 from app.users.repositories import user_repository
@@ -42,6 +42,23 @@ class CommentService:
         try:
             comment = comment_repository.create_comment(post_id=post_id, user_id=user_id, content=content)
             post_repository.increment_comment_count(post_id)
+            db.session.flush()
+            db.session.refresh(post)
+
+            # 通知事件 + 评论数事件与评论同事务写 outbox
+            if post.user_id != user_id:
+                enqueue_event('comment.created', {
+                    'user_id': post.user_id,
+                    'actor_id': user_id,
+                    'type': 'comment',
+                    'comment_id': comment.id,
+                    'post_id': post_id,
+                    'content': content
+                })
+            enqueue_event('post.comment_count_changed', {
+                'post_id': post_id,
+                'comment_count': post.comment_count,
+            })
             db.session.commit()
 
             #预热评论详情缓存（主库写Redistribution，失败不影响主流程）
@@ -53,24 +70,6 @@ class CommentService:
                 CommentCache.set_count(post_id, fresh_post.comment_count if fresh_post else 0)
             else:
                 CommentCache.increment_count(post_id)
-
-            # 触发通知事件（排除作者自评论）
-            if post.user_id != user_id:
-                event_bus.publish('comment.created', {
-                    'user_id': post.user_id,
-                    'actor_id': user_id,
-                    'type': 'comment',
-                    'comment_id': comment.id,
-                    'post_id': post_id,
-                    'content': content
-                })
-
-            #发评论数变化事件(ES索引更新用)
-            current_count=CommentCache.get_count(post_id) or 0
-            event_bus.publish('post.comment_count_changed',{
-                'post_id':post_id,
-                'comment_count':current_count
-            })
 
             logger.info('用户%d为帖子%d创建评论%d', user_id, post_id, comment.id)
             COMMENT_OPERATIONS.labels(action='create', result='success').inc()
@@ -195,6 +194,12 @@ class CommentService:
             # 更新帖子统计
             if comment.post_id:
                 post_repository.decrement_comment_count(comment.post_id)
+                db.session.flush()
+                db.session.refresh(comment.post)
+                enqueue_event('post.comment_count_changed', {
+                    'post_id': comment.post_id,
+                    'comment_count': comment.post.comment_count,
+                })
             db.session.commit()
 
             #清评论缓存+延迟双删
@@ -217,11 +222,6 @@ class CommentService:
                     CommentCache.set_count(post_id, fresh_post.comment_count if fresh_post else 0)
                 else:
                     CommentCache.decrement_count(post_id)
-                current_count=CommentCache.get_count(post_id) or 0
-                event_bus.publish('post.comment_count_changed',{
-                    'post_id':post_id,
-                    'comment_count':current_count
-                })
             logger.info('用户%d删除评论%d',user_id,comment_id)
             COMMENT_OPERATIONS.labels(action='delete', result='success').inc()
             return {'message': '评论删除成功'}

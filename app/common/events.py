@@ -95,13 +95,15 @@ class RedisEventBus:
         self._subscribers[event_name].append(handler)
         logger.info(f'事件订阅注册:{event_name}->{handler.__name__}')
 
-    def publish(self,event_name:str,payload:dict)->bool:
+    def publish(self,event_name:str,payload:dict,event_id:str|None=None)->bool:
         '''
         发布事件：LPUSH 到 Redis List，立即返回。
+        event_id 可传入（outbox relay 用它保证重复投递仍按同一事件幂等）；
+        不传则自动生成。
         入队失败重试 PUBLISH_RETRIES 次，仍失败则打指标 + error 日志（不再静默），返回 False。
         '''
         event={
-            "id":uuid.uuid4().hex,
+            "id":event_id or uuid.uuid4().hex,
             "event":event_name,
             "payload":payload,
             "timestamp":time.time(),

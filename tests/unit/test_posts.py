@@ -176,21 +176,25 @@ class TestPostService:
             assert len(result["items"]) <= 10
 
     def test_delete_post_cascade_events(self, app, db_session, mock_redis, monkeypatch):
-        """测试删除帖子时事件发布"""
+        """测试删除帖子时事件写入 outbox，而不是直接发布"""
+        from app.common.events import event_bus
+        from app.common.outbox import EventOutbox
+
         with app.app_context():
             user = UserFactory()
             post = PostFactory(author=user)
 
             published = []
-            import app.posts.services as post_services
             monkeypatch.setattr(
-                post_services.event_bus, "publish",
-                lambda *a, **k: published.append(a)
+                event_bus, "publish",
+                lambda *a, **k: published.append(a) or True
             )
 
             PostService.delete_post(post.id, user.id)
 
-            assert published
+            row = db_session.query(EventOutbox).filter_by(event_name='post.deleted').one()
+            assert row.payload['post_id'] == post.id
+            assert published == []
 
     def test_concurrent_update_stale_data(self, app, db_session, mock_redis, monkeypatch):
         """测试并发更新检测 StaleDataError"""

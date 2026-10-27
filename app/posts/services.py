@@ -4,7 +4,6 @@ from typing import Any
 from sqlalchemy.orm.exc import StaleDataError
 
 from app.comments.cache import CommentCache
-from app.common import event_bus
 from app.common.database import utcnow
 from app.common.exceptions import (
     AuthenticationError,
@@ -12,6 +11,7 @@ from app.common.exceptions import (
     ResourceNotFoundError,
     ValidationError,
 )
+from app.common.outbox import enqueue_event
 from app.likes.cache import LikeCache
 from app.likes.repositories import like_repository
 from app.posts.repositories import post_repository
@@ -50,6 +50,20 @@ class PostService:
                 content=content.strip(),
                 image_url=image_url
             )
+            db.session.flush()
+            # 与 post 同一个事务写入 outbox，避免 DB 提交后事件丢失
+            enqueue_event('post.created', {
+                'id': post.id,
+                'content': post.content,
+                'user_id': post.user_id,
+                'user_name': user.username,
+                'image_url': post.image_url,
+                'like_count': post.like_count,
+                'comment_count': post.comment_count,
+                'created_at': post.created_at.isoformat() if post.created_at else None,
+                'is_published': post.is_published,
+                'deleted_at': post.deleted_at.isoformat() if post.deleted_at else None,
+            })
             db.session.commit()
             POST_OPERATIONS.labels(action='create', result='success').inc()
 
@@ -59,24 +73,6 @@ class PostService:
 
             #强一致标记：5秒内必须走主库
             PostCache.mark_recently_modified(post.id,ttl=5)
-
-
-            try:
-                event_bus.publish('post.created',{
-
-                        'id':post.id,
-                        'content':post.content,
-                        'user_id':post.user_id,
-                        'user_name':user.username,
-                        'image_url':post.image_url,
-                        'like_count':post.like_count,
-                        'comment_count':post.comment_count,
-                        'created_at':post.created_at.isoformat() if post.created_at else None,
-                        'is_published':post.is_published,
-                        'deleted_at':post.deleted_at.isoformat() if post.deleted_at else None,
-                })
-            except Exception as e:
-                logger.warning(f'ES 索引失败（不影响主流程）: {e}')
 
             return post
         except Exception:
@@ -229,6 +225,12 @@ class PostService:
             if image_url is not None:
                 post.image_url = image_url
 
+            enqueue_event('post.updated', {
+                'post_id': post_id,
+                'content': post.content,
+                'image_url': post.image_url,
+                'deleted_at': post.deleted_at.isoformat() if post.deleted_at else None,
+            })
             db.session.commit()
 
             #延迟双删---第一次删除+强一致标记
@@ -249,15 +251,6 @@ class PostService:
                 logger.warning(f'调度延迟删除失败，降级为线程:{e}')
                 PostCache.double_invalidate(post_id)
 
-            try:
-                event_bus.publish('post.updated',{
-                    'post_id':post_id,
-                    'content':post.content,
-                    'image_url':post.image_url,
-                    'deleted_at': post.deleted_at.isoformat() if post.deleted_at else None,
-                })
-            except Exception as e:
-                logger.warning(f'发布帖子更新事件失败，不影响主进程：{e}')
             POST_OPERATIONS.labels(action='update', result='success').inc()
             logger.info('用户%d更新了帖子%d', user_id, post_id)
             return post
@@ -283,6 +276,11 @@ class PostService:
                 raise AuthenticationError('无权删除该帖子')
 
             post_repository.soft_delete_post(post)
+            enqueue_event('post.deleted', {
+                'post_id': post_id,
+                'user_id': post.user_id,
+                'deleted_at': post.deleted_at.isoformat() if post.deleted_at else utcnow().isoformat(),
+            })
             db.session.commit()
 
             # 延迟双删
@@ -298,18 +296,6 @@ class PostService:
             except Exception as e:
                 logger.warning(f'调度延迟删除失败，降级为线程: {e}')
                 PostCache.double_invalidate(post_id)
-
-            # 同步删除 ES 索引
-            try:
-                CELERY_TASKS.labels(task_name='delayed_invalidate', status='published').inc()
-                event_bus.publish('post.deleted',{
-                    'post_id':post_id,
-                    'user_id':post.user_id,
-                    'deleted_at': utcnow().isoformat(),
-                    })
-            except Exception as e:
-                CELERY_TASKS.labels(task_name='delayed_invalidate', status='publish_failed').inc()
-                logger.warning(f'发布帖子删除事件失败（不影响主流程）: {e}')
 
             POST_OPERATIONS.labels(action='delete', result='success').inc()
             logger.info('用户%d软删除了帖子%d', user_id, post_id)

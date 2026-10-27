@@ -2,13 +2,13 @@ import logging
 
 from sqlalchemy.exc import IntegrityError
 
-from app.common import event_bus
 from app.common.exceptions import (
     ConflictError,
     DatabaseError,
     ResourceNotFoundError,
     ValidationError,
 )
+from app.common.outbox import enqueue_event
 from app.feeds.cache import FeedCache
 from app.users.repositories import user_repository
 from app.users.schemas import public_user_schema
@@ -46,6 +46,11 @@ class FollowService:
             db.session.flush()
             user_repository.increment_follower_count(followed_id)
             user_repository.increment_following_count(follower_id)
+            enqueue_event('follow.created', {
+                'user_id': followed_id,
+                'actor_id': follower_id,
+                'type': 'follow',
+            })
             db.session.commit()
 
             # 5. 同步更新 Redis（失败不阻塞，清缓存兜底）
@@ -56,15 +61,6 @@ class FollowService:
             FeedCache.invalidate_feed(follower_id)
             logger.info(f'用户{follower_id}关注了用户{followed_id}')
             FOLLOW_OPERATIONS.labels(action='follow', result='success').inc()
-            # 通知模块订阅：给被关注者建通知（含 SSE 实时推送）
-            try:
-                event_bus.publish('follow.created', {
-                    'user_id': followed_id,
-                    'actor_id': follower_id,
-                    'type': 'follow',
-                })
-            except Exception as e:
-                logger.warning(f'发布关注事件失败（不影响主流程）：{e}')
             return {'message': '关注成功', 'follow': follow_response_schema.dump(follow)}
 
         except IntegrityError:

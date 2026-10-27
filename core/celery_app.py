@@ -32,6 +32,7 @@ def make_celery(app_name='weibo'):
             'tasks.data_tasks',
             'tasks.search_tasks',
             'tasks.search_reconcile',
+            'tasks.outbox_tasks',
         ]
     )
     celery.conf.update(
@@ -48,6 +49,11 @@ def make_celery(app_name='weibo'):
             'tasks.feed_tasks.*':{'queue':'feed'},
         },
         beat_schedule={
+            'relay-event-outbox': {
+                'task': 'tasks.outbox_tasks.relay_event_outbox',
+                'schedule': 5.0,
+                'args': (100,),
+            },
             'reconcile-likes': {
                 'task': 'tasks.like_reconcile.reconcile_like_counts',
                 'schedule': 300.0,
