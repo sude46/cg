@@ -23,8 +23,8 @@ class Like(db.Model):
             "(post_id IS NOT NULL OR comment_id IS NOT NULL) AND NOT (post_id IS NOT NULL AND comment_id IS NOT NULL)",
             name="like_post_or_comment_check",
         ),
-        db.UniqueConstraint('user_id', 'post_id','deleted_at', name='user_post_unique'),
-        db.UniqueConstraint('user_id', 'comment_id','deleted_at', name='user_comment_unique'),
+        db.UniqueConstraint('user_id', 'post_id', name='uq_like_user_post'),
+        db.UniqueConstraint('user_id', 'comment_id', name='uq_like_user_comment'),
         #覆盖'用户点赞列表按时间倒序'
         db.Index('idx_like_user_created','user_id','created_at'),
     )
