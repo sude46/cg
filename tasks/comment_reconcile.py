@@ -25,7 +25,8 @@ def reconcile_hot_comments(sample_size: int = 50):
                 # 从 DB 查该帖点赞数最高的 N 条评论
                 comments = comment_repository.list_top_by_likes(
                     post_id=post_id,
-                    limit=CommentCache.HOT_COMMENTS_PRE_POST
+                    limit=CommentCache.HOT_COMMENTS_PRE_POST,
+                    force_master=True,
                 )
                 if comments:
                     comments_data = [

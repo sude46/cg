@@ -243,7 +243,7 @@ class FeedService:
         ExploreCache.add_post(post_id,created_at)
 
         # 粉丝数用权威计数(users.follower_count)，不再为算个数把整份粉丝集合载入内存
-        follower_count = follow_repository.get_follower_count(author_id)
+        follower_count = follow_repository.get_follower_count(author_id, force_master=True)
 
         # 一段(>=BIG_V)：大V不 fanout，只写 outbox，粉丝读首页时归并
         if FeedCache.is_big_v(follower_count):
