@@ -63,9 +63,9 @@ class FollowRepository:
 
     @staticmethod
     @monitor_db("select", "follows")
-    def get_following_ids(follower_id: int):
+    def get_following_ids(follower_id: int, force_master: bool = False):
         '''获取某用户关注的人ID列表（对账/关系标注用）'''
-        session=FollowRepository._read_session()
+        session=db.session if force_master else FollowRepository._read_session()
         rows=session.query(Follow.followed_id).filter(
             Follow.follower_id==follower_id,
             Follow.deleted_at.is_(None)

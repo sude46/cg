@@ -27,6 +27,10 @@ class FollowCache:
         return f'followers:{user_id}'
 
     @classmethod
+    def _empty_following_key(cls, user_id: int) -> str:
+        return f'following:{user_id}:empty'
+
+    @classmethod
     def _lock_key(cls, follower_id: int, followed_id: int) -> str:
         return f'lock:follow:{follower_id}:{followed_id}'
 
@@ -65,20 +69,24 @@ class FollowCache:
 
     @classmethod
     def get_following_ids(cls,user_id:int):
-        '''获取关注列表(None表示miss或故障)'''
+        '''获取关注列表(None表示缓存miss或故障,[]表示确实没有关注任何人)'''
         try:
-            members=redis_cache.smembers(
-                cls._following_key(user_id),
-                for_write=False
-            )
-            if members is None:
+            key=cls._following_key(user_id)
+            # key 不存在无法判定为"没关注任何人",要再查空标记;两者都没有则是 miss
+            if redis_cache.exists(key,for_write=True)==0:
+                if redis_cache.exists(cls._empty_following_key(user_id),for_write=True)==1:
+                    return []
                 return None
+            members=redis_cache.smembers(key,for_write=False)
+            if not members:
+                # 主库存在但副本读不到,大概率是从库延迟,回主库再读一次
+                members=redis_cache.smembers(key,for_write=True)
             return[
                 int(m.decode() if isinstance(m,bytes) else m)
                 for m in members
             ]
         except Exception as e:
-            logger.error(f'[FollowCache]词查关注列表失败 uid={user_id}:{e}')
+            logger.error(f'[FollowCache]查关注列表失败 uid={user_id}:{e}')
             return None
 
     @classmethod
@@ -109,6 +117,7 @@ class FollowCache:
             pipe.sadd(cls._followers_key(followed_id),str(follower_id))
             pipe.expire(cls._following_key(follower_id),cls.TTL_DAYS*86400)
             pipe.expire(cls._followers_key(followed_id), cls.TTL_DAYS * 86400)
+            pipe.delete(cls._empty_following_key(follower_id))
             pipe.execute()
             return True
         except Exception as e:
@@ -126,6 +135,33 @@ class FollowCache:
         except Exception as e:
             logger.error(f'[FollowCache] 移除关系失败 {follower_id}->{followed_id}: {e}')
             return False
+    @classmethod
+    def preload_following(cls,user_id:int,following_ids):
+        '''DB回填关注列表,并清掉"确实没有关注"的空标记'''
+        if not following_ids:
+            return cls.set_empty_following(user_id)
+        try:
+            key=cls._following_key(user_id)
+            pipe=redis_cache.pipeline(transaction=False,for_write=True)
+            pipe.sadd(key,*[str(i) for i in following_ids])
+            pipe.expire(key,cls.TTL_DAYS*86400)
+            pipe.delete(cls._empty_following_key(user_id))
+            pipe.execute()
+            return True
+        except Exception as e:
+            logger.error(f'[FollowCache] 预热关注列表失败 uid={user_id}: {e}')
+            return False
+
+    @classmethod
+    def set_empty_following(cls,user_id:int,ttl:int=60):
+        '''记录"确实没有关注任何人",避免空关注用户每次请求都回源DB'''
+        try:
+            redis_cache.set_exact(cls._empty_following_key(user_id),"1",ttl)
+            return True
+        except Exception as e:
+            logger.error(f'[FollowCache] 设置空关注标记失败 uid={user_id}: {e}')
+            return False
+
     @classmethod
     def preload_followers(cls,user_id:int,follower_ids):
         '''DB回填Redis(发帖推送前预热)'''
@@ -146,6 +182,7 @@ class FollowCache:
             pipe = redis_cache.pipeline(transaction=False, for_write=True)
             pipe.delete(cls._following_key(user_id))
             pipe.delete(cls._followers_key(user_id))
+            pipe.delete(cls._empty_following_key(user_id))
             pipe.execute()
             return True
         except Exception as e:
