@@ -198,6 +198,9 @@ class RedisEventBus:
         except Exception:
             parent_ctx=None
 
+        # 把事件 id 传给 handler，供业务做幂等（如通知按 event_id 去重）
+        handler_payload={**payload,'_event_id':event_id} if event_id else payload
+
         failed=False
         for handler in handlers:
             try:
@@ -207,9 +210,9 @@ class RedisEventBus:
                     with tracer.start_as_current_span(
                         f'eventbus:{event_name}', context=parent_ctx
                     ):
-                        self._call_handler(handler,payload)
+                        self._call_handler(handler,handler_payload)
                 else:
-                    self._call_handler(handler,payload)
+                    self._call_handler(handler,handler_payload)
                 logger.debug(f"事件处理成功：{event_name}->{handler.__name__}")
             except Exception as e:
                 failed=True

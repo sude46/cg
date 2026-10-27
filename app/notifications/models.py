@@ -17,6 +17,8 @@ class Notification(db.Model):
             db.ForeignKey('users.id',ondelete='CASCADE'),
             index=True
             )
+    # 事件幂等键：同一 event_id 只允许一条通知（at-least-once 重试去重）
+    event_id=db.Column(db.String(64),nullable=True)
     #通知类型
     type=db.Column(db.String(20),nullable=False)
     #相关资源ID,例如帖子ID或评论ID根据type不同而不同
@@ -31,6 +33,7 @@ class Notification(db.Model):
     # 复合索引：覆盖"查某用户未读通知按时间倒序"的核心查询
     __table_args__ = (
         db.Index('idx_notification_user_read_created', 'user_id', 'deleted_at', 'is_read', 'created_at'),
+        db.Index('uq_notification_event_id', 'event_id', unique=True),
     )
 
     #关系

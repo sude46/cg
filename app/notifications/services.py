@@ -34,6 +34,7 @@ def _handle_comment_created(event_data: dict):
         NotificationService.create_notification({
             'user_id': event_data.get('user_id'),
             'actor_id': event_data.get('actor_id'),
+            'event_id': event_data.get('_event_id'),
             'type': 'comment',
             'comment_id': event_data.get('comment_id'),
             'content': event_data.get('content')
@@ -48,6 +49,7 @@ class NotificationService:
     def create_notification(data: dict):
         user_id = data.get('user_id')
         actor_id = data.get('actor_id')
+        event_id = data.get('event_id')
         if not user_id:
             raise ValidationError('缺少 recipient user_id')
         if not user_repository.get_by_id(user_id):
@@ -73,6 +75,7 @@ class NotificationService:
         notif_data = {
             'user_id': user_id,
             'actor_id': actor_id,
+            'event_id': event_id,
             'type': notif_type,
             'resource_id': resource_id,
             'resource_type': resource_type,
@@ -107,6 +110,12 @@ class NotificationService:
             return dumped
         except IntegrityError:
             db.session.rollback()
+            # 同一 event_id 重试：返回已存在的通知，不重复加未读/推 SSE
+            if event_id:
+                existing = notification_repository.get_by_event_id(event_id)
+                if existing is not None:
+                    NOTIFICATION_OPERATIONS.labels(action='create', result='duplicate').inc()
+                    return notification_schema.dump(existing)
             NOTIFICATION_OPERATIONS.labels(action='create', result='error').inc()
             raise DatabaseError('创建通知失败，数据库约束错误')
         except Exception as e:
@@ -249,6 +258,7 @@ def _handle_like_created(event_data: dict):
         NotificationService.create_notification({
             'user_id': event_data.get('user_id'),
             'actor_id': event_data.get('actor_id'),
+            'event_id': event_data.get('_event_id'),
             'type': 'like',
             'post_id': event_data.get('post_id'),
             'comment_id': event_data.get('comment_id'),
@@ -267,6 +277,7 @@ def _handle_follow_created(event_data: dict):
         NotificationService.create_notification({
             'user_id': event_data.get('user_id'),
             'actor_id': event_data.get('actor_id'),
+            'event_id': event_data.get('_event_id'),
             'type': 'follow',
             'content': '关注了你',
         })
