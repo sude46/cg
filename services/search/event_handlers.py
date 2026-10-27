@@ -68,10 +68,31 @@ def on_post_like_count_changed(data: dict):
         PostSearchService.mark_dirty(post_id)
 
 
+def on_post_comment_count_changed(data: dict):
+    """帖子评论数变更事件：更新 ES；失败标记脏索引等待对账"""
+    post_id = data.get('post_id')
+    comment_count = data.get('comment_count')
+    if not post_id:
+        return
+    try:
+        if es_client.is_available() and PostSearchService.update_post(
+            post_id, comment_count=comment_count
+        ):
+            logger.debug(
+                f'ES 评论数更新成功: post_id={post_id}, comment_count={comment_count}'
+            )
+            return
+        PostSearchService.mark_dirty(post_id)
+    except Exception as e:
+        logger.warning(f'ES 评论数更新失败（不影响主流程）: {e}')
+        PostSearchService.mark_dirty(post_id)
+
+
 def register_search_event_handlers():
     """注册所有搜索相关的事件监听器"""
     event_bus.subscribe('post.created', on_post_created)
     event_bus.subscribe('post.updated', on_post_updated)
     event_bus.subscribe('post.deleted', on_post_deleted)
     event_bus.subscribe('post.like_count_changed', on_post_like_count_changed)
+    event_bus.subscribe('post.comment_count_changed', on_post_comment_count_changed)
     logger.info('搜索模块事件监听器已注册')

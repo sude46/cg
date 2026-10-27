@@ -225,11 +225,7 @@ class LikeService:
                 })
                 logger.info(f'[LikeService]用户{user_id}取消点赞成功(redis秒返回),pending_id: {pending_id}')
             elif comment_id:
-                like_count=LikeCache.get_like_count(comment_id,'comment') or 0
-                event_bus.publish('comment.like_count_changed',{
-                    'comment_id':comment_id,
-                    'like_count':like_count
-                })
+                # 评论不进 ES，没有订阅者；热评榜已在上面更新，无需再发事件
                 LIKE_OPERATIONS.labels(action='delete',result='success').inc()
                 logger.info(f'[LikeService]用户{user_id}取消点赞成功(redis秒返回),pending_id: {pending_id}')
             return True
