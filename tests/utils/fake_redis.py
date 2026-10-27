@@ -376,6 +376,44 @@ class FakeRedisClient:
         keys = list(keys_and_args[:numkeys])
         args = list(keys_and_args[numkeys:])
         s = script.lower().replace(' ', '').replace('\n', '')
+        # LIKE 原子多 key（FIX-11）：user/target/count/dirty/dirty_set 一次写完
+        if "keys[5]" in s and 'sismember' in s and 'setex' in s:
+            member = args[0]
+            target_id = args[1]
+            ttl = int(args[2])
+            dirty_ttl = int(args[3])
+            target_type = args[4]
+            initial = int(args[5])
+            is_add = 'incr' in s and 'decr' not in s
+            if is_add:
+                if self.sismember(keys[1], member):
+                    return 0
+                if self.exists(keys[2]) == 0:
+                    self.setex(keys[2], ttl, initial)
+                self.sadd(keys[1], member)
+                self.incrby(keys[2], 1)
+                self.sadd(keys[0], target_id)
+                self.expire(keys[0], ttl)
+                self.expire(keys[1], ttl)
+                self.expire(keys[2], ttl)
+                self.setex(keys[3], dirty_ttl, '1')
+                self.sadd(keys[4], f"{target_type}:{target_id}")
+                return 1
+
+            was_member = self.sismember(keys[1], member)
+            if self.exists(keys[2]) == 0:
+                self.setex(keys[2], ttl, initial)
+            if was_member:
+                self.srem(keys[1], member)
+                current = int(self.get(keys[2]) or 0)
+                if current > 0:
+                    self.incrby(keys[2], -1)
+            self.srem(keys[0], target_id)
+            self.expire(keys[1], ttl)
+            self.expire(keys[2], ttl)
+            self.setex(keys[3], dirty_ttl, '1')
+            self.sadd(keys[4], f"{target_type}:{target_id}")
+            return 1 if was_member else 2
         # refresh 轮换 + grace 原子写入（FIX-04）
         if "keys[2],argv[3],'ex'" in s:
             cur = self.get(keys[0])

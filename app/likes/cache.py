@@ -8,25 +8,47 @@ from core.redis_cache import redis_cache
 logger = logging.getLogger(__name__)
 
 
-# ========== Lua 脚本（原子更新 Set + Counter）==========
+# ========== Lua 脚本（原子更新 user/target/count/dirty 全部 key）==========
+# KEYS: user_key, target_key, count_key, dirty_key, dirty_set
+# ARGV: user_id, target_id, ttl, dirty_ttl, target_type, initial_count
 LIKE_INCR_SCRIPT = """
-local is_member = redis.call('sismember', KEYS[1], ARGV[1])
-if is_member == 0 then
-    redis.call('sadd', KEYS[1], ARGV[1])
-    redis.call('incr', KEYS[2])
-    return 1
+local is_member = redis.call('SISMEMBER', KEYS[2], ARGV[1])
+if is_member == 1 then
+    return 0
 end
-return 0
+if redis.call('EXISTS', KEYS[3]) == 0 then
+    redis.call('SET', KEYS[3], ARGV[6], 'EX', ARGV[3])
+end
+redis.call('SADD', KEYS[2], ARGV[1])
+redis.call('INCR', KEYS[3])
+redis.call('SADD', KEYS[1], ARGV[2])
+redis.call('EXPIRE', KEYS[1], ARGV[3])
+redis.call('EXPIRE', KEYS[2], ARGV[3])
+redis.call('EXPIRE', KEYS[3], ARGV[3])
+redis.call('SETEX', KEYS[4], ARGV[4], '1')
+redis.call('SADD', KEYS[5], ARGV[5] .. ':' .. ARGV[2])
+return 1
 """
 
 LIKE_DECR_SCRIPT = """
-local is_member = redis.call('sismember', KEYS[1], ARGV[1])
-if is_member == 1 then
-    redis.call('srem', KEYS[1], ARGV[1])
-    redis.call('decr', KEYS[2])
-    return 1
+local is_member = redis.call('SISMEMBER', KEYS[2], ARGV[1])
+if redis.call('EXISTS', KEYS[3]) == 0 then
+    redis.call('SET', KEYS[3], ARGV[6], 'EX', ARGV[3])
 end
-return 0
+if is_member == 1 then
+    redis.call('SREM', KEYS[2], ARGV[1])
+    local count = tonumber(redis.call('GET', KEYS[3]))
+    if count and count > 0 then
+        redis.call('DECR', KEYS[3])
+    end
+end
+redis.call('SREM', KEYS[1], ARGV[2])
+redis.call('EXPIRE', KEYS[2], ARGV[3])
+redis.call('EXPIRE', KEYS[3], ARGV[3])
+redis.call('SETEX', KEYS[4], ARGV[4], '1')
+redis.call('SADD', KEYS[5], ARGV[5] .. ':' .. ARGV[2])
+if is_member == 1 then return 1 end
+return 2
 """
 
 
@@ -56,22 +78,22 @@ class LikeCache:
             cls._decr_sha = redis_cache.script_load(LIKE_DECR_SCRIPT)
 
     @classmethod
-    def _eval_incr(cls, target_key, count_key, user_id):
+    def _eval_incr(cls, keys, args):
         """执行点赞 INCR 脚本；Redis 重启/切换导致脚本丢失(NOSCRIPT)时自动重载。"""
         try:
-            return redis_cache.evalsha(cls._incr_sha, 2, target_key, count_key, str(user_id))
+            return redis_cache.evalsha(cls._incr_sha, len(keys), *keys, *args)
         except NoScriptError:
             cls._incr_sha = redis_cache.script_load(LIKE_INCR_SCRIPT)
-            return redis_cache.evalsha(cls._incr_sha, 2, target_key, count_key, str(user_id))
+            return redis_cache.evalsha(cls._incr_sha, len(keys), *keys, *args)
 
     @classmethod
-    def _eval_decr(cls, target_key, count_key, user_id):
+    def _eval_decr(cls, keys, args):
         """执行取消点赞 DECR 脚本；NOSCRIPT 时自动重载。"""
         try:
-            return redis_cache.evalsha(cls._decr_sha, 2, target_key, count_key, str(user_id))
+            return redis_cache.evalsha(cls._decr_sha, len(keys), *keys, *args)
         except NoScriptError:
             cls._decr_sha = redis_cache.script_load(LIKE_DECR_SCRIPT)
-            return redis_cache.evalsha(cls._decr_sha, 2, target_key, count_key, str(user_id))
+            return redis_cache.evalsha(cls._decr_sha, len(keys), *keys, *args)
 
     # ========== Key 生成 ==========
 
@@ -114,15 +136,15 @@ class LikeCache:
     @classmethod
     def is_liked(cls, user_id: int, target_id: int, target_type: str = 'post') -> bool | None:
         """
-        检查是否已点赞
-        返回 True/False，或 None（Redis 故障，需 Service 层降级查 DB）
+        检查是否已点赞（三态）
+        - True/False：user_liked key 存在，按成员判断
+        - None：key 不存在或 Redis 故障，需 Service 层降级查 DB
         """
         try:
-            result = redis_cache.sismember(
-                cls._user_liked_key(user_id, target_type),
-                str(target_id)
-            )
-            return bool(result)
+            key = cls._user_liked_key(user_id, target_type)
+            if redis_cache.exists(key, for_write=True) == 0:
+                return None
+            return bool(redis_cache.sismember(key, str(target_id), for_write=True))
         except Exception as e:
             logger.error(f'[Redis] 检查点赞状态失败 uid={user_id} tid={target_id}: {e}')
             return None
@@ -131,22 +153,43 @@ class LikeCache:
     def get_like_count(cls, target_id: int, target_type: str = 'post') -> int | None:
         """
         获取点赞数量（优先读 String 计数器，O(1)）
-        如果 Counter 键不存在，降级读 SCARD
+        count 与 likers SCARD 不一致视为缓存不完整，返回 None；
+        Counter 不存在时降级读 SCARD。
         """
         try:
             count_key = cls._like_count_key(target_type, target_id)
-            count = redis_cache.get(count_key, for_write=False)
-            if count is not None:
-                return int(count)
-            # Counter 不存在：likers Set 也不存在说明缓存未预热，返回 None 让上层用 DB 值
             likers_key = cls._target_likers_key(target_type, target_id)
-            if redis_cache.exists(likers_key, for_write=True) == 0:
+            count = redis_cache.get(count_key, for_write=False)
+            likers_exists = redis_cache.exists(likers_key, for_write=True)
+
+            if count is not None:
+                if likers_exists == 0:
+                    return None
+                scard = redis_cache.scard(likers_key, for_write=False)
+                if scard is None or int(scard) != int(count):
+                    return None
+                return int(count)
+
+            # Counter 不存在：likers Set 也不存在说明缓存未预热，返回 None 让上层用 DB 值
+            if likers_exists == 0:
                 return None
             # Set 存在：降级读 SCARD
             count = redis_cache.scard(likers_key, for_write=False)
             return int(count) if count is not None else None
         except Exception as e:
             logger.error(f'[Redis] 获取点赞数量失败 {target_type}:{target_id}: {e}')
+            return None
+
+    @classmethod
+    def get_like_count_raw(cls, target_id: int, target_type: str = 'post') -> int | None:
+        """只读原始 count，不做 SCARD 完整性校验（写路径发事件时用）。"""
+        try:
+            count = redis_cache.get(
+                cls._like_count_key(target_type, target_id), for_write=True
+            )
+            return int(count) if count is not None else None
+        except Exception as e:
+            logger.error(f'[Redis] 获取原始点赞数量失败 {target_type}:{target_id}: {e}')
             return None
 
     @classmethod
@@ -173,60 +216,68 @@ class LikeCache:
     # ========== 写操作（Lua 原子更新 Set + Count + 脏标记） ==========
 
     @classmethod
-    def add_like(cls, user_id: int, target_id: int, target_type: str = 'post', expire: int = None) -> bool:
+    def add_like(
+        cls,
+        user_id: int,
+        target_id: int,
+        target_type: str = 'post',
+        expire: int = None,
+        initial_count: int = 0,
+    ) -> bool:
         """
-        记录点赞到 Redis（Lua 原子脚本）
-        返回 True（成功）/ False（失败或已点过）
+        记录点赞到 Redis（Lua 原子脚本，一次覆盖全部 key）
+        initial_count: count key 不存在时用于初始化，避免冷启动从 1 开始。
         """
         cls._load_scripts()
         expire = expire or cls.DEFAULT_EXPIRE
         try:
-            user_key = cls._user_liked_key(user_id, target_type)
-            target_key = cls._target_likers_key(target_type, target_id)
-            count_key = cls._like_count_key(target_type, target_id)
-            dirty_key = cls._dirty_key(target_type, target_id)
-
-            # 1) Lua 原子更新：Set + Counter
-            result = cls._eval_incr(target_key, count_key, user_id)
-            if result == 0:
-                return False  # 已点过赞，幂等返回
-
-            # 2) Pipeline 设置过期时间和脏标记
-            pipe = redis_cache.pipeline(transaction=False, for_write=True)
-            pipe.sadd(user_key, str(target_id))
-            pipe.expire(user_key, expire)
-            pipe.expire(target_key, expire)
-            pipe.expire(count_key, expire)
-            pipe.setex(dirty_key, cls.DIRTY_TTL, '1')
-            pipe.sadd("dirty:likes", f"{target_type}:{target_id}")
-            pipe.execute()
-            return True
+            keys = [
+                cls._user_liked_key(user_id, target_type),
+                cls._target_likers_key(target_type, target_id),
+                cls._like_count_key(target_type, target_id),
+                cls._dirty_key(target_type, target_id),
+                "dirty:likes",
+            ]
+            args = [
+                str(user_id),
+                str(target_id),
+                expire,
+                cls.DIRTY_TTL,
+                target_type,
+                int(initial_count or 0),
+            ]
+            return cls._eval_incr(keys, args) == 1
         except Exception as e:
             logger.error(f'添加点赞缓存失败 uid={user_id} tid={target_id}: {e}')
             return False
 
     @classmethod
-    def remove_like(cls, user_id: int, target_id: int, target_type: str = 'post') -> bool:
-        """移除点赞记录"""
+    def remove_like(
+        cls,
+        user_id: int,
+        target_id: int,
+        target_type: str = 'post',
+        initial_count: int = 0,
+    ) -> bool:
+        """移除点赞记录；本来没点过也返回成功（幂等）。"""
         cls._load_scripts()
         try:
-            user_key = cls._user_liked_key(user_id, target_type)
-            target_key = cls._target_likers_key(target_type, target_id)
-            count_key = cls._like_count_key(target_type, target_id)
-            dirty_key = cls._dirty_key(target_type, target_id)
-
-            result = cls._eval_decr(target_key, count_key, user_id)
-            if result == 0:
-                return False  # 本来就没点过
-
-            pipe = redis_cache.pipeline(transaction=False, for_write=True)
-            pipe.srem(user_key, str(target_id))
-            pipe.expire(target_key, cls.DEFAULT_EXPIRE)
-            pipe.expire(count_key, cls.DEFAULT_EXPIRE)
-            pipe.setex(dirty_key, cls.DIRTY_TTL, '1')
-            pipe.sadd("dirty:likes", f"{target_type}:{target_id}")
-            pipe.execute()
-            return True
+            keys = [
+                cls._user_liked_key(user_id, target_type),
+                cls._target_likers_key(target_type, target_id),
+                cls._like_count_key(target_type, target_id),
+                cls._dirty_key(target_type, target_id),
+                "dirty:likes",
+            ]
+            args = [
+                str(user_id),
+                str(target_id),
+                cls.DEFAULT_EXPIRE,
+                cls.DIRTY_TTL,
+                target_type,
+                int(initial_count or 0),
+            ]
+            return cls._eval_decr(keys, args) in (1, 2)
         except Exception as e:
             logger.error(f'移除点赞缓存失败 uid={user_id} tid={target_id}: {e}')
             return False
