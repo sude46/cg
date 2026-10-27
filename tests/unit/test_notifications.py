@@ -279,9 +279,9 @@ class TestNotificationEventHandlers:
             assert notif.type == "comment"
 
     def test_handle_comment_created_invalid_user(self, app, db_session, mock_redis):
-        """测试评论事件处理函数 - 用户不存在时不抛异常"""
+        """用户不存在时抛异常，交给事件总线重试/DLQ，而不是静默吞掉"""
         from app.notifications.services import _handle_comment_created
-        with app.app_context():
+        with app.app_context(), pytest.raises(ResourceNotFoundError):
             _handle_comment_created({
                 "user_id": 999999,
                 "actor_id": 888888,
