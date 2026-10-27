@@ -144,6 +144,41 @@ class FeedCache:
 
 
     @classmethod
+    def push_posts_to_followers(cls,post_scores:list[tuple],follower_ids:list[int]):
+        '''
+        批量把多篇帖子推到粉丝时间线（大V降级回填用）。
+        Args:
+            post_scores: [(post_id, score), ...]，score 直接来自作者 outbox
+            follower_ids: 粉丝ID列表
+        '''
+        if not post_scores:
+            return {'pushed':0,'posts':0,'mode':'backfill'}
+        if not follower_ids:
+            return {'pushed':0,'posts':len(post_scores),'mode':'backfill'}
+        expire_seconds=cls.FEED_EXPIRE_DAYS*86400
+        mapping={str(pid):float(score) for pid,score in post_scores}
+        total_pushed=0
+        try:
+            for i in range(0,len(follower_ids),cls.PUSH_BATCH_SIZE):
+                batch=follower_ids[i:i+cls.PUSH_BATCH_SIZE]
+                pipe=redis_cache.pipeline(transaction=False,for_write=True)
+                for fid in batch:
+                    key=cls._feed_key(fid)
+                    pipe.zadd(key,mapping)
+                    pipe.zremrangebyrank(key,0,-(cls.MAX_FEED_SIZE+1))
+                    pipe.expire(key,expire_seconds)
+                    pipe.delete(cls._empty_key(fid))
+                pipe.execute()
+                total_pushed+=len(batch)
+            logger.info(
+                f"降级回填：{len(post_scores)}篇帖子已推送到{total_pushed}个粉丝的时间线"
+            )
+            return {'pushed':total_pushed,'posts':len(post_scores),'mode':'backfill'}
+        except Exception as e:
+            logger.error(f"降级回填推送失败: {e}")
+            raise
+
+    @classmethod
     def pull_feed(cls,user_id:int,page:int=1,per_page:int=20):
         '''
         拉模式：从Redis获取用户的时间线帖子ID列表

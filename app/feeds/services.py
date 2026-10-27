@@ -271,8 +271,34 @@ class FeedService:
                 'pushed': 0
             }
 
-        # 普通作者：粉丝掉回阈值以下则取消大V标记
-        FeedCache.unmark_big_v(author_id)
+        # 普通作者：如果之前是大V，先补推历史帖子，成功后再由任务解除标记
+        was_big_v = bool(FeedCache.filter_big_v([author_id]))
+        if was_big_v:
+            try:
+                # 延迟导入：tasks.feed_tasks 顶层 import app.feeds.cache，会形成循环
+                from tasks.feed_tasks import backfill_demoted_author
+                backfill_demoted_author.apply_async(
+                    args=(author_id,),
+                    queue='feed',
+                    retry=True,
+                    retry_policy={'max_retries': 2, 'interval_start': 0.2, 'interval_step': 0.2},
+                )
+            except Exception as exc:
+                # 入队失败：保留大V标记，继续拉模式，历史内容不会丢
+                FEED_OPERATIONS.labels(action='demotion_backfill', result='enqueue_failed').inc()
+                logger.error(
+                    f'大V降级回填入队失败，保留拉模式 author={author_id}: {exc}'
+                )
+                return {
+                    'post_id': post_id,
+                    'mode': 'pull',
+                    'followers': follower_count,
+                    'pushed': 0,
+                    'reason': 'demotion_backfill_enqueue_failed',
+                }
+        else:
+            # 从未是大V：确保标记不存在（幂等）
+            FeedCache.unmark_big_v(author_id)
 
         # 二段(>=ASYNC 且 <BIG_V)：fanout 下沉 Celery feed 队列
         if follower_count >= FeedCache.fanout_async_threshold():
