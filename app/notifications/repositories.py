@@ -23,6 +23,15 @@ class NotificationRepository:
 
     @staticmethod
     @monitor_db("select", "notifications")
+    def get_by_event_id(event_id: str, force_master: bool = True) -> Notification | None:
+        """按事件幂等键查通知；默认走主库，确保刚提交的行可见。"""
+        session = db.session if force_master else NotificationRepository._read_session()
+        return session.query(Notification).filter(
+            Notification.event_id == event_id
+        ).first()
+
+    @staticmethod
+    @monitor_db("select", "notifications")
     def get_by_id(notification_id: int, user_id: int, force_master: bool = False) -> Notification | None:
         session = db.session if force_master else NotificationRepository._read_session()
         return session.query(Notification).options(
