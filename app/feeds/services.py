@@ -189,8 +189,21 @@ class FeedService:
         '''用户关注的大V作者ID（读时据此拉取 outbox）'''
         following=FollowCache.get_following_ids(user_id)
         if following is None:
-            following=follow_repository.get_following_ids(user_id)
-        return FeedCache.filter_big_v(following)
+            # 缓存 miss 必须回源主库；空列表则是"确实没关注任何人",由空标记区分
+            following=follow_repository.get_following_ids(user_id,force_master=True)
+            if following:
+                FollowCache.preload_following(user_id,following)
+            else:
+                FollowCache.set_empty_following(user_id)
+
+        bigv_ids=FeedCache.filter_big_v(following)
+        if following and not bigv_ids and not FeedCache.big_v_index_available():
+            # 大V索引被淘汰：fail-open 把关注对象都当候选，宁可多拉几个 outbox
+            logger.warning(
+                f'用户{user_id}的大V索引缺失，本次 fail-open 拉取全部关注对象 outbox'
+            )
+            return following
+        return bigv_ids
 
     @classmethod
     def _timeline_from_db(cls,user_id:int,cur,limit:int):

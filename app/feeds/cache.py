@@ -408,6 +408,15 @@ class FeedCache:
             logger.error(f"取消登记大V失败{author_id}:{e}")
 
     @classmethod
+    def big_v_index_available(cls)->bool:
+        '''大V索引是否还在(用于丢失时 fail-open,而不是静默丢内容)'''
+        try:
+            return redis_cache.exists(cls.BIGV_SET_KEY,for_write=True)==1
+        except Exception as e:
+            logger.error(f'检查大V索引失败:{e}')
+            return False
+
+    @classmethod
     def filter_big_v(cls,author_ids:list[int])->list[int]:
         """从关注列表里筛出大V(pipeline批量SISMEMBER),顺序保留"""
         if not author_ids:
