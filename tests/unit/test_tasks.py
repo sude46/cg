@@ -113,15 +113,23 @@ class TestLikeTasks:
     """点赞相关Celery任务单元测试"""
 
     def test_async_like_create(self, app, db_session, mock_redis):
+        from app.likes.cache import LikeCache
+        from app.likes.models import Like
         from tasks.like_tasks import async_like_to_do
         from tests.unit.factories import PostFactory, UserFactory
         with app.app_context():
             user = UserFactory()
             post = PostFactory()
+            # 任务以 Redis 当前状态为准：先让 Redis 表示"已点赞"
+            LikeCache.preload_user_likes(user.id, [post.id])
             result = async_like_to_do(user.id, "post", post.id, "create", "test_pending")
             assert result["status"] == "success"
+            assert Like.query.filter_by(
+                user_id=user.id, post_id=post.id, deleted_at=None
+            ).count() == 1
 
     def test_async_like_delete(self, app, db_session, mock_redis):
+        from app.likes.models import Like
         from app.likes.repositories import like_repository
         from tasks.like_tasks import async_like_to_do
         from tests.unit.factories import PostFactory, UserFactory
@@ -131,3 +139,6 @@ class TestLikeTasks:
             like_repository.create_post_like(user.id, post.id)
             result = async_like_to_do(user.id, "post", post.id, "delete", "test_pending")
             assert result["status"] == "success"
+            assert Like.query.filter_by(
+                user_id=user.id, post_id=post.id, deleted_at=None
+            ).count() == 0
