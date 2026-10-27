@@ -41,7 +41,14 @@ def make_celery(app_name='weibo'):
         timezone='Asia/Shanghai',
         enable_utc=True,
         task_time_limit=3600,
-        worker_prefetch_multiplier=4,
+        # late ack：worker 崩溃时未确认任务可重投；任务必须幂等
+        task_acks_late=True,
+        task_reject_on_worker_lost=True,
+        task_track_started=True,
+        # 一次只预取一个，降低 worker 崩溃时被囤积的任务量
+        worker_prefetch_multiplier=1,
+        # Redis broker 可见性超时必须大于任务最长执行时间，避免运行中被重投
+        broker_transport_options={'visibility_timeout': 7200},
         task_default_queue='default',
         task_routes={
             'tasks.like_tasks.*':{'queue':'like'},
