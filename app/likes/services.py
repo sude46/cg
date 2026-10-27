@@ -74,16 +74,24 @@ class LikeService:
                     LikeCache.preload_user_likes(user_id,[target_id],target_type)
                     LikeCache.ensure_liker(user_id,target_id,target_type)
                     if target_type=='post':
-                        db_count=like_repository.count_likes_for_post(target_id)
+                        db_count=like_repository.count_likes_for_post(target_id,force_master=True)
                     else:
-                        db_count=like_repository.count_likes_for_comment(target_id)
+                        db_count=like_repository.count_likes_for_comment(target_id,force_master=True)
                     LikeCache.set_like_count(target_id,db_count,target_type)
                     LIKE_OPERATIONS.labels(action='create',result='duplicate').inc()
                     raise ConflictError('您已点赞过了')
 
 
-            #核心：先写redis
-            if not LikeCache.add_like(user_id,target_id,target_type):
+            # 冷启动：count 缺失时用主库真值初始化，避免从 1 开始
+            initial_count=0
+            if LikeCache.get_like_count(target_id,target_type) is None:
+                if target_type=='post':
+                    initial_count=like_repository.count_likes_for_post(target_id,force_master=True)
+                else:
+                    initial_count=like_repository.count_likes_for_comment(target_id,force_master=True)
+
+            #核心：先写redis（Lua 原子覆盖全部 key）
+            if not LikeCache.add_like(user_id,target_id,target_type,initial_count=initial_count):
                 LIKE_OPERATIONS.labels(action='create',result='error').inc()
                 raise DatabaseError('点赞操作失败，请稍后重试')
 
@@ -105,12 +113,16 @@ class LikeService:
                 from app.comments.cache import CommentCache
                 comment=comment_repository.get_by_id(target_id,force_master=False)
                 if comment:
-                    new_count=LikeCache.get_like_count(target_id,'comment') or 0
+                    new_count=LikeCache.get_like_count(target_id,'comment')
+                    if new_count is None:
+                        new_count=LikeCache.get_like_count_raw(target_id,'comment') or 0
                     CommentCache.update_hot_comment(comment.post_id,target_id,new_count)
 
             #异步更新ES（用redis实时计数，不阻塞主流程)
             if post_id:
-                like_count=LikeCache.get_like_count(post_id,'post') or 0
+                like_count=LikeCache.get_like_count(post_id,'post')
+                if like_count is None:
+                    like_count=LikeCache.get_like_count_raw(post_id,'post') or 0
                 event_bus.publish('post.like_count_changed',{
                     'post_id':post_id,
                     'like_count':like_count
@@ -184,13 +196,22 @@ class LikeService:
                 LikeCache.preload_user_likes(user_id,[target_id],target_type)
                 LikeCache.ensure_liker(user_id,target_id,target_type)
                 if target_type=='post':
-                    db_count=like_repository.count_likes_for_post(target_id)
+                    db_count=like_repository.count_likes_for_post(target_id,force_master=True)
                 else:
-                    db_count=like_repository.count_likes_for_comment(target_id)
+                    db_count=like_repository.count_likes_for_comment(target_id,force_master=True)
                 LikeCache.set_like_count(target_id,db_count,target_type)
+
+            # count 缺失时用主库真值初始化，避免 DECR 从 0 开始
+            initial_count=0
+            if LikeCache.get_like_count(target_id,target_type) is None:
+                if target_type=='post':
+                    initial_count=like_repository.count_likes_for_post(target_id,force_master=True)
+                else:
+                    initial_count=like_repository.count_likes_for_comment(target_id,force_master=True)
+
             #cache_liked is True 或者None但已回填，都继续执行删除
-            #先删redis(秒返回)
-            if not LikeCache.remove_like(user_id,target_id,target_type):
+            #先删redis(秒返回，Lua 原子覆盖全部 key)
+            if not LikeCache.remove_like(user_id,target_id,target_type,initial_count=initial_count):
                 LIKE_OPERATIONS.labels(action='delete',result='error').inc()
                 raise DatabaseError('取消点赞操作失败，请稍后重试')
             #异步删DB(Celery任务，pending_id幂等去重)
@@ -212,20 +233,26 @@ class LikeService:
                 from app.comments.cache import CommentCache
                 comment = comment_repository.get_by_id(target_id, force_master=False)
                 if comment:
-                    new_count = LikeCache.get_like_count(target_id, 'comment') or 0
+                    new_count = LikeCache.get_like_count(target_id, 'comment')
+                    if new_count is None:
+                        new_count = LikeCache.get_like_count_raw(target_id, 'comment') or 0
                     # like_count 为 0 时从热评榜移除
                     CommentCache.update_hot_comment(comment.post_id, target_id, new_count)
 
             #异步更新ES（用redis实时计数，不阻塞主流程)
             if post_id:
-                like_count=LikeCache.get_like_count(post_id,'post') or 0
+                like_count=LikeCache.get_like_count(post_id,'post')
+                if like_count is None:
+                    like_count=LikeCache.get_like_count_raw(post_id,'post') or 0
                 event_bus.publish('post.like_count_changed',{
                     'post_id':post_id,
                     'like_count':like_count
                 })
                 logger.info(f'[LikeService]用户{user_id}取消点赞成功(redis秒返回),pending_id: {pending_id}')
             elif comment_id:
-                like_count=LikeCache.get_like_count(comment_id,'comment') or 0
+                like_count=LikeCache.get_like_count(comment_id,'comment')
+                if like_count is None:
+                    like_count=LikeCache.get_like_count_raw(comment_id,'comment') or 0
                 event_bus.publish('comment.like_count_changed',{
                     'comment_id':comment_id,
                     'like_count':like_count

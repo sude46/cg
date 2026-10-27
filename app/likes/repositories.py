@@ -169,9 +169,9 @@ class LikeRepository:
 
     @staticmethod
     @monitor_db("count","likes")
-    def count_likes_for_post(post_id):
-        """帖子有效点赞数（DB层，对账用）"""
-        session = LikeRepository._read_session()
+    def count_likes_for_post(post_id, force_master: bool = False):
+        """帖子有效点赞数（DB层，对账/冷启动初始化用）"""
+        session = LikeRepository._get_session(force_master)
         return session.query(Like).filter(
             Like.post_id == post_id,
             Like.deleted_at.is_(None)
@@ -179,9 +179,9 @@ class LikeRepository:
 
     @staticmethod
     @monitor_db("count","likes")
-    def count_likes_for_comment(comment_id):
-        """评论有效点赞数（DB层，对账用）"""
-        session = LikeRepository._read_session()
+    def count_likes_for_comment(comment_id, force_master: bool = False):
+        """评论有效点赞数（DB层，对账/冷启动初始化用）"""
+        session = LikeRepository._get_session(force_master)
         return session.query(Like).filter(
             Like.comment_id == comment_id,
             Like.deleted_at.is_(None)
