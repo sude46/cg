@@ -28,8 +28,10 @@ def on_post_deleted(payload:dict):
                 post_id=payload['post_id'],
                 author_id=payload['user_id'],
                 )
-    except Exception as e:
-        logger.error(f'Feed清理失败 post_id={payload.get("post_id")}:{e}')
+    except Exception:
+        # 不吞异常：让事件总线重试/DLQ，而不是静默丢清理
+        logger.exception(f'Feed清理失败 post_id={payload.get("post_id")}')
+        raise
 def register_feed_handlers():
     global _registered
     if _registered:

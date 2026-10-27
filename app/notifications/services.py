@@ -39,9 +39,10 @@ def _handle_comment_created(event_data: dict):
             'comment_id': event_data.get('comment_id'),
             'content': event_data.get('content')
         })
-    except Exception as e:
-        # 通知创建失败不应影响评论创建流程
-        logger.error(f"Failed to create notification for comment: {e}")
+    except Exception:
+        # 不吞异常：让事件总线重试/DLQ，而不是静默丢通知
+        logger.exception('Failed to create notification for comment')
+        raise
 
 
 class NotificationService:
@@ -264,8 +265,10 @@ def _handle_like_created(event_data: dict):
             'comment_id': event_data.get('comment_id'),
             'content': '赞了你的评论' if event_data.get('target_type') == 'comment' else '赞了你的帖子',
         })
-    except Exception as e:
-        logger.error(f"Failed to create notification for like: {e}")
+    except Exception:
+        # 不吞异常：让事件总线重试/DLQ
+        logger.exception('Failed to create notification for like')
+        raise
 
 
 def _handle_follow_created(event_data: dict):
@@ -281,8 +284,10 @@ def _handle_follow_created(event_data: dict):
             'type': 'follow',
             'content': '关注了你',
         })
-    except Exception as e:
-        logger.error(f"Failed to create notification for follow: {e}")
+    except Exception:
+        # 不吞异常：让事件总线重试/DLQ
+        logger.exception('Failed to create notification for follow')
+        raise
 
 
 def register_notification_event_handlers():
