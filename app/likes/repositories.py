@@ -2,7 +2,7 @@ from typing import Any
 
 from sqlalchemy.orm import joinedload, selectinload
 
-from app.common.database import get_read_session, pagination_utils, utcnow
+from app.common.database import get_read_session, pagination_utils
 from app.common.exceptions import ConflictError
 from app.likes.models import Like
 from core import db
@@ -82,11 +82,10 @@ class LikeRepository:
         return like
 
     @staticmethod
-    @monitor_db("update","likes")
+    @monitor_db("delete","likes")
     def delete_like(like: Like) -> None:
-        """软删除点赞"""
-        like.deleted_at = utcnow()
-        db.session.add(like)
+        """硬删除点赞（取消点赞是低频动作，硬删让 active 唯一约束生效）"""
+        db.session.delete(like)
 
     @staticmethod
     @monitor_db("select","likes")
