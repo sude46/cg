@@ -376,6 +376,19 @@ class FakeRedisClient:
         keys = list(keys_and_args[:numkeys])
         args = list(keys_and_args[numkeys:])
         s = script.lower().replace(' ', '').replace('\n', '')
+        # refresh 轮换 + grace 原子写入（FIX-04）
+        if "keys[2],argv[3],'ex'" in s:
+            cur = self.get(keys[0])
+            if cur is None:
+                return -1
+            if cur == args[0]:
+                self.setex(keys[0], int(args[3]), args[1])
+                self.setex(keys[1], int(args[4]), args[2])
+                return 1
+            grace = self.get(keys[1])
+            if grace is not None:
+                return grace
+            return 0
         # refresh 轮换 CAS：GET 比较后 SET EX
         if "redis.call('set'" in s and "redis.call('get'" in s and 'ex' in s:
             cur = self.get(keys[0])
