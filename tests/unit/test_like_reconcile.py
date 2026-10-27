@@ -29,7 +29,9 @@ def test_reconcile_does_not_shrink_db_count(app, db_session, mock_redis):
 
         db_session.expire_all()
         assert db_session.get(Post, post.id).like_count == 5
-        assert LikeCache.get_like_count(post.id, "post") == 5
+        # 只重建 count，likers 集合仍不完整；完整性读会回退 DB，但原始计数不能是 1
+        assert LikeCache.get_like_count_raw(post.id, "post") == 5
+        assert LikeCache.get_like_count(post.id, "post") is None
         assert f"post:{post.id}" not in redis_cache.smembers(
             DIRTY_LIKES_KEY, for_write=True
         )
