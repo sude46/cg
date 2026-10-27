@@ -1,5 +1,5 @@
+import json
 import logging
-import time
 
 from flask_jwt_extended import create_access_token, create_refresh_token, decode_token
 
@@ -190,17 +190,42 @@ class AuthService:
         except Exception:
             new_jti = ''
 
+        result = {
+            'access_token': new_access,
+            'refresh_token': new_refresh,
+            'token_type': 'bearer',
+            'expires_in': 3600,
+        }
+
+        # 轮换 family 与写 grace 结果必须在同一个 Lua 内完成。
+        # 若拆成两步，中间崩溃/阻塞会让并发的旧 refresh 查不到 grace，
+        # 被误判为复用并删除整族。
         lua = """
         local cur = redis.call('GET', KEYS[1])
         if not cur then return -1 end
-        if cur ~= ARGV[1] then return 0 end
-        redis.call('SET', KEYS[1], ARGV[2], 'EX', ARGV[3])
-        return 1
+        if cur == ARGV[1] then
+            redis.call('SET', KEYS[1], ARGV[2], 'EX', ARGV[4])
+            redis.call('SET', KEYS[2], ARGV[3], 'EX', ARGV[5])
+            return 1
+        end
+        local grace = redis.call('GET', KEYS[2])
+        if grace then return grace end
+        return 0
         """
         try:
-            r = redis_cache.eval(lua, 1, family_key, old_jti, new_jti, AuthService._refresh_ttl())
+            r = redis_cache.eval(
+                lua,
+                2,
+                family_key,
+                grace_key,
+                old_jti,
+                new_jti,
+                json.dumps(result, ensure_ascii=False),
+                AuthService._refresh_ttl(),
+                AuthService.REFRESH_GRACE_SECONDS,
+            )
         except Exception as e:
-            # 条件②：Redis 故障降级——只发新 access，不做轮换
+            # Redis 故障降级——只发新 access，不做轮换
             logger.error('Redis 不可用，refresh 降级为不轮换: %s', e)
             return {'access_token': new_access, 'token_type': 'bearer', 'expires_in': 3600}
 
@@ -208,14 +233,6 @@ class AuthService:
             raise AuthenticationError('登录已过期，请重新登录')
 
         if r == 0:
-            # 条件①：疑似复用 -> 宽限期内返回与上次轮换相同的结果
-            cached = AuthService._get_grace_result(grace_key)
-            if cached:
-                return cached
-            time.sleep(0.05)  # 极端并发：给获胜请求写入宽限结果的时间
-            cached = AuthService._get_grace_result(grace_key)
-            if cached:
-                return cached
             # 超过宽限窗口：判定复用攻击，整族作废
             try:
                 redis_cache.delete(family_key)
@@ -224,28 +241,23 @@ class AuthService:
             logger.warning('refresh token 复用 detected: user=%s fid=%s', user_id, fid)
             raise AuthenticationError('检测到令牌复用，请重新登录')
 
-        result = {
-            'access_token': new_access,
-            'refresh_token': new_refresh,
-            'token_type': 'bearer',
-            'expires_in': 3600,
-        }
-        try:
-            redis_cache.set_exact(grace_key, result, AuthService.REFRESH_GRACE_SECONDS)
-        except Exception:
-            pass
-        USER_OPERATIONS.labels(action='refresh_token', result='success').inc()
-        return result
+        if r == 1:
+            USER_OPERATIONS.labels(action='refresh_token', result='success').inc()
+            return result
 
-    @staticmethod
-    def _get_grace_result(grace_key: str):
-        try:
-            cached = redis_cache.get(grace_key, for_write=True)
+        # 并发失败者：Lua 直接返回获胜者写入的 grace 结果
+        if isinstance(r, bytes):
+            r = r.decode('utf-8')
+        if isinstance(r, str) and r:
+            try:
+                cached = json.loads(r)
+            except (TypeError, ValueError):
+                cached = None
             if isinstance(cached, dict) and cached.get('access_token'):
                 return cached
-        except Exception:
-            pass
-        return None
+
+        logger.error('refresh 返回了无法解析的 grace 结果: %r', r)
+        raise AuthenticationError('登录状态异常，请重新登录')
 
     @staticmethod
     def get_current_user(user_id: int) -> dict:

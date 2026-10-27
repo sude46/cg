@@ -27,6 +27,28 @@ def test_refresh_rotation_and_reuse_grace(app, db_session, mock_redis):
         assert out2['refresh_token'] == r2
 
 
+def test_refresh_atomic_rotation_survives_grace_write_failure(
+    app, db_session, mock_redis, monkeypatch
+):
+    """轮换与 grace 写入必须原子：旧实现先改 family、再写 grace，
+    中间失败会让旧 refresh 被误判为复用并踢掉整族。"""
+    with app.app_context():
+        res = _register(app, 'atomicuser')
+        uid = res['user']['id']
+        claims1 = decode_token(res['refresh_token'])
+
+        def fail_set_exact(*args, **kwargs):
+            raise RuntimeError('grace write crashed')
+
+        # 模拟旧实现在 family 已轮换后写 grace 失败
+        monkeypatch.setattr(redis_cache, 'set_exact', fail_set_exact)
+
+        out1 = AuthService.refresh_tokens(uid, claims1)
+        out2 = AuthService.refresh_tokens(uid, claims1)
+
+        assert out2['refresh_token'] == out1['refresh_token']
+
+
 def test_refresh_reuse_beyond_grace_invalidates_family(app, db_session, mock_redis):
     """超过宽限窗口的重用 -> 判为复用，整族作废。"""
     with app.app_context():
