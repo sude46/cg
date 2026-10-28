@@ -1,7 +1,9 @@
 # 压测报告 — Feed 读路径（Locust）
 
-> 目标：给出**可复现的实测数据**，而不是只有脚本和拍脑袋的 SLO 目标。
+> 目标：给出可复现的实测数据，而不是只有脚本和拍脑袋的 SLO 目标。
 > 脚本：`tests/performance/locustfile.py`、`load_test.js`（k6）、`seed_tokens.py`（造数据/发 token）。
+>
+> 测量时间：2026-10-20。该时间早于 fix-batch（outbox、Celery late ack、点赞 Lua/唯一约束、Feed 降级回填等）。读路径基线仍可参考；写路径和异步链路需要按新代码重测。
 
 ## 1. 测试环境
 

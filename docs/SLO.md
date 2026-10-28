@@ -153,40 +153,37 @@ sum(rate(weibo_read_forced_master_total[5m])) by (resource)
 抓取目标见 `monitoring/prometheus/prometheus.yml`：`weibo-api(app:5000)`、node、redis-business、mysql-master、mysql-replica、redis-replica-1/2、celery、alert-webhook。
 追踪：HTTP → SQL → 自研事件总线 → Celery → ES 已贯通（见 `core/tracing.py`）。
 
-> 采集注意：应用 `/metrics` 目前使用 prometheus_client 默认的进程内 registry，Gunicorn 多 worker 下不是聚合值。要么把 web 进程改成单 worker 专门暴露指标，要么启用 `PROMETHEUS_MULTIPROC_DIR` + `MultiProcessCollector`；在此之前，SLO 计算应使用 Prometheus 端的多实例聚合，或明确只对单 worker 生效。
+> 采集注意：web 进程已通过 `PROMETHEUS_MULTIPROC_DIR` + `MultiProcessCollector` 汇总 Gunicorn worker 指标，`gunicorn.conf.py` 会在 worker 退出时清理对应进程文件。Celery worker/beat 在独立容器，没有共享该目录，所以它们的指标不会出现在 app `/metrics`。SLO 计算仍应以 Prometheus 端聚合为准。
 
 ---
 
 ## 6. 已知限制（SLO 不承诺的部分）
 
-1. **异步事件为 at-least-once，非 exactly-once**：自研事件总线用 `LPUSH` + `BLMOVE(queue→processing)` + 处理完 `LREM` ack，reaper 回收超时在途事件；失败后重入队，超过阈值进死信队列（可用 `scripts/replay_event_dlq.py` 重放）。因此**可能重复投递**，handler 必须幂等（总线按 `event.id` 做幂等去重，TTL 默认 24h）。多进程（`gunicorn -w N`）共享队列，事件由哪个进程处理不确定。SSE 走 Pub/Sub，不在此列。
-   - **“重试 3 次”的真实语义**：代码是 `retry_count += 1` 后判断 `< EVENT_BUS_MAX_RETRY`，所以 `EVENT_BUS_MAX_RETRY=3` 表示**总共 3 次处理机会（初始 1 次 + 重试 2 次）**，不是“初始 + 3 次重试”。若要 1 次初始 + 3 次重试，应配 `4` 或改比较逻辑。
-   - **极端丢失窗口**：handler 失败后重入队本身失败时，`_dispatch` 只记日志，`_consume` 仍会 ack，事件可能丢失。当前靠 error 日志/指标发现，后续应改为进死信或保留 processing。
-   - `EVENT_BUS_VISIBILITY_TIMEOUT=60s` 必须大于最慢 handler；小于 handler 耗时会重复投递。
+1. **异步事件是 at-least-once，不是 exactly-once**：发帖、更新、删除、评论、评论数变化、关注先在业务事务里写 `event_outbox`，Celery beat 每 5 秒 relay 到 Redis 事件总线。消费端用 `BLMOVE(queue→processing)` 领取，处理完 `LREM` ack；失败重入队，超过阈值进死信；reaper 回收超时未 ack 的事件（可用 `scripts/replay_event_dlq.py` 重放）。同一 `event.id` 默认 24 小时内只处理一次，但事件仍可能重复投递，handler 必须幂等。多进程共享队列，事件由哪个进程处理不确定。SSE 走 Pub/Sub，不在此列。
+   - “重试 3 次”的真实语义：`EVENT_BUS_MAX_RETRY=3` 表示总共 3 次处理机会（初始 1 次 + 重试 2 次），不是初始 + 3 次重试。
+   - 极端丢失窗口仍在：handler 失败后重入队本身失败时，`_dispatch` 只记日志，`_consume` 仍会 ack。当前靠日志和指标发现。
+   - `EVENT_BUS_VISIBILITY_TIMEOUT=60s` 必须大于最慢 handler，否则运行中的事件会被重复投递。
+   - outbox relay 最长有约 5 秒延迟；目前没有 pending/oldest-age 指标、最大重试和 sent 数据清理。`like.created` 和点赞数变化未进 outbox。
 2. **私信未读数**：`chats` 用 `ConversationUser.unread_count` 求和（DB SELECT）；尚未做 Redis 计数与对账，热点会话量大时延迟会上升。
 3. **搜索依赖 ES**：ES 故障时降级为 DB `ILIKE`（短 TTL 缓存），召回与延迟都不能按 ES 目标承诺；重建索引期间结果可能暂缺。
 4. **缓存一致性**：Cache-Aside + 延迟双删（写后立即删缓存，再由 Celery `delayed_invalidate` 在约 2s 后二次删）；窗口内读强制走主库，避免主从延迟回跳旧值。整体为**最终一致**，不接受强一致读承诺。
    - **帖子**：`PostCache.RECENT_MODIFY_TTL=60`，但 `create_post/update_post/delete_post` 显式传 `ttl=5`，所以**代码意图是 5s**。
    - **通知**：`NotificationCache.RECENT_MODIFY_TTL=60`。
    - **用户**：默认 60s，登录/注册/资料更新路径显式传 5s。
-   - **重要偏差**：`mark_recently_modified` 调用的是 `RedisCache.set`，而 `set` 会加 `0–60s` 随机 jitter（防雪崩）。因此实际窗口是：帖子 **5–65s**、通知/用户默认 **60–120s**。这与“5s/60s 强一致窗口”的表述不一致；强一致窗口应改用 `set_exact`（`core/redis_cache.py` 已提供）或给 `set` 增加 `jitter=False` 参数。
+   - 注意：`mark_recently_modified` 调用的是 `RedisCache.set`，而 `set` 会加 `0–60s` 随机 jitter（防雪崩）。因此实际窗口是帖子 5–65s、通知/用户默认 60–120s，与“5s/60s 强一致窗口”的表述不一致。要精确控制窗口，应改用 `set_exact` 或给 `set` 增加 `jitter=False`。通知未读数读取已改为先看 `recently_modified`、再信缓存，但 jitter 窗口本身还没修正。
    - 延迟双删的 `countdown=2s` 与窗口 TTL 目前是工程默认值，**应依据 `mysql_slave_status_seconds_behind_master` / `redis_master_last_io_seconds_ago` 的实测 P99 校准**（建议 `countdown = max(2s, 2×P99)`、`窗口 TTL = countdown + P99`，并用 `set_exact` 保证不被 jitter 放大）。
    - `PostCache.invalidate` 不应删除 `recent_modify` 标记，否则延迟双删的第二次删除会提前结束窗口；当前代码已修复（`app/posts/cache.py`）。
 5. **无前端 RUM**：仅服务端指标，页面级可用性/交互延迟不在本 SLO 内。
 6. **无自动 Trace-SLO**：Jaeger 用于排障与人工核对，暂未用 trace 数据自动计算 SLO。
-7. **单实例 beat**：`beat_schedule` 依赖单个 `celery-beat`，多实例会重复触发；对账/热榜属幂等任务，可容忍。
-8. **SSE 并发上限**：以当前仓库 `Dockerfile` 的实际启动命令 `gunicorn -w 4 -k gthread --threads 8` 计算，理论工作线程数 **4×8=32**；每条 SSE 长连接独占 1 个线程 + 1 条 Redis pub/sub 连接，因此**理论上限约 32**（通知流 + 私信流共用）。此前文档写的 `--threads 2 → 8` 与 Dockerfile 不一致，已按代码更正；实际容量仍需压测，不能只看线程数。
+7. **单实例 beat**：`beat_schedule` 依赖单个 `celery-beat`，多实例会重复触发。对账、热榜和 outbox relay 都要求重复执行不出错；outbox relay 的重复投递由 `event.id` 去重。
+8. **SSE 并发上限**：以 `gunicorn -w 4 -k gthread --threads 8` 计算，理论工作线程数是 4×8=32；每条 SSE 长连接独占 1 个线程和 1 条 Redis pub/sub 连接，所以通知流 + 私信流合计上限约 32。实际容量需要压测，不能只看线程数。
    - **Gunicorn 默认 `timeout=30s`** 未显式覆盖，长连接场景有被回收的风险；应按 worker 类型实测并显式配置。
    - 当前以 nginx `proxy_read_timeout 3600s` + 后端心跳（通知 20s / 私信 15s）保活。
    - 无 `Last-Event-ID`，断线期间增量不会自动补，只能重连后拉历史；每连接还占一条 Redis pub/sub 连接，连接数不是免费的。
    - 更高并发应改用 gevent/eventlet，或把实时层拆成独立 FastAPI WebSocket/SSE 网关。
-9. **Prometheus 多进程指标未聚合**：`prometheus_client` 默认 registry 是进程内的，Gunicorn 多 worker 下 `/metrics` 每次可能由不同 worker 响应，Counter 会跳变、Gauge 只反映某个 worker。当前未启用 `PROMETHEUS_MULTIPROC_DIR` + `MultiProcessCollector`，所以：
-   - 第 2 节的 API/DB/Celery 总量类 SLO 在多 worker 部署下**不能直接按单进程 `/metrics` 计算**；
-   - `weibo_redis_cache_hit_rate` 是 Gauge 最后值，不是命中率；
-   - worker 进程写的 Celery/事件总线指标不会被 web `/metrics` 看到。
-   生产启用多进程采集前，这些指标只适合排障，不适合作为严格 SLO 依据。
-10. **点赞缓存冷启动风险**：`LikeCache.add_like` 的 Lua 在计数 key 不存在时会 `INCR` 成 1；如果 DB 已有历史点赞但 Redis 未预热，随后对账“以 Redis 为准”可能把 DB 计数修正得过小。当前 Service 只在 Redis 异常（返回 None）时回填 DB 真值，`is_liked` 对“key 不存在”返回 False，不会触发回填。上线前应做冷启动预热或调整对账方向。
-11. **搜索评论数可能滞后**：搜索事件只订阅了 `post.like_count_changed`，没有订阅 `post.comment_count_changed`，ES 文档的 `comment_count`/`hot_score` 可能落后于 DB；搜索排序的“热度”因此是近似值。
+9. **Prometheus 多进程采集的边界**：web 进程已启用 `PROMETHEUS_MULTIPROC_DIR` 和 `MultiProcessCollector`，Gunicorn worker 指标会汇总；但 Celery worker/beat 在独立容器，没有共享该目录，所以它们的指标不会出现在 app `/metrics`。另外 `weibo_redis_cache_hit_rate` 仍是 Gauge 最后值，不是命中率。SLO 计算应以 Prometheus 端聚合为准。
+10. **点赞缓存重建的边界**：冷启动时 count 现在会用主库真值初始化，对账也不会再用 Redis 小数覆盖 DB 大数。但 count-only 重建后 likers 集合仍可能不完整，`get_like_count` 会返回 `None` 让读路径回退 DB；全量关系对账和大 target 重建仍未实现。
+11. **outbox 观察缺口**：relay 目前只有日志和事件总线指标，没有 outbox pending/oldest-age 指标，也没有最大重试和 sent 数据清理。上线后建议补 `weibo_event_outbox_pending`、`weibo_event_outbox_oldest_age_seconds` 及对应告警。
 
 ---
 
@@ -196,14 +193,4 @@ sum(rate(weibo_read_forced_master_total[5m])) by (resource)
 - 调整 SLO 目标需评估错误预算与容量，并记录变更原因。
 - 实现与文档不一致时，以代码为准并回写文档；不要保留“看起来有监控、实际没有”的描述。
 
-### 7.1 本次同步记录（2026-10-20）
-
-结合代码复核后修正：
-
-1. SSE 并发上限从 `--threads 2 → 8` 更正为 Dockerfile 实际的 `-w4 --threads 8 → 32`，并补充 Gunicorn timeout/无 Last-Event-ID/Redis 连接占用风险。
-2. 事件总线“重试 3 次”更正为“总共 3 次处理机会（初始 + 2 次重试）”，并补充重入队失败可能丢事件的极端窗口。
-3. `recent_modify` 窗口补充 jitter 放大：帖子实际 5–65s、通知/用户默认 60–120s，强一致窗口应改用 `set_exact`。
-4. 对账指标口径更正：当前代码只写 like/post/search，user/comment/feed 没有写 `reconcile_diff_count`。
-5. 日志 `trace_id` 更正为尚未加入格式（当前只有 `request_id`）。
-6. 缓存命中率指标标注为 Gauge 最后值，不能直接作为 SLO；补充 Prometheus 多进程未聚合的限制。
-7. 补充点赞缓存冷启动、搜索评论数滞后两个一致性风险。
+本次 fix-batch 的迁移和上线步骤见 [`DEPLOY_FIX_BATCH.md`](DEPLOY_FIX_BATCH.md)。

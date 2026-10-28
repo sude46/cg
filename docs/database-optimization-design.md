@@ -18,11 +18,12 @@
 
 **Priority: High**
 
-1. **`likes`** for `get_liked_post_ids` bulk check:
+1. **`likes`** for active lookup and duplicate prevention:
    ```sql
-   INDEX idx_like_user_post (user_id, post_id, deleted_at)
+   UNIQUE uq_like_user_post (user_id, post_id)
+   UNIQUE uq_like_user_comment (user_id, comment_id)
    ```
-   Current index `idx_like_user_created` on `(user_id, created_at)` does not cover `post_id` IN queries.
+   Likes are hard-deleted. Do not include `deleted_at` in the unique key: MySQL treats multiple NULLs as distinct, so the old `(user_id, post_id, deleted_at)` constraint did not prevent duplicate active rows. `likes.deleted_at` is kept for compatibility but is no longer used by the like path.
 
 2. **`notifications`** for `mark_all_as_read` bulk update:
    ```sql
@@ -40,9 +41,10 @@
 
 4. **`likes`** for `count_likes_for_comment` / `count_likes_for_post`:
    ```sql
-   INDEX idx_like_target (post_id, deleted_at)  -- covers post counts
-   INDEX idx_like_comment (comment_id, deleted_at)  -- covers comment counts
+   INDEX idx_like_target (post_id)      -- covers post counts
+   INDEX idx_like_comment (comment_id)  -- covers comment counts
    ```
+   The count queries filter `deleted_at IS NULL` only for legacy data; likes are now hard-deleted.
 
 ### Index Maintenance
 
@@ -111,6 +113,8 @@ Current: Some models use `deleted_at` (DateTime), the `SoftDeleteQuery` filters 
 2. Remove SoftDeleteQuery (repositories already filter `deleted_at.is_(None)` explicitly).
 
 **Recommendation**: Option 2 — remove SoftDeleteQuery to avoid confusion. Repository-level filtering is explicit and testable.
+
+Likes are the exception: they are hard-deleted, and `likes.deleted_at` is no longer used. The column remains only so existing databases do not need an immediate drop.
 
 ### Optimistic Locking — Evaluate Usage
 
@@ -186,17 +190,17 @@ Mark `force_master=True` for:
 
 ### Refinements
 
-**Batch Decrement for Soft-Delete Cascade**
-```python
-# Current: loop over likes and db.session.delete(like)
-# Problem: O(n) DELETE + O(n) UPDATE for counter decrement
-```
-**Action**: Use single UPDATE with subquery for batch decrement:
+**Batch decrement when deleting a post**
+
+Deleting a post hard-deletes its likes and decrements `like_count` in the same transaction. Since likes are hard-deleted, the count query should not filter likes by `deleted_at`:
+
 ```sql
 UPDATE posts SET like_count = like_count - (
-    SELECT COUNT(*) FROM likes WHERE post_id = ? AND deleted_at IS NULL
+    SELECT COUNT(*) FROM likes WHERE post_id = ?
 ) WHERE id = ?;
 ```
+
+If the likes are deleted first, do the count before the delete or keep the count in the same transaction.
 
 **Counter Reconciliation SLO**
 | Task | Schedule | Tolerance | Action if Exceeds |

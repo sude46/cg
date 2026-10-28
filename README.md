@@ -2,21 +2,21 @@
 
 基于 Flask + Vue 3 的微博类社交平台，覆盖发帖、关注、点赞、评论、通知、私信、全文搜索与异步任务，并附带完整的可观测性方案。
 
-后端采用严格分层架构（Routes → Service → Repository → Model），在**读写分离、缓存一致性、搜索降级、事件驱动、实时推送**等方向做了工程化实践，而不是一个只跑通增删改查的 demo。
+后端按 Routes → Service → Repository → Model 分层，重点处理读写分离、缓存一致性、搜索降级、事件可靠性和实时推送。
 
 - 语言 / 框架：Python 3.11+ · Flask 3 · Vue 3
 - 存储：MySQL 主从 · Redis 哨兵 · Elasticsearch 8（IK 中文分词）
 - 异步：Celery（worker / beat）
 - 部署：Docker Compose · Gunicorn · nginx
 
-## 项目亮点
+## 关键设计
 
-- **主从读写分离**：读请求优选健康从库，从库连续失败自动标记不健康并回落主库，带冷却试探与 Prometheus 埋点（`core/db_router.py`）。
-- **缓存一致性**：Cache-Aside + 延迟双删；通知未读数另有短窗口强一致标记，避免主从延迟回跳旧值。
-- **搜索降级熔断**：Elasticsearch 故障时进入熔断窗口，自动降级为带护栏的数据库查询，窗口内不再探测 ES（`services/search`）。
-- **事件驱动 + 对账兜底**：基于 Redis List 的持久化事件总线，失败重试；beat 定时对账 Redis 与 DB / 搜索索引的一致性。
+- **主从读写分离**：读请求优先走健康从库；从库连续失败时标记不健康并回落到主库，冷却后重新试探（`core/db_router.py`）。
+- **缓存一致性**：Cache-Aside + 延迟双删；点赞用 Lua 原子更新用户集合、目标集合和计数；通知未读数在短窗口内强制读主库。
+- **搜索降级**：Elasticsearch 故障时进入熔断窗口，降级为带护栏的数据库查询，窗口内不再探测 ES（`services/search`）。
+- **事件可靠性**：业务事务内写 `event_outbox`，relay 异步投递到 Redis 事件总线；消费端 at-least-once，失败重试，按 `event.id` 幂等。
 - **实时推送**：通知流与私信流基于 SSE（`text/event-stream`）。
-- **全链路可观测**：Prometheus 指标、Grafana 面板、Loki 日志、Jaeger 追踪（OpenTelemetry 贯通 HTTP → SQL → 事件总线 → Celery → ES）、Sentry。
+- **可观测性**：Prometheus 指标、Grafana 面板、Loki 日志、Jaeger 追踪、Sentry。OpenTelemetry 覆盖 HTTP、SQL、事件总线和 Celery；SQLAlchemy 固定在 2.0.46，以匹配 instrumentation 的版本范围。
 
 ## 功能
 
@@ -98,15 +98,16 @@ Routes (Blueprint / Flask-RESTX)   —— 参数解析、鉴权、限流
 应用通过工厂函数 `create_app` 创建，各层通过 `app` 实例传递依赖，无全局可变状态。`route_limit` 等代理对象采用延迟绑定（Proxy），避免导入期循环依赖。
 
 ### 2. 主从读写分离（`core/db_router.py`）
-- 读路径经 `MasterSlaveRouter` 优选健康从库，并每次探测连通性，绝不把请求打到已挂从库。
+- 读路径经 `MasterSlaveRouter` 优选健康从库；探测失败时标记不健康，冷却结束前不再使用该从库。
 - 从库连续失败达到阈值即标记不健康，冷却一段时间后再试探恢复。
 - 无健康从库时，读操作回落主库，并对 `weibo_db_replica_healthy` / `weibo_db_replica_failover_total` 打点。
 
 ### 3. 缓存一致性
-- 采用 **Cache-Aside**：读时回填，写后删除缓存。
-- 写后为避免主从延迟导致的脏读，再触发一次**延迟删除**（Celery `delayed_invalidate*`）。
-- 通知未读数维护**短窗口强一致标记**：窗口内的读强制走主库，避免回跳旧值。
-- 整体为**最终一致**，不承诺强一致读。
+- 采用 **Cache-Aside**：读时回填，写后删除缓存；写后延迟再删一次，降低主从延迟期间旧值回填的概率（Celery `delayed_invalidate*`）。
+- 通知未读数维护短窗口强一致标记：窗口内的读先走主库，不再先信缓存。
+- 点赞用 Lua 一次更新用户点赞集合、目标点赞集合、计数和 dirty 标记；计数缺失时用主库真值初始化，不直接从 1 开始。
+- Feed 关注缓存 miss 会回源主库；大 V 索引丢失时按 fail-open 处理，避免静默缺内容。
+- 整体仍是最终一致，不承诺强一致读。
 
 ### 4. 搜索降级与熔断（`services/search`）
 - 正常走 Elasticsearch（IK 分词，支持全文与 ngram 子串）。
@@ -115,9 +116,16 @@ Routes (Blueprint / Flask-RESTX)   —— 参数解析、鉴权、限流
 - 索引同步失败的帖子进入 dirty 集合，由 `reconcile_search_index` 定时回灌。
 
 ### 5. 事件总线与对账
-- `RedisEventBus`：生产者 LPUSH 事件，后台线程 BRPOP 消费并分发，进程重启不丢事件；处理失败最多重试 3 次。
+
+事件分两段：生产端先落库，再由 relay 投递。
+
+- 发帖、更新、删除、评论、评论数变化、关注，都在业务事务内写一条 `event_outbox`。Celery beat 每 5 秒执行 `relay_event_outbox`，把 pending 记录投递到 Redis 事件总线。
+- 消费端用 `BLMOVE(queue → processing)` 领取事件，处理完 `LREM` ack；失败重新入队，超过次数进死信；reaper 回收超时未 ack 的事件。
+- 事件带唯一 `event.id`，消费端按 `event.id` 做 24 小时幂等去重。语义是 at-least-once，不是 exactly-once。
+- Celery 开了 late ack、`worker_prefetch_multiplier=1`，worker 崩溃时未确认任务会重投。任务本身需要幂等。
+- 点赞是 Redis-first 的高 QPS 写，`like.created` 和点赞数变化仍直接发事件；点赞落库由 Celery 任务按 Redis 当前状态收敛。这部分还没进 outbox。
 - 事件注入 OpenTelemetry trace context，消费端续接同一条链路。
-- beat 定时执行多维度对账：like / post / comment / user / search，差异数写入 `weibo_reconcile_diff_count`。
+- beat 定时对账：like / post / search 会写 `weibo_reconcile_diff_count`；comment/user 任务存在，但目前只写日志，不写该指标。
 
 ### 6. 实时推送（SSE）
 通知流与私信流使用 Server-Sent Events（`text/event-stream`）。前端在断线后按退避策略重连。SSE 长连接会占用 Gunicorn 工作线程，容量需据此规划。
@@ -127,7 +135,7 @@ Routes (Blueprint / Flask-RESTX)   —— 参数解析、鉴权、限流
 
 ### 8. 可观测性
 - 指标：`/metrics` 暴露 HTTP / DB / Redis / Celery / 业务指标。
-- 日志：结构化日志（含 `request_id` / `trace_id`）同时输出到 stdout 与文件。
+- 日志：结构化日志同时输出到 stdout 与文件，当前格式包含 `request_id`；`trace_id` 还未写入日志，追踪信息在 Jaeger 查看。
 - 追踪：OpenTelemetry 自动埋点 Flask / SQLAlchemy / Celery，经 OTLP 上报 Jaeger。
 - 异常：Sentry 聚合前后端异常。
 
@@ -154,7 +162,7 @@ migrations/             数据库迁移（Alembic）
 monitoring/             Prometheus / Grafana / Loki / Jaeger / Alertmanager
 scripts/                启动入口、ES 初始化、依赖校验、排障脚本
 web/                    前端（Vue 3 + Vite）
-docs/                   设计与运维文档（SLO、压测报告、ES 搭建、数据库优化）
+docs/                   设计与运维文档（SLO、压测报告、ES 搭建、数据库优化、部署说明）
 tests/                  单元 / 集成 / 冒烟 / 性能测试
 ```
 
@@ -169,6 +177,7 @@ tests/                  单元 / 集成 / 冒烟 / 性能测试
 | `likes` | 点赞（帖子 / 评论） |
 | `follows` | 关注关系 |
 | `notifications` | 通知 |
+| `event_outbox` | 事务性事件 outbox（relay 投递到 Redis） |
 | `conversations` | 私信会话 |
 | `conversation_users` | 会话成员（含未读数） |
 | `messages` | 私信消息 |
@@ -367,13 +376,14 @@ docker compose -f monitoring/docker-compose.monitoring.yml up -d
 
 ## 已知限制
 
-- 事件总线为「尽力而为 + 对账兜底」，非精确一次投递。
+- 事件总线是 at-least-once，不是 exactly-once。outbox 解决了“DB 已提交、事件没入队”的生产端丢失，但 relay 有约 5 秒延迟；outbox 目前没有 pending/oldest-age 指标、最大重试和清理任务。
+- `like.created` 和点赞数变化未进 outbox。点赞本身由 Celery 任务按 Redis 当前状态收敛，通知属于 best-effort。
 - 搜索在 ES 故障时降级为数据库查询，召回与延迟不按 ES 目标承诺。
-- SSE 并发受 Gunicorn 工作线程数限制，需按容量调整。
-- 缓存整体为最终一致，不提供强一致读。
+- SSE 没有 `Last-Event-ID`/replay，断线期间的增量不会自动补；并发也受 Gunicorn 工作线程数限制。
+- 缓存整体为最终一致，不提供强一致读。点赞缓存只重建 count 时，likers 集合仍可能不完整，读路径会回退 DB。
 - 自建 MySQL 主从 / Redis 哨兵 / ES 适合单机或小规模部署，更大规模建议使用托管服务或编排系统。
 
-详见 [`docs/SLO.md`](docs/SLO.md)。
+本次批量修复的迁移和上线步骤见 [`docs/DEPLOY_FIX_BATCH.md`](docs/DEPLOY_FIX_BATCH.md)，SLO 与已知边界见 [`docs/SLO.md`](docs/SLO.md)。
 
 ## 贡献
 
