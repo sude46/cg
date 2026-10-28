@@ -1,5 +1,4 @@
-# Weibo DemoDemo
-
+# Weibo
 基于 Flask + Vue 3 的微博类社交平台，覆盖发帖、关注、点赞、评论、通知、私信、全文搜索与异步任务，并附带完整的可观测性方案。
 
 后端按 Routes → Service → Repository → Model 分层，重点处理读写分离、缓存一致性、搜索降级、事件可靠性和实时推送。
