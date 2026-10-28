@@ -34,6 +34,8 @@ storage_config:
 limits_config:
   allow_structured_metadata: true
   retention_period: 168h
+  # Grafana Explore 的日志体积直方图依赖 volume endpoint，Loki 2.9 默认关闭
+  volume_enabled: true
 
 table_manager:
   retention_deletes_enabled: false
