@@ -147,7 +147,7 @@ sum(rate(weibo_read_forced_master_total[5m])) by (resource)
 | Prometheus | `:9090` | 抓取与告警规则 |
 | Alertmanager | `:9093` | 告警路由（钉钉 webhook） |
 | Grafana | `:3000` | 面板 |
-| Loki | `:3100` | 日志（含 `request_id`；**`trace_id` 尚未加入日志格式**，需在 `core/logging_config.py` 的 `log_format` 中补充） |
+| Loki | `:3100` | app 文件日志（宿主机 `logs/` 挂载给 Promtail；worker/beat 不在 Loki）。含 `request_id`；`trace_id` 尚未加入日志格式，需在 `core/logging_config.py` 的 `log_format` 中补充 |
 | Jaeger | `:16686` | 分布式追踪（`weibo-api` / `weibo-worker`） |
 
 抓取目标见 `monitoring/prometheus/prometheus.yml`：`weibo-api(app:5000)`、node、redis-business、mysql-master、mysql-replica、redis-replica-1/2、celery、alert-webhook。

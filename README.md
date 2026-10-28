@@ -134,7 +134,7 @@ Routes (Blueprint / Flask-RESTX)   —— 参数解析、鉴权、限流
 
 ### 8. 可观测性
 - 指标：`/metrics` 暴露 HTTP / DB / Redis / Celery / 业务指标。
-- 日志：结构化日志同时输出到 stdout 与文件，当前格式包含 `request_id`；`trace_id` 还未写入日志，追踪信息在 Jaeger 查看。
+- 日志：结构化日志同时输出到 stdout 和文件。app 容器把 `/app/logs` 挂到宿主机 `logs/`，Promtail 采集到 Loki；worker/beat 目前仍只写各自容器 stdout，不在 Loki。日志格式包含 `request_id`，`trace_id` 还未写入，追踪信息在 Jaeger 查看。
 - 追踪：OpenTelemetry 自动埋点 Flask / SQLAlchemy / Celery，经 OTLP 上报 Jaeger。
 - 异常：Sentry 聚合前后端异常。
 

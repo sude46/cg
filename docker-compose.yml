@@ -283,6 +283,7 @@ services:
       - weibo-network
     volumes:
       - uploads_data:/app/app/static/uploads
+      - ./logs:/app/logs
 
 
   web:
